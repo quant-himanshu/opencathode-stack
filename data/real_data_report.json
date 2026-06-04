@@ -1,0 +1,12 @@
+{
+  "rwth_eis": {
+    "n_cells": 4,
+    "n_spectra": 70,
+    "eis_r2": 0.6719627230096277,
+    "eis_mae_mOhm": 18.583194274427022,
+    "eis_rmse_mOhm": 24.459732657167766
+  },
+  "nasa": {
+    "status": "unavailable"
+  }
+}

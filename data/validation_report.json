@@ -1,0 +1,48 @@
+{
+  "system": "OpenCATHODE Stack v1.1",
+  "validation_dataset": "NASA B18 (synthetic, matching statistics)",
+  "n_cycles": 168,
+  "n_total_points": 84000,
+  "metrics": {
+    "r2": 0.9884499725917828,
+    "mae_mv": 2.396768450573754,
+    "rmse_mv": 3.0107950946867454
+  },
+  "benchmarks": {
+    "step_mean_us": 41.87671797505269,
+    "step_p99_us": 48.675347934477024
+  },
+  "plating_warning_s": 24.0,
+  "capacity_fade": {
+    "initial_mAh": 500.0,
+    "final_mAh": 138.88888888888889,
+    "fade_pct_per_cycle": 0.0350140056022409
+  },
+  "comparison": {
+    "opencathode_original": {
+      "r2": 0.9844,
+      "mae_mv": 3.14,
+      "rmse_mv": 2.26,
+      "speed_us": 37,
+      "cells": 1,
+      "eis": false,
+      "gnn": false,
+      "real_time": true,
+      "nature_algos": false
+    },
+    "opencathode_stack": {
+      "r2": 0.9884499725917828,
+      "mae_mv": 2.396768450573754,
+      "rmse_mv": 3.0107950946867454,
+      "speed_us": 48.675347934477024,
+      "cells": 20,
+      "eis": true,
+      "gnn": true,
+      "real_time": true,
+      "nature_algos": true,
+      "plating_warning_s": 24.0
+    }
+  },
+  "generation_time_s": 3.5222894169855863,
+  "plot_path": "/Users/himanshusharma/Desktop/opencathode-stack/validation/../dashboard/final_validation.png"
+}

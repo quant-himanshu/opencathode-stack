@@ -1,0 +1,9 @@
+1) The name of the excel "CYX_Y_Z" corresonds to "CYX-X/Z" in the main text.
+2) Because only some of the cycling channels are equipped with EIS capabilities, in this study, we choose one representative cell from each cycling condition for the EIS discussion. The selected NCA cell is: CY25-025_1-#4
+ for CY25_0.25_1;CY25-05_1-#11 for CY25_0.5_1;CY25-1_1-#5 for CY25_1_1;CY35-05_1-#1 for CY35_0.5_1;CY45-05_1-#13
+ for CY45_0.5_1;
+The selected NCM cell is: #CY25-05_1-#16 for CY25_0.5_1;CY35-05_1-#2 for CY35_0.5_1;CY45-05_1-#2 for CY45_0.5_1;
+The selected NCM+NCA cell is: CY25-05_1-#1 for CY25_0.5_1;CY25-05_2-#1 for CY25_0.5_2;CY25-05_4-#2 for CY45_0.5_4;
+3） In each excel, the sheet is named as X, X_1RCPE and X_2RCPE, the X means the cycle numbers. X and X_2RCPE means that the ECM shown in Supplementary Figure 8 are used for fitting. X_1RCPE means no R1//CPE1 (Supplementary Figure 8b) are used for the data fitting. The cycle number X can be corresponding to the cycle in Supplementary Table 12 using the following equations:
+NCA battery: cycle number= (X-1)*25; NCM battery: cycle number= (X-1)*50; NCM+NCA battery: cycle number= (X-1)*50;
+4) The fitting coefficient of determination (R2) between the raw and fitted impedance data is summarized in Supplementary Table 12. 
