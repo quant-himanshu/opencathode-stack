@@ -186,7 +186,7 @@ python diagnosis/dual_ekf_lfp.py
 @software{opencathode2025,
   title   = {OpenCATHODE Stack: Physics-Informed Battery Pack Management},
   author  = {Sharma, Himanshu},
-  year    = {2025},
+  year    = {2026},
   url     = {https://github.com/quant-himanshu/opencathode-stack},
   note    = {MAE 18.6 mV, R²=0.9810, 36-cell Quartz WLTP validated}
 }
