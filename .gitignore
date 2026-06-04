@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Large data archives — too large for GitHub (use Git LFS or external storage)
+data/nasa/
+data/iontech_lfp/
+data/rwth/Impedance\ raw\ data\ and\ fitting\ data.zip
+data/iontech
+
+# Embedded git repo
+data/iontech/
+
+# IDE / OS
+.DS_Store
+.idea/
+*.swp
