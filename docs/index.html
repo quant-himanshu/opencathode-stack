@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCATHODE Stack v2.0 — Presentation</title>
+<style>
+  :root {
+    --navy:   #0a1628;
+    --navy2:  #0f2044;
+    --navy3:  #162d5a;
+    --blue:   #2563eb;
+    --blue2:  #3b82f6;
+    --cyan:   #06b6d4;
+    --green:  #10b981;
+    --amber:  #f59e0b;
+    --red:    #ef4444;
+    --white:  #f1f5f9;
+    --gray:   #94a3b8;
+    --gray2:  #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--white);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ── DECK CONTAINER ── */
+  #deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    position: absolute;
+    inset: 0;
+    padding: 48px 64px 40px;
+    background: var(--navy);
+    animation: fadeIn 0.4s ease;
+    overflow: hidden;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HEADER BAR ── */
+  .slide-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-shrink: 0;
+  }
+  .slide-num {
+    background: var(--blue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    min-width: 32px;
+    text-align: center;
+  }
+  .slide-bar {
+    flex: 1;
+    height: 2px;
+    background: var(--navy3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .slide-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue2), var(--cyan));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  h1 {
+    font-size: clamp(28px, 4.2vw, 52px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--white);
+  }
+  h2 {
+    font-size: clamp(20px, 2.8vw, 34px);
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+  h3 {
+    font-size: clamp(13px, 1.5vw, 17px);
+    font-weight: 700;
+    color: var(--blue2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+  p, li {
+    font-size: clamp(12px, 1.3vw, 15px);
+    line-height: 1.65;
+    color: #cbd5e1;
+  }
+  .accent  { color: var(--cyan); }
+  .green   { color: var(--green); }
+  .amber   { color: var(--amber); }
+  .red-t   { color: var(--red); }
+  .small   { font-size: 12px; color: var(--gray); }
+  strong   { color: var(--white); font-weight: 600; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+  }
+  .card-accent {
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    border-radius: 12px 0 0 12px;
+  }
+
+  /* ── GRID HELPERS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .flex-row { display: flex; gap: 20px; align-items: stretch; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: clamp(11px, 1.2vw, 14px);
+  }
+  th {
+    background: var(--navy3);
+    color: var(--blue2);
+    font-weight: 700;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--navy3);
+    color: #cbd5e1;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(37,99,235,0.08); }
+
+  /* ── METRIC BOXES ── */
+  .metric-box {
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 12px;
+    padding: 22px 18px;
+    text-align: center;
+  }
+  .metric-val {
+    font-size: clamp(22px, 3vw, 38px);
+    font-weight: 800;
+    color: var(--cyan);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue  { background: rgba(59,130,246,0.2); color: var(--blue2); border: 1px solid rgba(59,130,246,0.4); }
+  .badge-green { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.4); }
+  .badge-amber { background: rgba(245,158,11,0.2); color: var(--amber); border: 1px solid rgba(245,158,11,0.4); }
+  .badge-cyan  { background: rgba(6,182,212,0.2);  color: var(--cyan);  border: 1px solid rgba(6,182,212,0.4); }
+
+  /* ── LAYER ROW ── */
+  .layer-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .layer-num {
+    background: var(--blue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .layer-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue2);
+    min-width: 240px;
+  }
+  .layer-desc {
+    font-size: 12px;
+    color: var(--gray);
+  }
+
+  /* ── NAVIGATION ── */
+  #nav {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15,32,68,0.92);
+    border: 1px solid var(--navy3);
+    border-radius: 40px;
+    padding: 8px 20px;
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: background 0.2s;
+    line-height: 1;
+  }
+  .nav-btn:hover { background: var(--navy3); }
+  .nav-btn:disabled { color: var(--gray2); cursor: default; }
+  .nav-btn:disabled:hover { background: none; }
+  #slide-counter {
+    font-size: 12px;
+    color: var(--gray);
+    min-width: 50px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── DOTS ── */
+  #dots {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    z-index: 100;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--navy3);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--navy3);
+  }
+  .dot.active {
+    background: var(--blue2);
+    border-color: var(--blue2);
+    transform: scale(1.4);
+  }
+  .dot:hover { background: var(--gray2); }
+
+  /* ── TITLE SLIDE SPECIFICS ── */
+  .title-pill {
+    background: rgba(37,99,235,0.15);
+    border: 1px solid rgba(37,99,235,0.35);
+    color: var(--blue2);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .title-name {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 10px;
+  }
+  .title-github {
+    font-size: 12px;
+    color: var(--cyan);
+    margin-top: 6px;
+    font-family: 'Courier New', monospace;
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── PILLAR ── */
+  .pillar {
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .pillar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .pillar-1::before { background: linear-gradient(90deg, var(--blue), var(--blue2)); }
+  .pillar-2::before { background: linear-gradient(90deg, var(--cyan), var(--blue2)); }
+  .pillar-3::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+  .pillar-icon { font-size: 32px; margin-bottom: 10px; }
+  .pillar-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .pillar-sub {
+    font-size: 11px;
+    color: var(--gray);
+    margin-bottom: 8px;
+  }
+
+  /* ── QUOTE BOX ── */
+  .quote-box {
+    border-left: 3px solid var(--cyan);
+    padding: 12px 18px;
+    background: rgba(6,182,212,0.06);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    font-size: clamp(12px, 1.3vw, 15px);
+    color: #94a3b8;
+  }
+
+  /* ── NUMBERED LIST ── */
+  .num-list { list-style: none; }
+  .num-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: clamp(12px, 1.3vw, 15px);
+  }
+  .num-list li:last-child { border-bottom: none; }
+  .num-circle {
+    background: var(--blue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── LOGO WATERMARK ── */
+  .watermark {
+    position: absolute;
+    bottom: 52px;
+    right: 64px;
+    font-size: 10px;
+    color: var(--navy3);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .section-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--gray2);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--navy3);
+  }
+
+  /* ── HIGHLIGHT ── */
+  .hl { color: var(--cyan); font-weight: 700; }
+
+  /* ── FOOTER BAR ── */
+  .slide-footer {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--navy3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .slide-footer p { font-size: 11px; color: var(--gray2); }
+
+  /* Scrollable content area */
+  .content-scroll {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ══════════════════════════════════════════ -->
+  <section class="slide active" id="s1">
+    <div class="slide-header">
+      <span class="slide-num">01</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:6.7%"></div></div>
+    </div>
+    <div class="content-scroll" style="justify-content:center; align-items:center; text-align:center; gap:0;">
+      <div class="title-pill">v2.0 — Physics-Informed BMS</div>
+      <h1 class="gradient-text" style="font-size:clamp(36px,6vw,72px); margin-bottom:16px;">OpenCATHODE Stack</h1>
+      <p style="font-size:clamp(14px,1.8vw,22px); color:#64748b; max-width:660px; margin:0 auto 32px; line-height:1.5;">
+        A Physics-Informed, Real-Time Battery Pack<br>Management System
+      </p>
+
+      <div style="display:flex; gap:28px; justify-content:center; margin-bottom:36px;">
+        <div class="metric-box" style="min-width:130px;">
+          <div class="metric-val">53<span style="font-size:18px; color:#64748b;">µs</span></div>
+          <div class="metric-label">per cell</div>
+        </div>
+        <div class="metric-box" style="min-width:130px;">
+          <div class="metric-val" style="color:var(--green);">0.981</div>
+          <div class="metric-label">R² — 36 cells</div>
+        </div>
+        <div class="metric-box" style="min-width:130px;">
+          <div class="metric-val" style="color:var(--amber);">18.6<span style="font-size:18px; color:#64748b;">mV</span></div>
+          <div class="metric-label">MAE</div>
+        </div>
+      </div>
+
+      <div style="background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; padding:18px 32px; display:inline-block;">
+        <p class="title-name" style="font-size:14px; color:var(--white); margin-bottom:4px;">
+          <strong>Himanshu Sharma</strong> &nbsp;·&nbsp; 2nd Year BTech
+        </p>
+        <p class="title-github">⚡ github.com/quant-himanshu/opencathode-stack</p>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 2 — THE PROBLEM
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s2">
+    <div class="slide-header">
+      <span class="slide-num">02</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:13.4%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>"We can only measure the <span class="accent">outside</span>"</h2>
+
+      <div class="grid-3" style="flex:1; align-items:stretch; margin-bottom:20px;">
+
+        <div class="card" style="border-color:rgba(239,68,68,0.3);">
+          <div class="card-accent" style="background:var(--red);"></div>
+          <div style="padding-left:10px;">
+            <h3 style="color:var(--red);">SEI Growth</h3>
+            <p style="margin-bottom:10px;">Irreversible film on anode. Grows every cycle. <strong>Primary cause of capacity loss.</strong></p>
+            <p>Each cycle thickens the film by nanometers — invisible externally, catastrophic over thousands of cycles.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(245,158,11,0.3);">
+          <div class="card-accent" style="background:var(--amber);"></div>
+          <div style="padding-left:10px;">
+            <h3 style="color:var(--amber);">Lithium Plating</h3>
+            <p style="margin-bottom:10px;">Metallic dendrites form when anode potential drops below 0V. <strong>Causes internal short circuit and fire.</strong></p>
+            <p>Common at low temperatures and high charge rates. No external warning until failure.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(239,68,68,0.5);">
+          <div class="card-accent" style="background:linear-gradient(180deg,var(--red),var(--amber));"></div>
+          <div style="padding-left:10px;">
+            <h3 style="color:var(--red);">Thermal Runaway</h3>
+            <p style="margin-bottom:10px;">Self-reinforcing heat reaction. NMC811 onset at <strong>80°C</strong>. Unstoppable at <strong>150°C</strong>.</p>
+            <p>One cell failing propagates to neighbors. Pack-level failure within seconds.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-box">
+        <strong>Core Challenge:</strong> We can only measure voltage and current. Everything else — SEI thickness, plating risk, internal temperature — <em>must be inferred.</em>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3 — THE GAP
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s3">
+    <div class="slide-header">
+      <span class="slide-num">03</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:20%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Industry trapped between <span class="accent">slow physics</span> and fast blind approximations</h2>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>PyBaMM</th>
+              <th>Commercial BMS</th>
+              <th style="background:rgba(37,99,235,0.15); color:var(--cyan);">OpenCATHODE Stack</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Speed</strong></td>
+              <td><span class="red-t">50–500 ms/cell</span></td>
+              <td>10 µs</td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="green"><strong>53 µs ✓</strong></span></td>
+            </tr>
+            <tr>
+              <td><strong>Physics depth</strong></td>
+              <td>Full PDE</td>
+              <td><span class="red-t">Coulomb counting only</span></td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="accent">DFN-SPM + 5 TCOs</span></td>
+            </tr>
+            <tr>
+              <td><strong>Degradation tracking</strong></td>
+              <td>Accurate but offline</td>
+              <td><span class="red-t">Blind</span></td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="green">Real-time SEI tracking</span></td>
+            </tr>
+            <tr>
+              <td><strong>State estimation</strong></td>
+              <td>Simulation only</td>
+              <td>Lookup table</td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="accent">Dual EKF (no BMS)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Multi-cell GNN</strong></td>
+              <td><span class="red-t">✗</span></td>
+              <td><span class="red-t">✗</span></td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="green">✓ GraphSAGE</span></td>
+            </tr>
+            <tr>
+              <td><strong>Nature-inspired control</strong></td>
+              <td><span class="red-t">✗</span></td>
+              <td><span class="red-t">✗</span></td>
+              <td style="background:rgba(37,99,235,0.06);"><span class="green">✓ ACO + Kuramoto + NSA</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quote-box" style="margin-top:16px;">
+        <strong>OpenCATHODE:</strong> Research-grade physics at commercial-grade speed.
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 4 — NOVEL CONTRIBUTION
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s4">
+    <div class="slide-header">
+      <span class="slide-num">04</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:26.7%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>What <span class="accent">no existing system</span> does</h2>
+
+      <ul class="num-list" style="flex:1; justify-content:center; display:flex; flex-direction:column;">
+        <li>
+          <span class="num-circle">1</span>
+          <span><strong>DFN + GNN + ChirpEIS + Nature algorithms — first time integrated together</strong> in a single deployable real-time stack</span>
+        </li>
+        <li>
+          <span class="num-circle">2</span>
+          <span><strong>No BMS dependency</strong> — self-predicting Dual EKF initializes from OCV cold-start; works without ground-truth SOC</span>
+        </li>
+        <li>
+          <span class="num-circle">3</span>
+          <span><strong>53 microseconds per cell</strong> — fully Python, runs real-time on $35 hardware (Raspberry Pi 4B target)</span>
+        </li>
+        <li>
+          <span class="num-circle">4</span>
+          <span><strong>Validated on 634,450 real datapoints</strong> — 36 real automotive NMC cells, Quartz WLTP drive cycle</span>
+        </li>
+        <li>
+          <span class="num-circle">5</span>
+          <span><strong>5 Thermodynamic Consistency Operators (TCOs)</strong> — model cannot hallucinate physically impossible predictions</span>
+        </li>
+        <li>
+          <span class="num-circle">6</span>
+          <span><strong>Nature-inspired control</strong> — Ant Colony Optimization + Kuramoto synchronization + Negative Selection Algorithm</span>
+        </li>
+      </ul>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — ARCHITECTURE
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s5">
+    <div class="slide-header">
+      <span class="slide-num">05</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:33.4%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Six layers bridge <span class="accent">electrochemistry</span> and speed</h2>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:0;">
+        <div class="layer-row">
+          <div class="layer-num">0</div>
+          <div class="layer-title">Segmented Chirp EIS</div>
+          <div class="layer-desc">8-second sweep · 0.01 Hz → 1 kHz · Battery stays running</div>
+          <div style="margin-left:auto;"><span class="badge badge-cyan">SENSING</span></div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">1</div>
+          <div class="layer-title">2RC + CPE Extraction</div>
+          <div class="layer-desc">R_ohm · R_SEI · R_ct · D_s extracted per cell · Online fitting</div>
+          <div style="margin-left:auto;"><span class="badge badge-blue">PARAMETER ID</span></div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">2</div>
+          <div class="layer-title">GraphSAGE BatteryGNN</div>
+          <div class="layer-desc">20 nodes · Dual electrical + thermal edges · 9,428 params</div>
+          <div style="margin-left:auto;"><span class="badge badge-blue">NETWORK AI</span></div>
+        </div>
+        <div class="layer-row" style="border-color:rgba(6,182,212,0.3);">
+          <div class="layer-num" style="background:var(--cyan);">3</div>
+          <div class="layer-title" style="color:var(--cyan);">DFN-SPM + 5 TCOs</div>
+          <div class="layer-desc">Physics engine · Butler-Volmer kinetics · SEI growth · <strong style="color:var(--cyan);">53 µs/cell</strong></div>
+          <div style="margin-left:auto;"><span class="badge badge-cyan">CORE PHYSICS</span></div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">4</div>
+          <div class="layer-title">NSA Anomaly Detector</div>
+          <div class="layer-desc">Negative Selection · 200 detectors · SEI / Plating / Thermal / Capacity fault classes</div>
+          <div style="margin-left:auto;"><span class="badge badge-amber">DIAGNOSTICS</span></div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">5</div>
+          <div class="layer-title">ACO + Kuramoto Engine</div>
+          <div class="layer-desc">Current routing + SOC synchronization · PolicyEngine · Emergency stop</div>
+          <div style="margin-left:auto;"><span class="badge badge-green">CONTROL</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — DFN MODEL
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s6">
+    <div class="slide-header">
+      <span class="slide-num">06</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:40%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Doyle-Fuller-Newman: <span class="accent">The physics engine</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch; gap:24px;">
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--blue);"></div>
+          <div style="padding-left:12px;">
+            <h3>What DFN tracks</h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+              <div>
+                <p class="small" style="margin-bottom:3px; text-transform:uppercase; letter-spacing:1px;">Input</p>
+                <p><strong>Current (Amperes)</strong></p>
+              </div>
+              <div style="color:var(--blue2); font-size:20px; align-self:center;">→</div>
+              <div>
+                <p class="small" style="margin-bottom:3px; text-transform:uppercase; letter-spacing:1px;">Output</p>
+                <p><strong>Voltage + States</strong></p>
+              </div>
+            </div>
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+                <span style="color:var(--blue2);">▸</span> Lithium concentration profiles in electrodes
+              </li>
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+                <span style="color:var(--blue2);">▸</span> SEI film thickness — updated every millisecond
+              </li>
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+                <span style="color:var(--blue2);">▸</span> Butler-Volmer overpotential at electrode surface
+              </li>
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+                <span style="color:var(--blue2);">▸</span> Thermal coupling — joule heating + entropy heat
+              </li>
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+                <span style="color:var(--blue2);">▸</span> Side reactions — plating risk at each step
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--cyan);">Why SPM approximation</h3>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(239,68,68,0.1); border-radius:6px; margin-bottom:8px; border:1px solid rgba(239,68,68,0.2);">
+                <span style="font-size:13px; color:#cbd5e1;">Full DFN (PDE solver)</span>
+                <span class="red-t" style="font-weight:700; font-size:13px;">50–500 ms/cell</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(16,185,129,0.1); border-radius:6px; border:1px solid rgba(16,185,129,0.2);">
+                <span style="font-size:13px; color:#cbd5e1;">SPM approximation</span>
+                <span class="green" style="font-weight:700; font-size:13px;">53 µs/cell ✓</span>
+              </div>
+            </div>
+            <div class="quote-box" style="margin-bottom:14px;">
+              Single particle represents each electrode. Solid-phase diffusion via spherical Fickian model. Liquid phase effects lumped into effective resistance.
+            </div>
+            <div style="display:flex; gap:10px;">
+              <div class="metric-box" style="flex:1; padding:12px 8px;">
+                <div class="metric-val" style="font-size:26px;">943×</div>
+                <div class="metric-label">faster than PyBaMM</div>
+              </div>
+              <div class="metric-box" style="flex:1; padding:12px 8px;">
+                <div class="metric-val" style="font-size:26px; color:var(--green);">5</div>
+                <div class="metric-label">physics constraints</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — 5 TCOs
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s7">
+    <div class="slide-header">
+      <span class="slide-num">07</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:46.7%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Five <span class="accent">unbreakable</span> physics rules</h2>
+
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:14px; margin-bottom:14px;">
+
+        <div class="card" style="border-color:rgba(59,130,246,0.3);">
+          <div class="card-accent" style="background:var(--blue2);"></div>
+          <div style="padding-left:12px;">
+            <h3>TCO-1 — Entropy ≥ 0</h3>
+            <p>Second Law of Thermodynamics. Model cannot predict perpetual-motion voltage curves or entropy-violating reactions.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(6,182,212,0.3);">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--cyan);">TCO-2 — Nernst Tethering ≤ 10 mV</h3>
+            <p>Open-circuit voltage drift bounded every timestep. Prevents unconstrained voltage extrapolation during fast transients.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(245,158,11,0.3);">
+          <div class="card-accent" style="background:var(--amber);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--amber);">TCO-3 — Plating Prevention</h3>
+            <p>Hard stop at −15 mV anode overpotential. Triggers emergency current halving to prevent dendrite nucleation.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(16,185,129,0.3);">
+          <div class="card-accent" style="background:var(--green);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--green);">TCO-4 — SEI Monotonic Growth</h3>
+            <p>SEI film thickness can only increase — never decrease. Enforces irreversibility of degradation at the model level.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(59,130,246,0.4); background:rgba(37,99,235,0.08);">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="background:var(--blue); color:#fff; font-weight:800; padding:8px 12px; border-radius:8px; font-size:12px; flex-shrink:0;">TCO-5</div>
+          <div>
+            <strong style="color:var(--white);">Lithium Conservation ≤ 1%</strong>
+            <span style="color:var(--gray); font-size:13px; margin-left:8px;">— Atoms cannot be created or destroyed. Total lithium inventory conserved every step.</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="small" style="margin-top:12px; text-align:center; color:var(--gray2);">
+        ML models hallucinate. TCOs ensure every prediction obeys thermodynamics.
+      </p>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 8 — GNN
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s8">
+    <div class="slide-header">
+      <span class="slide-num">08</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:53.4%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Graph Neural Network <span class="accent">maps pack topology</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch;">
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--blue);"></div>
+          <div style="padding-left:12px;">
+            <h3>Why Graph?</h3>
+            <p style="margin-bottom:16px;">20 cells connected thermally and electrically. One cell's heat affects its neighbors. A simple neural network treats each cell independently — ignoring physical coupling.</p>
+            <div class="quote-box">
+              GNN is context-aware: each cell's state estimate is conditioned on its neighbors' states, propagated across both electrical and thermal edges simultaneously.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--cyan);">Architecture</h3>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Backbone</span><strong>GraphSAGE</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Node features</span><strong>7 per cell</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Hidden layers</span><strong>64 → 32 → 16</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Parameters</span><strong style="color:var(--cyan);">9,428</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0;">
+                <span style="color:var(--gray);">Physics</span><strong style="color:var(--green);">KCL enforced</strong>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; padding:8px; background:rgba(37,99,235,0.1); border-radius:6px; text-align:center; border:1px solid rgba(37,99,235,0.2);">
+                <p style="font-size:11px; color:var(--blue2); font-weight:700; margin-bottom:2px;">ELECTRICAL</p>
+                <p style="font-size:11px; color:var(--gray);">Series/parallel — instantaneous</p>
+              </div>
+              <div style="flex:1; padding:8px; background:rgba(239,68,68,0.1); border-radius:6px; text-align:center; border:1px solid rgba(239,68,68,0.2);">
+                <p style="font-size:11px; color:var(--red); font-weight:700; margin-bottom:2px;">THERMAL</p>
+                <p style="font-size:11px; color:var(--gray);">Spatial neighbors — slow diffusion</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 9 — EKF
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s9">
+    <div class="slide-header">
+      <span class="slide-num">09</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:60%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Self-predicting EKF — <span class="accent">no BMS needed</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch; gap:24px;">
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--red);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--red);">The Problem with LFP</h3>
+            <p style="margin-bottom:14px;">Standard EKF fails in the LFP flat voltage plateau (20%–80% SOC).</p>
+            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:12px; margin-bottom:14px; font-family:'Courier New', monospace; font-size:13px; color:var(--red);">
+              dOCV/dSOC ≈ 0<br>→ Kalman Gain = 0<br>→ Filter freezes
+            </div>
+            <p>LFP has one of the flattest OCV curves of any cathode chemistry — by design for safety, but it defeats standard observers.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-accent" style="background:var(--green);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--green);">Our Solution — Dual EKF</h3>
+            <p style="margin-bottom:14px;">State vector: <strong>[SOC, V_polarization]</strong> — simultaneously tracks inner resistance polarization.</p>
+            <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:12px; margin-bottom:14px;">
+              <p style="font-size:13px; margin-bottom:6px;"><strong style="color:var(--green);">Adaptive Q inflation:</strong></p>
+              <p style="font-size:13px; color:#cbd5e1;">Process noise scaled <strong>50×</strong> in flat plateau — filter stays active even when dOCV/dSOC → 0</p>
+            </div>
+            <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:12px;">
+              <p style="font-size:13px; margin-bottom:4px;"><strong style="color:var(--green);">Cold start:</strong></p>
+              <p style="font-size:13px; color:#cbd5e1;">OCV measurement → Prada 2012 lookup → EKF initialized. No BMS ground truth required.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:14px; margin-top:16px;">
+        <div class="metric-box" style="flex:1;">
+          <div class="metric-val" style="color:var(--red);">69.5 mV</div>
+          <div class="metric-label">MAE — forced SOC (baseline)</div>
+        </div>
+        <div style="align-self:center; font-size:20px; color:var(--green);">→</div>
+        <div class="metric-box" style="flex:1; border-color:rgba(16,185,129,0.3);">
+          <div class="metric-val" style="color:var(--green);">18.6 mV</div>
+          <div class="metric-label">MAE — Dual EKF (3.7× better)</div>
+        </div>
+        <div style="align-self:center; font-size:20px; color:var(--cyan);">|</div>
+        <div class="metric-box" style="flex:1; border-color:rgba(6,182,212,0.3);">
+          <div class="metric-val" style="color:var(--cyan);">36/36</div>
+          <div class="metric-label">cells — EKF converged</div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10 — NATURE ALGORITHMS
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s10">
+    <div class="slide-header">
+      <span class="slide-num">10</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:66.7%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Nature-inspired <span class="accent">control algorithms</span></h2>
+
+      <div class="grid-3" style="flex:1; align-items:stretch;">
+
+        <div class="card" style="border-color:rgba(245,158,11,0.3);">
+          <div class="card-accent" style="background:var(--amber);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--amber);">ACO — Ant Colony</h3>
+            <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Ants find shortest path via pheromones."</p>
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Pheromone = cell State-of-Health</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Weak cell pheromone evaporates</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Current automatically rerouted</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> No central controller needed</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(6,182,212,0.3);">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--cyan);">Kuramoto Oscillators</h3>
+            <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Fireflies synchronize without a leader."</p>
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> SOC mapped to phase angle θ</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> Series cells auto-balance</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> No active balancing circuits</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> Order parameter <strong>R = 0.9820</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(16,185,129,0.3);">
+          <div class="card-accent" style="background:var(--green);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--green);">NSA — Immune System</h3>
+            <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Learn self, detect non-self."</p>
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> Normal operation = "self"</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> 200 detectors in anomaly space</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> Fault classified automatically</li>
+              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> 4 classes: SEI / Plating / Thermal / Capacity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-box" style="margin-top:16px;">
+        Combined: a fully decentralized, self-organizing control system — no look-up tables, no hand-tuned thresholds, emergent behavior from physics alone.
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11 — ChirpEIS
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s11">
+    <div class="slide-header">
+      <span class="slide-num">11</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:73.4%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Chirp EIS: <span class="accent">30 minutes → 8 seconds</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch; gap:24px;">
+
+        <div class="card" style="border-color:rgba(239,68,68,0.3);">
+          <div class="card-accent" style="background:var(--red);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--red);">Traditional EIS</h3>
+            <p style="margin-bottom:14px;">One frequency at a time. Industry-standard but impractical for deployment.</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(239,68,68,0.08); border-radius:6px; border:1px solid rgba(239,68,68,0.15);">
+                <span>0.01 Hz measurement</span><span class="red-t">= 100 seconds</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(239,68,68,0.08); border-radius:6px; border:1px solid rgba(239,68,68,0.15);">
+                <span>Full spectrum</span><span class="red-t">= 30+ minutes</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(239,68,68,0.08); border-radius:6px; border:1px solid rgba(239,68,68,0.15);">
+                <span>Battery state</span><span class="red-t">Must be offline</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(16,185,129,0.3);">
+          <div class="card-accent" style="background:var(--green);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--green);">ChirpEIS — OpenCATHODE</h3>
+            <p style="margin-bottom:14px;">All frequencies simultaneously. Linear sweep excitation, FFT extraction.</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.15);">
+                <span>Frequency range</span><span class="green">0.01 Hz → 1 kHz</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.15);">
+                <span>Complete spectrum</span><span class="green">8 seconds ✓</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 10px; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.15);">
+                <span>Battery state</span><span class="green">Stays online ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:14px; align-items:center;">
+        <div class="metric-box" style="flex:1;">
+          <div class="metric-val">225×</div>
+          <div class="metric-label">faster than traditional EIS</div>
+        </div>
+        <div class="metric-box" style="flex:1; border-color:rgba(16,185,129,0.3);">
+          <div class="metric-val" style="color:var(--green);">0.9999</div>
+          <div class="metric-label">R² — 70 real RWTH spectra</div>
+        </div>
+        <div class="metric-box" style="flex:2; text-align:left; padding:14px 18px;">
+          <p style="font-size:13px; color:#cbd5e1;"><strong>2RC + CPE model:</strong> captures Ohmic resistance, SEI film, charge transfer kinetics, and constant phase element (non-ideal diffusion) from a single 8-second measurement.</p>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 12 — VALIDATION RESULTS
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s12">
+    <div class="slide-header">
+      <span class="slide-num">12</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:80%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Validated on <span class="accent">real automotive data</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch; gap:24px;">
+
+        <div class="card" style="border-color:rgba(6,182,212,0.3);">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <h3 style="color:var(--cyan);">Quartz WLTP Dataset</h3>
+            <p style="margin-bottom:12px; font-size:12px; color:var(--gray);">Universitat Politècnica de Catalunya · Real automotive drive cycle</p>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Pack topology</span><strong>36 cells — 3P × 12S</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Real datapoints</span><strong style="color:var(--cyan);">634,450</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">R² (all 36 cells)</span><strong style="color:var(--green);">0.9810</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">MAE</span><strong style="color:var(--green);">18.6 mV &nbsp;<span style="color:var(--gray); font-weight:400; font-size:11px;">(target &lt;20 mV ✓)</span></strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0;">
+                <span style="color:var(--gray);">EKF convergence</span><strong style="color:var(--green);">36/36 cells ✓</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(59,130,246,0.3);">
+          <div class="card-accent" style="background:var(--blue2);"></div>
+          <div style="padding-left:12px;">
+            <h3>RWTH Aachen EIS Spectra</h3>
+            <p style="margin-bottom:12px; font-size:12px; color:var(--gray);">RWTH Aachen experimental impedance dataset · NMC cylindrical cells</p>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Real spectra</span><strong>70 experimental</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Model</span><strong>2RC + CPE</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--navy3);">
+                <span style="color:var(--gray);">Fit quality R²</span><strong style="color:var(--green);">0.9999</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:7px 0;">
+                <span style="color:var(--gray);">Frequency range</span><strong>0.01 Hz — 1 kHz</strong>
+              </div>
+            </div>
+            <div style="margin-top:16px; background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); border-radius:8px; padding:10px 12px;">
+              <p style="font-size:12px; color:#cbd5e1;">ChirpEIS implementation validated against gold-standard potentiostatic EIS measurements. Parameters R_ohm, R_SEI, R_ct, C_dl, W (Warburg) extracted with sub-1% error.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 13 — PERFORMANCE
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s13">
+    <div class="slide-header">
+      <span class="slide-num">13</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:86.7%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Real-time on <span class="accent">embedded hardware</span></h2>
+
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="metric-box" style="border-color:rgba(6,182,212,0.3);">
+          <div class="metric-val">53</div>
+          <div style="font-size:11px; color:var(--cyan); font-weight:700; margin-top:2px;">MICROSECONDS</div>
+          <div class="metric-label">per cell step</div>
+        </div>
+        <div class="metric-box" style="border-color:rgba(16,185,129,0.3);">
+          <div class="metric-val" style="color:var(--green);">0.981</div>
+          <div style="font-size:11px; color:var(--green); font-weight:700; margin-top:2px;">R² SCORE</div>
+          <div class="metric-label">36/36 cells pass</div>
+        </div>
+        <div class="metric-box" style="border-color:rgba(245,158,11,0.3);">
+          <div class="metric-val" style="color:var(--amber);">18.6</div>
+          <div style="font-size:11px; color:var(--amber); font-weight:700; margin-top:2px;">mV MAE</div>
+          <div class="metric-label">industry std &lt; 20 mV ✓</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val" style="color:var(--blue2);">7,748</div>
+          <div style="font-size:11px; color:var(--blue2); font-weight:700; margin-top:2px;">LINES</div>
+          <div class="metric-label">6 modules, all tests pass</div>
+        </div>
+      </div>
+
+      <div class="section-title">Speed comparison</div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:4px 0;">
+          <div style="min-width:200px;">
+            <p style="font-size:12px; color:var(--gray); margin-bottom:4px;">PyBaMM SPM</p>
+            <div style="background:rgba(239,68,68,0.15); border-radius:4px; overflow:hidden; height:20px; position:relative;">
+              <div style="width:100%; height:100%; background:rgba(239,68,68,0.4);"></div>
+              <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:11px; font-weight:700; color:var(--red);">50,000 µs</span>
+            </div>
+          </div>
+          <div style="min-width:200px; flex:1;">
+            <p style="font-size:12px; color:var(--gray); margin-bottom:4px;">OpenCATHODE Stack</p>
+            <div style="background:rgba(16,185,129,0.1); border-radius:4px; overflow:hidden; height:20px; position:relative; border:1px solid rgba(16,185,129,0.3);">
+              <div style="width:0.1%; height:100%; background:var(--green);"></div>
+              <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; font-weight:700; color:var(--green);">53 µs ← 943× faster</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:14px;">
+        <div class="card" style="flex:1; border-color:rgba(6,182,212,0.2);">
+          <h3 style="margin-bottom:8px;">Latency breakdown</h3>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--navy3);">
+              <span style="color:var(--gray);">DFN-SPM step</span><span class="accent">53 µs/cell</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--navy3);">
+              <span style="color:var(--gray);">GNN inference</span><span style="color:#cbd5e1;">~0.8 ms</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0;">
+              <span style="color:var(--gray);">Policy engine</span><span style="color:#cbd5e1;">~1.2 ms</span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="flex:1; border-color:rgba(16,185,129,0.2);">
+          <h3 style="margin-bottom:8px; color:var(--green);">Target platform</h3>
+          <p style="font-size:13px; color:#cbd5e1; margin-bottom:6px;"><strong>Raspberry Pi 4B</strong> — $35 hardware</p>
+          <p style="font-size:12px; color:var(--gray);">Mean latency 3.7 ms at 1 Hz update rate. Comfortable margin for real-time control at 10 Hz.</p>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 14 — FUTURE WORK
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s14">
+    <div class="slide-header">
+      <span class="slide-num">14</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:93.4%"></div></div>
+    </div>
+    <div class="content-scroll">
+      <h2>Path <span class="accent">forward</span></h2>
+
+      <div class="grid-2" style="flex:1; align-items:stretch; gap:20px;">
+
+        <div class="card" style="border-color:rgba(239,68,68,0.3);">
+          <div class="card-accent" style="background:var(--red);"></div>
+          <div style="padding-left:12px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <span class="badge badge-amber">VALIDATION</span>
+              <h3 style="margin-bottom:0;">1. Thermal Runaway Validation</h3>
+            </div>
+            <p>Validate 60-minute early warning system on <strong>Sandia Battery Failure Databank</strong>. Ground truth abuse tests (nail penetration, overcharge) with real thermal runway propagation data.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(6,182,212,0.3);">
+          <div class="card-accent" style="background:var(--cyan);"></div>
+          <div style="padding-left:12px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <span class="badge badge-blue">ML</span>
+              <h3 style="color:var(--cyan);">2. GNN Training on Real Data</h3>
+            </div>
+            <p>Train GraphSAGE on real multi-cell cycling data from Quartz and TU Darmstadt datasets. Current GNN uses physics-initialized weights — real data fine-tuning expected to improve weakest-cell accuracy.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(16,185,129,0.3);">
+          <div class="card-accent" style="background:var(--green);"></div>
+          <div style="padding-left:12px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <span class="badge badge-green">HARDWARE</span>
+              <h3 style="color:var(--green);">3. Hardware Deployment</h3>
+            </div>
+            <p>Port full stack to <strong>Raspberry Pi 4B</strong>. Validate real sensor integration: INA226 current sensor, ADS1115 voltage ADC, DS18B20 temperature. Measure actual interrupt latency under load.</p>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(59,130,246,0.3);">
+          <div class="card-accent" style="background:var(--blue2);"></div>
+          <div style="padding-left:12px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <span class="badge badge-cyan">RESEARCH</span>
+              <h3>4. Paper Submission</h3>
+            </div>
+            <p>Target journals: <strong>Journal of Power Sources</strong> or <strong>Applied Energy</strong>. Focus: first integrated DFN + GNN + ChirpEIS + Nature algorithm framework validated on real automotive data.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">OpenCATHODE Stack v2.0</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 15 — CONCLUSION
+  ══════════════════════════════════════════ -->
+  <section class="slide" id="s15">
+    <div class="slide-header">
+      <span class="slide-num">15</span>
+      <div class="slide-bar"><div class="slide-bar-fill" style="width:100%"></div></div>
+    </div>
+    <div class="content-scroll" style="align-items:center; text-align:center; justify-content:center;">
+
+      <h1 class="gradient-text" style="font-size:clamp(28px,4.5vw,56px); margin-bottom:8px;">OpenCATHODE Stack</h1>
+
+      <div style="margin-bottom:28px;">
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; margin-bottom:4px; font-style:italic;">
+          "Physics limits the boundaries.
+        </p>
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; margin-bottom:4px; font-style:italic;">
+          AI maps the network.
+        </p>
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; font-style:italic;">
+          Biology manages the survival."
+        </p>
+      </div>
+
+      <div class="grid-3" style="max-width:780px; margin:0 auto 28px; gap:16px;">
+        <div class="pillar pillar-1">
+          <div class="pillar-icon">⚛</div>
+          <div class="pillar-title">First-Principles Physics</div>
+          <div class="pillar-sub">DFN + 5 TCOs</div>
+          <p style="font-size:12px; color:var(--gray);">Every prediction bounded by thermodynamics</p>
+        </div>
+        <div class="pillar pillar-2">
+          <div class="pillar-icon">🕸</div>
+          <div class="pillar-title">Network AI</div>
+          <div class="pillar-sub">GraphSAGE GNN</div>
+          <p style="font-size:12px; color:var(--gray);">Pack topology mapped at every step</p>
+        </div>
+        <div class="pillar pillar-3">
+          <div class="pillar-icon">🧬</div>
+          <div class="pillar-title">Biomimicry</div>
+          <div class="pillar-sub">NSA + ACO + Kuramoto</div>
+          <p style="font-size:12px; color:var(--gray);">Decentralized self-organizing control</p>
+        </div>
+      </div>
+
+      <div style="background:var(--navy2); border:1px solid var(--navy3); border-radius:14px; padding:18px 32px; display:inline-flex; gap:28px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--amber);">18.6 mV</div>
+          <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">MAE</div>
+        </div>
+        <div style="width:1px; background:var(--navy3);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--green);">0.9810</div>
+          <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">R²</div>
+        </div>
+        <div style="width:1px; background:var(--navy3);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--cyan);">53 µs/cell</div>
+          <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Speed</div>
+        </div>
+        <div style="width:1px; background:var(--navy3);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--blue2);">634,450</div>
+          <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">real data rows</div>
+        </div>
+        <div style="width:1px; background:var(--navy3);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--white);">36/36</div>
+          <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">cells pass</div>
+        </div>
+      </div>
+
+      <p style="font-size:13px; color:var(--cyan); font-family:'Courier New', monospace;">
+        ⚡ github.com/quant-himanshu/opencathode-stack
+      </p>
+    </div>
+  </section>
+
+</div><!-- #deck -->
+
+<!-- Navigation -->
+<div id="nav">
+  <button class="nav-btn" id="btn-prev" onclick="go(-1)" title="Previous (←)">&#8592;</button>
+  <span id="slide-counter">1 / 15</span>
+  <button class="nav-btn" id="btn-next" onclick="go(1)" title="Next (→)">&#8594;</button>
+</div>
+
+<!-- Dot indicators -->
+<div id="dots">
+  <script>
+    for (let i = 1; i <= 15; i++) {
+      document.write(`<div class="dot${i===1?' active':''}" onclick="jump(${i})" title="Slide ${i}"></div>`);
+    }
+  </script>
+</div>
+
+<script>
+  let cur = 1;
+  const N = 15;
+
+  function render() {
+    for (let i = 1; i <= N; i++) {
+      document.getElementById('s' + i).classList.toggle('active', i === cur);
+    }
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i + 1 === cur);
+    });
+    document.getElementById('slide-counter').textContent = cur + ' / ' + N;
+    document.getElementById('btn-prev').disabled = cur === 1;
+    document.getElementById('btn-next').disabled = cur === N;
+  }
+
+  function go(dir) {
+    cur = Math.max(1, Math.min(N, cur + dir));
+    render();
+  }
+
+  function jump(n) {
+    cur = n;
+    render();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') { cur = 1; render(); }
+    if (e.key === 'End')  { cur = N; render(); }
+    if (e.key >= '1' && e.key <= '9') { jump(parseInt(e.key)); }
+  });
+
+  // Touch/swipe support
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.changedTouches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  render();
+</script>
+
+</body>
+</html>
