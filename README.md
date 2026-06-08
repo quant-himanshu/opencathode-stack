@@ -183,7 +183,7 @@ python diagnosis/dual_ekf_lfp.py
 ## Cite
 
 ```bibtex
-@software{opencathode2025,
+@software{opencathode2026,
   title   = {OpenCATHODE Stack: Physics-Informed Battery Pack Management},
   author  = {Sharma, Himanshu},
   year    = {2026},
