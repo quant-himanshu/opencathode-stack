@@ -6,26 +6,26 @@
 <title>OpenCATHODE Stack v2.0 — Presentation</title>
 <style>
   :root {
-    --navy:   #0a1628;
-    --navy2:  #0f2044;
-    --navy3:  #162d5a;
+    --navy:   #FFFFFF;
+    --navy2:  #f8f9fa;
+    --navy3:  #e8e8e8;
     --blue:   #2563eb;
-    --blue2:  #3b82f6;
-    --cyan:   #06b6d4;
-    --green:  #10b981;
-    --amber:  #f59e0b;
-    --red:    #ef4444;
-    --white:  #f1f5f9;
-    --gray:   #94a3b8;
-    --gray2:  #64748b;
+    --blue2:  #2563eb;
+    --cyan:   #0284c7;
+    --green:  #27ae60;
+    --amber:  #d97706;
+    --red:    #e74c3c;
+    --white:  #1a1a2e;
+    --gray:   #666666;
+    --gray2:  #555555;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--navy);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    color: var(--white);
+    background: #f0f2f5;
+    font-family: Georgia, 'Times New Roman', 'DejaVu Serif', serif;
+    color: #1a1a2e;
     overflow: hidden;
     height: 100vh;
   }
@@ -42,14 +42,14 @@
     position: absolute;
     inset: 0;
     padding: 48px 64px 40px;
-    background: var(--navy);
-    animation: fadeIn 0.4s ease;
+    background: #FFFFFF;
+    animation: fadeIn 0.35s ease;
     overflow: hidden;
   }
   .slide.active { display: flex; flex-direction: column; }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
@@ -71,17 +71,18 @@
     border-radius: 4px;
     min-width: 32px;
     text-align: center;
+    font-family: 'Courier New', monospace;
   }
   .slide-bar {
     flex: 1;
     height: 2px;
-    background: var(--navy3);
+    background: #e8e8e8;
     border-radius: 2px;
     overflow: hidden;
   }
   .slide-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--blue2), var(--cyan));
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
     border-radius: 2px;
     transition: width 0.4s ease;
   }
@@ -92,48 +93,48 @@
     font-weight: 800;
     letter-spacing: -1px;
     line-height: 1.1;
-    color: var(--white);
+    color: #1a1a2e;
   }
   h2 {
     font-size: clamp(20px, 2.8vw, 34px);
     font-weight: 700;
-    color: var(--white);
+    color: #1a1a2e;
     line-height: 1.2;
     margin-bottom: 24px;
   }
   h3 {
-    font-size: clamp(13px, 1.5vw, 17px);
+    font-size: clamp(13px, 1.5vw, 16px);
     font-weight: 700;
-    color: var(--blue2);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    color: var(--blue);
+    letter-spacing: 0.3px;
     margin-bottom: 8px;
   }
   p, li {
     font-size: clamp(12px, 1.3vw, 15px);
     line-height: 1.65;
-    color: #cbd5e1;
+    color: #333333;
   }
   .accent  { color: var(--cyan); }
   .green   { color: var(--green); }
   .amber   { color: var(--amber); }
   .red-t   { color: var(--red); }
   .small   { font-size: 12px; color: var(--gray); }
-  strong   { color: var(--white); font-weight: 600; }
+  strong   { color: #1a1a2e; font-weight: 700; }
 
   /* ── CARDS ── */
   .card {
-    background: var(--navy2);
-    border: 1px solid var(--navy3);
-    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
     padding: 20px 22px;
     position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   }
   .card-accent {
     position: absolute;
     top: 0; left: 0;
     width: 4px; height: 100%;
-    border-radius: 12px 0 0 12px;
+    border-radius: 8px 0 0 8px;
   }
 
   /* ── GRID HELPERS ── */
@@ -147,61 +148,66 @@
     width: 100%;
     border-collapse: collapse;
     font-size: clamp(11px, 1.2vw, 14px);
+    font-family: Georgia, serif;
   }
   th {
-    background: var(--navy3);
-    color: var(--blue2);
+    background: #f0f2f5;
+    color: #1a1a2e;
     font-weight: 700;
     padding: 10px 14px;
     text-align: left;
     font-size: 12px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #e8e8e8;
+    border-top: 1px solid #e8e8e8;
   }
   td {
     padding: 9px 14px;
-    border-bottom: 1px solid var(--navy3);
-    color: #cbd5e1;
+    border-bottom: 1px solid #e8e8e8;
+    color: #333333;
   }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(37,99,235,0.08); }
+  tr:hover td { background: rgba(37,99,235,0.04); }
 
   /* ── METRIC BOXES ── */
   .metric-box {
-    background: var(--navy2);
-    border: 1px solid var(--navy3);
-    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
     padding: 22px 18px;
     text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   }
   .metric-val {
     font-size: clamp(22px, 3vw, 38px);
     font-weight: 800;
-    color: var(--cyan);
+    color: var(--blue);
     letter-spacing: -1px;
     line-height: 1;
+    font-family: Georgia, serif;
   }
   .metric-label {
     font-size: 11px;
-    color: var(--gray);
+    color: #666666;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 6px;
+    font-family: Georgia, serif;
   }
 
   /* ── BADGE ── */
   .badge {
     display: inline-block;
     padding: 2px 9px;
-    border-radius: 20px;
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
-  .badge-blue  { background: rgba(59,130,246,0.2); color: var(--blue2); border: 1px solid rgba(59,130,246,0.4); }
-  .badge-green { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.4); }
-  .badge-amber { background: rgba(245,158,11,0.2); color: var(--amber); border: 1px solid rgba(245,158,11,0.4); }
-  .badge-cyan  { background: rgba(6,182,212,0.2);  color: var(--cyan);  border: 1px solid rgba(6,182,212,0.4); }
+  .badge-blue  { background: rgba(37,99,235,0.08);  color: var(--blue);  border: 1px solid rgba(37,99,235,0.25); }
+  .badge-green { background: rgba(39,174,96,0.08);  color: var(--green); border: 1px solid rgba(39,174,96,0.25); }
+  .badge-amber { background: rgba(217,119,6,0.08);  color: var(--amber); border: 1px solid rgba(217,119,6,0.25); }
+  .badge-cyan  { background: rgba(2,132,199,0.08);  color: var(--cyan);  border: 1px solid rgba(2,132,199,0.25); }
 
   /* ── LAYER ROW ── */
   .layer-row {
@@ -209,10 +215,11 @@
     align-items: center;
     gap: 14px;
     padding: 10px 16px;
-    background: var(--navy2);
-    border: 1px solid var(--navy3);
-    border-radius: 8px;
+    background: #FFFFFF;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
     margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   .layer-num {
     background: var(--blue);
@@ -223,16 +230,17 @@
     border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    font-family: 'Courier New', monospace;
   }
   .layer-title {
     font-size: 13px;
     font-weight: 700;
-    color: var(--blue2);
+    color: var(--blue);
     min-width: 240px;
   }
   .layer-desc {
     font-size: 12px;
-    color: var(--gray);
+    color: #555555;
   }
 
   /* ── NAVIGATION ── */
@@ -244,17 +252,18 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(15,32,68,0.92);
-    border: 1px solid var(--navy3);
+    background: rgba(255,255,255,0.96);
+    border: 1px solid #e8e8e8;
     border-radius: 40px;
     padding: 8px 20px;
     backdrop-filter: blur(12px);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
     z-index: 100;
   }
   .nav-btn {
     background: none;
     border: none;
-    color: var(--white);
+    color: #1a1a2e;
     cursor: pointer;
     font-size: 18px;
     padding: 4px 10px;
@@ -262,15 +271,16 @@
     transition: background 0.2s;
     line-height: 1;
   }
-  .nav-btn:hover { background: var(--navy3); }
-  .nav-btn:disabled { color: var(--gray2); cursor: default; }
+  .nav-btn:hover { background: #f0f2f5; }
+  .nav-btn:disabled { color: #aaaaaa; cursor: default; }
   .nav-btn:disabled:hover { background: none; }
   #slide-counter {
     font-size: 12px;
-    color: var(--gray);
+    color: #666666;
     min-width: 50px;
     text-align: center;
     font-variant-numeric: tabular-nums;
+    font-family: 'Courier New', monospace;
   }
 
   /* ── DOTS ── */
@@ -287,23 +297,23 @@
   .dot {
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: var(--navy3);
+    background: #cccccc;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid var(--navy3);
+    border: 1px solid #cccccc;
   }
   .dot.active {
-    background: var(--blue2);
-    border-color: var(--blue2);
+    background: var(--blue);
+    border-color: var(--blue);
     transform: scale(1.4);
   }
-  .dot:hover { background: var(--gray2); }
+  .dot:hover { background: #999999; border-color: #999999; }
 
   /* ── TITLE SLIDE SPECIFICS ── */
   .title-pill {
-    background: rgba(37,99,235,0.15);
-    border: 1px solid rgba(37,99,235,0.35);
-    color: var(--blue2);
+    background: rgba(37,99,235,0.08);
+    border: 1px solid rgba(37,99,235,0.25);
+    color: var(--blue);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -315,17 +325,17 @@
   }
   .title-name {
     font-size: 13px;
-    color: var(--gray);
+    color: #555555;
     margin-top: 10px;
   }
   .title-github {
     font-size: 12px;
-    color: var(--cyan);
+    color: var(--blue);
     margin-top: 6px;
     font-family: 'Courier New', monospace;
   }
   .gradient-text {
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%);
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #27ae60 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -333,13 +343,14 @@
 
   /* ── PILLAR ── */
   .pillar {
-    background: var(--navy2);
-    border: 1px solid var(--navy3);
-    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
     padding: 24px 20px;
     text-align: center;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   }
   .pillar::before {
     content: '';
@@ -347,33 +358,32 @@
     top: 0; left: 0; right: 0;
     height: 3px;
   }
-  .pillar-1::before { background: linear-gradient(90deg, var(--blue), var(--blue2)); }
-  .pillar-2::before { background: linear-gradient(90deg, var(--cyan), var(--blue2)); }
+  .pillar-1::before { background: linear-gradient(90deg, var(--blue), #3b82f6); }
+  .pillar-2::before { background: linear-gradient(90deg, var(--cyan), var(--blue)); }
   .pillar-3::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
   .pillar-icon { font-size: 32px; margin-bottom: 10px; }
   .pillar-title {
     font-size: 13px;
     font-weight: 800;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: #1a1a2e;
+    letter-spacing: 0.5px;
     margin-bottom: 4px;
   }
   .pillar-sub {
     font-size: 11px;
-    color: var(--gray);
+    color: #666666;
     margin-bottom: 8px;
   }
 
   /* ── QUOTE BOX ── */
   .quote-box {
-    border-left: 3px solid var(--cyan);
+    border-left: 3px solid var(--blue);
     padding: 12px 18px;
-    background: rgba(6,182,212,0.06);
-    border-radius: 0 8px 8px 0;
+    background: rgba(37,99,235,0.04);
+    border-radius: 0 6px 6px 0;
     font-style: italic;
     font-size: clamp(12px, 1.3vw, 15px);
-    color: #94a3b8;
+    color: #444444;
   }
 
   /* ── NUMBERED LIST ── */
@@ -383,7 +393,7 @@
     gap: 12px;
     align-items: flex-start;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
     font-size: clamp(12px, 1.3vw, 15px);
   }
   .num-list li:last-child { border-bottom: none; }
@@ -397,6 +407,7 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     margin-top: 1px;
+    font-family: 'Courier New', monospace;
   }
 
   /* ── LOGO WATERMARK ── */
@@ -405,7 +416,7 @@
     bottom: 52px;
     right: 64px;
     font-size: 10px;
-    color: var(--navy3);
+    color: #cccccc;
     font-family: 'Courier New', monospace;
     letter-spacing: 1px;
   }
@@ -415,7 +426,7 @@
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--gray2);
+    color: #888888;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
@@ -425,23 +436,23 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--navy3);
+    background: #e8e8e8;
   }
 
   /* ── HIGHLIGHT ── */
-  .hl { color: var(--cyan); font-weight: 700; }
+  .hl { color: var(--blue); font-weight: 700; }
 
   /* ── FOOTER BAR ── */
   .slide-footer {
     margin-top: auto;
     padding-top: 14px;
-    border-top: 1px solid var(--navy3);
+    border-top: 1px solid #e8e8e8;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
   }
-  .slide-footer p { font-size: 11px; color: var(--gray2); }
+  .slide-footer p { font-size: 11px; color: #888888; }
 
   /* Scrollable content area */
   .content-scroll {
@@ -468,13 +479,13 @@
     <div class="content-scroll" style="justify-content:center; align-items:center; text-align:center; gap:0;">
       <div class="title-pill">v2.0 — Physics-Informed BMS</div>
       <h1 class="gradient-text" style="font-size:clamp(36px,6vw,72px); margin-bottom:16px;">OpenCATHODE Stack</h1>
-      <p style="font-size:clamp(14px,1.8vw,22px); color:#64748b; max-width:660px; margin:0 auto 32px; line-height:1.5;">
+      <p style="font-size:clamp(14px,1.8vw,22px); color:#555555; max-width:660px; margin:0 auto 32px; line-height:1.5;">
         A Physics-Informed, Real-Time Battery Pack<br>Management System
       </p>
 
       <div style="display:flex; gap:28px; justify-content:center; margin-bottom:36px;">
         <div class="metric-box" style="min-width:130px;">
-          <div class="metric-val">53<span style="font-size:18px; color:#64748b;">µs</span></div>
+          <div class="metric-val">53<span style="font-size:18px; color:#555555;">µs</span></div>
           <div class="metric-label">per cell</div>
         </div>
         <div class="metric-box" style="min-width:130px;">
@@ -482,13 +493,13 @@
           <div class="metric-label">R² — 36 cells</div>
         </div>
         <div class="metric-box" style="min-width:130px;">
-          <div class="metric-val" style="color:var(--amber);">18.6<span style="font-size:18px; color:#64748b;">mV</span></div>
+          <div class="metric-val" style="color:var(--amber);">18.6<span style="font-size:18px; color:#555555;">mV</span></div>
           <div class="metric-label">MAE</div>
         </div>
       </div>
 
-      <div style="background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; padding:18px 32px; display:inline-block;">
-        <p class="title-name" style="font-size:14px; color:var(--white); margin-bottom:4px;">
+      <div style="background:#f8f9fa; border:1px solid #e8e8e8; border-radius:12px; padding:18px 32px; display:inline-block;">
+        <p class="title-name" style="font-size:14px; color:#1a1a2e; margin-bottom:4px;">
           <strong>Himanshu Sharma</strong> &nbsp;·&nbsp; 2nd Year BTech
         </p>
         <p class="title-github">⚡ github.com/quant-himanshu/opencathode-stack</p>
@@ -563,7 +574,7 @@
               <th>Feature</th>
               <th>PyBaMM</th>
               <th>Commercial BMS</th>
-              <th style="background:rgba(37,99,235,0.15); color:var(--cyan);">OpenCATHODE Stack</th>
+              <th style="background:rgba(37,99,235,0.08); color:var(--blue);">OpenCATHODE Stack</th>
             </tr>
           </thead>
           <tbody>
@@ -737,19 +748,19 @@
               </div>
             </div>
             <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
-              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#333333;">
                 <span style="color:var(--blue2);">▸</span> Lithium concentration profiles in electrodes
               </li>
-              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#333333;">
                 <span style="color:var(--blue2);">▸</span> SEI film thickness — updated every millisecond
               </li>
-              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#333333;">
                 <span style="color:var(--blue2);">▸</span> Butler-Volmer overpotential at electrode surface
               </li>
-              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#333333;">
                 <span style="color:var(--blue2);">▸</span> Thermal coupling — joule heating + entropy heat
               </li>
-              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#cbd5e1;">
+              <li style="display:flex; align-items:center; gap:8px; font-size:13px; color:#333333;">
                 <span style="color:var(--blue2);">▸</span> Side reactions — plating risk at each step
               </li>
             </ul>
@@ -762,11 +773,11 @@
             <h3 style="color:var(--cyan);">Why SPM approximation</h3>
             <div style="margin-bottom:16px;">
               <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(239,68,68,0.1); border-radius:6px; margin-bottom:8px; border:1px solid rgba(239,68,68,0.2);">
-                <span style="font-size:13px; color:#cbd5e1;">Full DFN (PDE solver)</span>
+                <span style="font-size:13px; color:#333333;">Full DFN (PDE solver)</span>
                 <span class="red-t" style="font-weight:700; font-size:13px;">50–500 ms/cell</span>
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(16,185,129,0.1); border-radius:6px; border:1px solid rgba(16,185,129,0.2);">
-                <span style="font-size:13px; color:#cbd5e1;">SPM approximation</span>
+                <span style="font-size:13px; color:#333333;">SPM approximation</span>
                 <span class="green" style="font-weight:700; font-size:13px;">53 µs/cell ✓</span>
               </div>
             </div>
@@ -947,11 +958,11 @@
             <p style="margin-bottom:14px;">State vector: <strong>[SOC, V_polarization]</strong> — simultaneously tracks inner resistance polarization.</p>
             <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:12px; margin-bottom:14px;">
               <p style="font-size:13px; margin-bottom:6px;"><strong style="color:var(--green);">Adaptive Q inflation:</strong></p>
-              <p style="font-size:13px; color:#cbd5e1;">Process noise scaled <strong>50×</strong> in flat plateau — filter stays active even when dOCV/dSOC → 0</p>
+              <p style="font-size:13px; color:#333333;">Process noise scaled <strong>50×</strong> in flat plateau — filter stays active even when dOCV/dSOC → 0</p>
             </div>
             <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:12px;">
               <p style="font-size:13px; margin-bottom:4px;"><strong style="color:var(--green);">Cold start:</strong></p>
-              <p style="font-size:13px; color:#cbd5e1;">OCV measurement → Prada 2012 lookup → EKF initialized. No BMS ground truth required.</p>
+              <p style="font-size:13px; color:#333333;">OCV measurement → Prada 2012 lookup → EKF initialized. No BMS ground truth required.</p>
             </div>
           </div>
         </div>
@@ -996,10 +1007,10 @@
             <h3 style="color:var(--amber);">ACO — Ant Colony</h3>
             <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Ants find shortest path via pheromones."</p>
             <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Pheromone = cell State-of-Health</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Weak cell pheromone evaporates</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> Current automatically rerouted</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--amber);">▸</span> No central controller needed</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--amber);">▸</span> Pheromone = cell State-of-Health</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--amber);">▸</span> Weak cell pheromone evaporates</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--amber);">▸</span> Current automatically rerouted</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--amber);">▸</span> No central controller needed</li>
             </ul>
           </div>
         </div>
@@ -1010,10 +1021,10 @@
             <h3 style="color:var(--cyan);">Kuramoto Oscillators</h3>
             <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Fireflies synchronize without a leader."</p>
             <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> SOC mapped to phase angle θ</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> Series cells auto-balance</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> No active balancing circuits</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--cyan);">▸</span> Order parameter <strong>R = 0.9820</strong></li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--cyan);">▸</span> SOC mapped to phase angle θ</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--cyan);">▸</span> Series cells auto-balance</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--cyan);">▸</span> No active balancing circuits</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--cyan);">▸</span> Order parameter <strong>R = 0.9820</strong></li>
             </ul>
           </div>
         </div>
@@ -1024,10 +1035,10 @@
             <h3 style="color:var(--green);">NSA — Immune System</h3>
             <p style="margin-bottom:10px; font-style:italic; color:var(--gray);">"Learn self, detect non-self."</p>
             <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> Normal operation = "self"</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> 200 detectors in anomaly space</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> Fault classified automatically</li>
-              <li style="font-size:13px; color:#cbd5e1;"><span style="color:var(--green);">▸</span> 4 classes: SEI / Plating / Thermal / Capacity</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--green);">▸</span> Normal operation = "self"</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--green);">▸</span> 200 detectors in anomaly space</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--green);">▸</span> Fault classified automatically</li>
+              <li style="font-size:13px; color:#333333;"><span style="color:var(--green);">▸</span> 4 classes: SEI / Plating / Thermal / Capacity</li>
             </ul>
           </div>
         </div>
@@ -1102,7 +1113,7 @@
           <div class="metric-label">R² — 70 real RWTH spectra</div>
         </div>
         <div class="metric-box" style="flex:2; text-align:left; padding:14px 18px;">
-          <p style="font-size:13px; color:#cbd5e1;"><strong>2RC + CPE model:</strong> captures Ohmic resistance, SEI film, charge transfer kinetics, and constant phase element (non-ideal diffusion) from a single 8-second measurement.</p>
+          <p style="font-size:13px; color:#333333;"><strong>2RC + CPE model:</strong> captures Ohmic resistance, SEI film, charge transfer kinetics, and constant phase element (non-ideal diffusion) from a single 8-second measurement.</p>
         </div>
       </div>
     </div>
@@ -1167,7 +1178,7 @@
               </div>
             </div>
             <div style="margin-top:16px; background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); border-radius:8px; padding:10px 12px;">
-              <p style="font-size:12px; color:#cbd5e1;">ChirpEIS implementation validated against gold-standard potentiostatic EIS measurements. Parameters R_ohm, R_SEI, R_ct, C_dl, W (Warburg) extracted with sub-1% error.</p>
+              <p style="font-size:12px; color:#333333;">ChirpEIS implementation validated against gold-standard potentiostatic EIS measurements. Parameters R_ohm, R_SEI, R_ct, C_dl, W (Warburg) extracted with sub-1% error.</p>
             </div>
           </div>
         </div>
@@ -1187,7 +1198,7 @@
     <div class="content-scroll">
       <h2>Quartz WLTP — <span class="accent">Real Validation Results</span></h2>
       <div style="flex:1; display:flex; flex-direction:column; min-height:0; gap:14px;">
-        <div style="flex:1; min-height:0; background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
+        <div style="flex:1; min-height:0; background:#f8f9fa; border:1px solid #e8e8e8; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
           <img src="quartz_validation_graph.png" alt="Quartz WLTP Real Validation — 4-panel figure"
                style="max-width:100%; max-height:100%; object-fit:contain; display:block; border-radius:6px;" />
         </div>
@@ -1195,19 +1206,19 @@
           <ul style="list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px 32px; margin:0; padding:0;">
             <li style="display:flex; align-items:flex-start; gap:8px;">
               <span style="color:#4ade80; font-size:15px; flex-shrink:0;">✓</span>
-              <span style="font-size:13px; color:#cbd5e1;"><strong style="color:#e2e8f0;">R² = 0.9810</strong> across all 36 real cells</span>
+              <span style="font-size:13px; color:#333333;"><strong style="color:#e2e8f0;">R² = 0.9810</strong> across all 36 real cells</span>
             </li>
             <li style="display:flex; align-items:flex-start; gap:8px;">
               <span style="color:#4ade80; font-size:15px; flex-shrink:0;">✓</span>
-              <span style="font-size:13px; color:#cbd5e1;"><strong style="color:#e2e8f0;">MAE = 18.60mV</strong> — better than 20mV industry standard</span>
+              <span style="font-size:13px; color:#333333;"><strong style="color:#e2e8f0;">MAE = 18.60mV</strong> — better than 20mV industry standard</span>
             </li>
             <li style="display:flex; align-items:flex-start; gap:8px;">
               <span style="color:#4ade80; font-size:15px; flex-shrink:0;">✓</span>
-              <span style="font-size:13px; color:#cbd5e1;">Weakest cell <strong style="color:#f87171;">P3S10</strong> correctly identified (V_min = 2.877V)</span>
+              <span style="font-size:13px; color:#333333;">Weakest cell <strong style="color:#f87171;">P3S10</strong> correctly identified (V_min = 2.877V)</span>
             </li>
             <li style="display:flex; align-items:flex-start; gap:8px;">
               <span style="color:#4ade80; font-size:15px; flex-shrink:0;">✓</span>
-              <span style="font-size:13px; color:#cbd5e1;">Temperature gradient <strong style="color:#e2e8f0;">5.59°C</strong> — thermally safe operation</span>
+              <span style="font-size:13px; color:#333333;">Temperature gradient <strong style="color:#e2e8f0;">5.59°C</strong> — thermally safe operation</span>
             </li>
           </ul>
         </div>
@@ -1227,25 +1238,25 @@
     <div class="content-scroll">
       <h2>Physics Validation — <span class="accent">Pack Discharge Analysis</span></h2>
       <div style="flex:1; display:flex; flex-direction:column; min-height:0; gap:14px;">
-        <div style="flex:1; min-height:0; background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
+        <div style="flex:1; min-height:0; background:#f8f9fa; border:1px solid #e8e8e8; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
           <img src="discharge_curve.png" alt="Pack Discharge Analysis — 4-panel figure"
                style="max-width:100%; max-height:100%; object-fit:contain; display:block; border-radius:6px;" />
         </div>
         <div class="card" style="flex-shrink:0; padding:16px 20px;">
           <ul style="list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px 32px;">
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--green); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Voltage drops 15.61V → 14.69V</strong> during full discharge — physically correct NMC811 behaviour</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--cyan); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">SOC tracking error = 0.000220</strong> — essentially zero, model matches theory perfectly</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Temperature rises only 5°C</strong> — 50°C below thermal runaway onset of 80°C — safe</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--blue2); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Cell voltage stays well above 3.0V cutoff</strong> — no over-discharge at any point</span>
             </li>
@@ -1267,25 +1278,25 @@
     <div class="content-scroll">
       <h2>NASA B18 Validation — <span class="accent">R²=0.9884, MAE=2.40mV</span></h2>
       <div style="flex:1; display:flex; flex-direction:column; min-height:0; gap:14px;">
-        <div style="flex:1; min-height:0; background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
+        <div style="flex:1; min-height:0; background:#f8f9fa; border:1px solid #e8e8e8; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
           <img src="final_validation.png" alt="NASA B18 Validation Plot"
                style="max-width:100%; max-height:100%; object-fit:contain; display:block; border-radius:6px;" />
         </div>
         <div class="card" style="flex-shrink:0; padding:16px 20px; border-color:rgba(16,185,129,0.25);">
           <ul style="list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px 32px;">
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--green); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Solid = measured, dashed = predicted</strong> — they overlap perfectly across 168 cycles</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--cyan); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">R² = 0.9884</strong> — consistently above 0.98 target for every single cycle</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Residuals are Gaussian centred at zero</strong> — no systematic bias in model</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--blue2); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">MAE = 2.40mV, RMSE = 3.01mV</strong> — 8× better than industry standard of 20mV</span>
             </li>
@@ -1307,25 +1318,25 @@
     <div class="content-scroll">
       <h2>Multi-Dataset <span class="accent">Real-World Validation</span></h2>
       <div style="flex:1; display:flex; flex-direction:column; min-height:0; gap:14px;">
-        <div style="flex:1; min-height:0; background:var(--navy2); border:1px solid var(--navy3); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
+        <div style="flex:1; min-height:0; background:#f8f9fa; border:1px solid #e8e8e8; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
           <img src="stack_real_validation.png" alt="Multi-Dataset Real Validation"
                style="max-width:100%; max-height:100%; object-fit:contain; display:block; border-radius:6px;" />
         </div>
         <div class="card" style="flex-shrink:0; padding:16px 20px; border-color:rgba(6,182,212,0.25);">
           <ul style="list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px 32px;">
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--green); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">4 datasets validated</strong> — NASA B18, NASA B6, Nature pack, Stanford SLAC</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--cyan); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">R² above 0.94 on all datasets</strong> — consistent performance across chemistries</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
               <span><strong style="color:var(--white);">Cell-to-cell variation clearly visible</strong> — each cell degrades differently</span>
             </li>
-            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#cbd5e1;">
+            <li style="display:flex; align-items:flex-start; gap:9px; font-size:clamp(11px,1.15vw,14px); color:#333333;">
               <span style="color:var(--gray); font-weight:800; flex-shrink:0; margin-top:1px;">ⓘ</span>
               <span><strong style="color:var(--white);">Note:</strong> Statistics-matched synthetic — primary real validation is <span class="accent">Quartz WLTP 634,450 rows</span></span>
             </li>
@@ -1398,16 +1409,16 @@
               <span style="color:var(--gray);">DFN-SPM step</span><span class="accent">53 µs/cell</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--navy3);">
-              <span style="color:var(--gray);">GNN inference</span><span style="color:#cbd5e1;">~0.8 ms</span>
+              <span style="color:var(--gray);">GNN inference</span><span style="color:#333333;">~0.8 ms</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 0;">
-              <span style="color:var(--gray);">Policy engine</span><span style="color:#cbd5e1;">~1.2 ms</span>
+              <span style="color:var(--gray);">Policy engine</span><span style="color:#333333;">~1.2 ms</span>
             </div>
           </div>
         </div>
         <div class="card" style="flex:1; border-color:rgba(16,185,129,0.2);">
           <h3 style="margin-bottom:8px; color:var(--green);">Target platform</h3>
-          <p style="font-size:13px; color:#cbd5e1; margin-bottom:6px;"><strong>Raspberry Pi 4B</strong> — $35 hardware</p>
+          <p style="font-size:13px; color:#333333; margin-bottom:6px;"><strong>Raspberry Pi 4B</strong> — $35 hardware</p>
           <p style="font-size:12px; color:var(--gray);">Mean latency 3.7 ms at 1 Hz update rate. Comfortable margin for real-time control at 10 Hz.</p>
         </div>
       </div>
@@ -1489,13 +1500,13 @@
       <h1 class="gradient-text" style="font-size:clamp(28px,4.5vw,56px); margin-bottom:8px;">OpenCATHODE Stack</h1>
 
       <div style="margin-bottom:28px;">
-        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; margin-bottom:4px; font-style:italic;">
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#555555; margin-bottom:4px; font-style:italic;">
           "Physics limits the boundaries.
         </p>
-        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; margin-bottom:4px; font-style:italic;">
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#555555; margin-bottom:4px; font-style:italic;">
           AI maps the network.
         </p>
-        <p style="font-size:clamp(13px,1.6vw,18px); color:#64748b; font-style:italic;">
+        <p style="font-size:clamp(13px,1.6vw,18px); color:#555555; font-style:italic;">
           Biology manages the survival."
         </p>
       </div>
@@ -1521,7 +1532,7 @@
         </div>
       </div>
 
-      <div style="background:var(--navy2); border:1px solid var(--navy3); border-radius:14px; padding:18px 32px; display:inline-flex; gap:28px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
+      <div style="background:#f8f9fa; border:1px solid #e8e8e8; border-radius:14px; padding:18px 32px; display:inline-flex; gap:28px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
         <div style="text-align:center;">
           <div style="font-size:20px; font-weight:800; color:var(--amber);">18.6 mV</div>
           <div style="font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">MAE</div>
