@@ -320,13 +320,13 @@ def print_comparison_table(hist_100: Dict, hist_full: Dict, pack: PackManager) -
          "<0.1%",
          "Full PDE DFN + electrolyte",
          "No (too slow)",
-         "Gold standard accuracy"),
+         "20,422 states vs SPM 204 (Chen 2020 set, PyBaMM 24.9); ~1000x per-step cost"),
         ("PyBaMM (SPM)",
          "~5-20 ms/cell",
          "~0.5%",
          "SPM (no electrolyte)",
          "Marginal",
-         "Python overhead"),
+         "204 states; Python overhead; see docs/literature_survey.md §5"),
     ]
 
     col_widths = [22, 26, 12, 36, 16, 28]

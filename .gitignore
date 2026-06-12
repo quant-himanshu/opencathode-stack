@@ -16,6 +16,12 @@ data/iontech_lfp/
 data/rwth/Impedance\ raw\ data\ and\ fitting\ data.zip
 data/iontech
 
+# Real-fleet datasets — multi-GB raw CSVs, must NOT be committed
+# Loaders (data/loaders/) and validation scripts ARE committed separately
+data/ved/
+data/bmw_i3/
+data/deng20/
+
 # Embedded git repo
 data/iontech/
 
