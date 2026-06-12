@@ -12,16 +12,31 @@ EPS = 1e-12
 
 
 class DualEKF_LFP:
-    def __init__(self, Q_nom_Ah: float = 160.0, R_int_ohm: float = 0.0005):
+    def __init__(
+        self,
+        Q_nom_Ah: float = 160.0,
+        R_int_ohm: float = 0.0005,
+        ocv_fn=None,
+    ):
+        """
+        Parameters
+        ----------
+        Q_nom_Ah  : nominal cell capacity [Ah]
+        R_int_ohm : initial internal resistance estimate [Ω]
+        ocv_fn    : optional OCV(soc)->V callable that overrides the built-in
+                    LFP table.  Pass an empirical NMC spline (from
+                    diagnosis/nmc_ocv.py) to avoid SOC saturation on NMC fleets.
+        """
         self.Q_nom = Q_nom_Ah
         self.R_int = R_int_ohm
+        self._ocv_fn_custom = ocv_fn   # None → use LFP table below
         self.x1 = np.array([0.5, 0.0])          # [SOC, V_polarization]
         self.P1 = np.diag([0.1**2, 0.01**2])
         self._Q_base = np.diag([1e-6, 1e-5])
         self._R_meas = np.array([[4e-6]])         # (2mV)^2
         self.x2 = np.array([1.0, R_int_ohm])     # [SOH, R_int_aged]
         self.P2 = np.diag([0.05**2, 0.005**2])
-        # Prada 2012 OCV table
+        # Prada 2012 LFP OCV table — used only when ocv_fn is None
         self._soc_pts = np.array([0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30,
                                    0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65,
                                    0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00])
@@ -31,6 +46,8 @@ class DualEKF_LFP:
                                    3.480, 3.540, 3.650])
 
     def _ocv(self, soc: float) -> float:
+        if self._ocv_fn_custom is not None:
+            return float(self._ocv_fn_custom(soc))
         return float(np.interp(np.clip(soc, 0.0, 1.0), self._soc_pts, self._ocv_pts))
 
     def _docv_dsoc(self, soc: float) -> float:
