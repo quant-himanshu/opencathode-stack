@@ -1,11 +1,16 @@
 """
 Dual EKF for SOC/SOH estimation.
 
-Improvement round 2:
+Improvement round 3:
+  - cal_soc_fn: δV(SOC) applied to V_pred for innovation ONLY.
+    Its SOC-derivative is NOT included in Jacobian H — treated as locally
+    constant. This decouples calibration accuracy (Mode A) from Kalman gain
+    stability (Mode B). Round 2 bug: adding dcal/dSOC to H introduced
+    large, erratic gain swings from the PCHIP spline slope, destabilizing
+    convergence (VED 45.6%, BMW N/A).
   - gamma: adaptive-Q scale factor (sweep {0.5, 1, 2} per fleet)
   - R_meas_V2: fleet-specific voltage measurement variance [V²/cell]
   - P0_soc: initial SOC covariance (default 0.04 = σ20%, matches +20% offset init)
-  - cal_soc_fn: SOC-dependent voltage correction callable δV(SOC) [V]
   - cal_dR0: current-proportional R0 correction [V/A], applied inside measurement model
 
 Key innovation: Adaptive process noise Q scaled by 1/|dOCV/dSOC|
@@ -90,10 +95,6 @@ class DualEKF_LFP:
             return float(self._cal_soc_fn(float(np.clip(soc, 0.0, 1.0))))
         return 0.0
 
-    def _dcal_dsoc(self, soc: float) -> float:
-        h = 0.005
-        return (self._cal_offset(soc + h) - self._cal_offset(soc - h)) / (2.0 * h)
-
     def _adaptive_Q(self, soc: float) -> np.ndarray:
         slope = abs(self._docv_dsoc(soc))
         factor = min(1.0 / max(slope, 0.02), 50.0)
@@ -117,9 +118,9 @@ class DualEKF_LFP:
         r0_off  = self._cal_dR0 * I_A   # I_A discharge-positive
         V_pred  = self._ocv(x_p[0]) - I_A * R_use + x_p[1] + cal_off + r0_off
 
-        # Jacobian H — include d(cal)/dSOC if SOC-dependent calibration active
-        dcal_ds = self._dcal_dsoc(x_p[0]) if self._cal_soc_fn is not None else 0.0
-        H = np.array([[self._docv_dsoc(x_p[0]) + dcal_ds, 1.0]])
+        # Jacobian H — δV(SOC) treated as locally constant; derivative excluded.
+        # Calibration enters innovation only, keeping Kalman gain stable.
+        H = np.array([[self._docv_dsoc(x_p[0]), 1.0]])
 
         S = (H @ P_p @ H.T + self._R_meas)[0, 0] + EPS
         K = (P_p @ H.T) / S

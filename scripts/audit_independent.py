@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/audit_independent.py  —  Improvement Round 2
+scripts/audit_independent.py  —  Improvement Round 3
 ─────────────────────────────────────────────────────────────────────────────
 STANDALONE integrity audit for reports/real_fleet_validation.md.
 
@@ -828,7 +828,7 @@ def check7_deng_anomaly(report_segs: Dict[str, Dict]) -> None:
 
 def main() -> None:
     print("=" * 72)
-    print("OpenCATHODE — Independent Integrity Audit  (Round 2)")
+    print("OpenCATHODE — Independent Integrity Audit  (Round 3)")
     print(f"Report: {_REPORT}")
     print("DOES NOT import: data.validate_generic")
     print("=" * 72)
@@ -868,9 +868,9 @@ def main() -> None:
 
     if _FAIL_CT == 0:
         print("\n  ╔══════════════════════════════════════════════════════════════════╗")
-        print("  ║  ALL CHECKS PASSED — PRESENTATION-READY SUMMARY (Round 2)       ║")
+        print("  ║  ALL CHECKS PASSED — PRESENTATION-READY SUMMARY (Round 3)       ║")
         print("  ╚══════════════════════════════════════════════════════════════════╝\n")
-        print("  ┌─ OpenCATHODE Real-Fleet Validation — Audited Results (Round 2) ──────────")
+        print("  ┌─ OpenCATHODE Real-Fleet Validation — Audited Results (Round 3) ──────────")
 
         def _sf(v, suffix="mV"):
             return f"{v:.1f} {suffix}" if v is not None else "—"
@@ -895,7 +895,7 @@ def main() -> None:
         print(f"  │  VED: skip <120 s; dt=5 s for 120–600 s; dt=20 s for ≥600 s")
         print(f"  │  Deng: sessions >12 h dropped (merged-data artifact filter)")
         print(f"  │  Deng sample: 2,000 sessions (seed=42) from held-out pool")
-        print(f"  │  EKF: gamma tuned per fleet {{{0.5},{1.0},{2.0}}}; fleet-specific R_meas")
+        print(f"  │  EKF: gamma tuned per fleet {{{0.5},{1.0},{2.0},{4.0}}}; fleet-specific R_meas")
         print(f"  │  Audit: scripts/audit_independent.py — all {_PASS_CT} checks PASS")
         if _FINDINGS:
             print(f"  │  Caveats: {len(_FINDINGS)} data quality finding(s) above (non-blocking)")
