@@ -2,7 +2,7 @@
 """
 validate_generic.py  —  OpenCATHODE generic fleet validation harness.
 
-Improvement round 2:
+Improvement round 3:
   1. SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.
      Replaces constant δV for held-out Mode A.  Old and new both reported.
   2. Mode B: calibration applied inside EKF measurement model; fleet-specific
@@ -110,7 +110,7 @@ class ValidationConfig:
 @dataclass
 class FleetCalibration:
     """
-    SOC-dependent calibration for one fleet (Improvement round 2).
+    SOC-dependent calibration for one fleet (Improvement round 3).
 
     Fitted on first 10% of segments per vehicle (calibration split).
     Applied to held-out 90% only.
@@ -470,7 +470,7 @@ def _tune_gamma(
     cal_pairs: List[Tuple[pd.DataFrame, object]],
     cfg: ValidationConfig,
     cal: "FleetCalibration",
-    gammas: Tuple[float, ...] = (0.5, 1.0, 2.0),
+    gammas: Tuple[float, ...] = (0.5, 1.0, 2.0, 4.0),
     max_segs: int = 20,
 ) -> float:
     """
@@ -789,7 +789,7 @@ def write_report(
         "",
         "**All results computed exclusively from real vehicle field data.**",
         "",
-        "> **Auto-generated** by `data/validate_generic.py` (Improvement Round 2).",
+        "> **Auto-generated** by `data/validate_generic.py` (Improvement Round 3).",
         "> Mode A = forced BMS SOC.  Mode B = free-running EKF +20% SOC offset.",
         "> Calibration: first 10% per vehicle.  All calibrated numbers are held-out.",
         "> SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.",
@@ -1160,7 +1160,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     print("=" * 70)
-    print("  OPENCATHODE — REAL FLEET VALIDATION HARNESS  (Improvement Round 2)")
+    print("  OPENCATHODE — REAL FLEET VALIDATION HARNESS  (Improvement Round 3)")
     print("=" * 70)
     print(f"  Quartz topology: N_P={_QUARTZ_N_P}  N_S={_QUARTZ_N_S}")
     print(f"  Cell mode (fleet data): {CellMode.AVG_CELL.value}")
@@ -1188,7 +1188,7 @@ def main() -> None:
 
     # ── Summary ─────────────────────────────────────────────────────────────
     print("\n" + "=" * 90)
-    print("  SUMMARY (held-out 90% per vehicle) — Improvement Round 2")
+    print("  SUMMARY (held-out 90% per vehicle) — Improvement Round 3")
     print("=" * 90)
     hdr = (f"  {'Fleet':22s}  {'N_eval':>6}  "
            f"{'MAE_zc':>8}  {'MAE_cc':>8}  {'MAE_sc':>8}  "
