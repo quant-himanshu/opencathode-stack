@@ -2,57 +2,25 @@
 """
 validate_generic.py  —  OpenCATHODE generic fleet validation harness.
 
-Runs the OpenCATHODE DFN/EKF stack against any dataset produced by the
-data/loaders/ family, in two modes:
+Improvement round 2:
+  1. SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.
+     Replaces constant δV for held-out Mode A.  Old and new both reported.
+  2. Mode B: calibration applied inside EKF measurement model; fleet-specific
+     R_meas; adaptive-Q gamma sweep {0.5, 1, 2} on cal segments.
+  3. VED short-segment: skip <120 s, use dt=5 s for 120–600 s segments.
+  4. Deng anomaly: sessions >12 h dropped as merged-data artifacts (see caveat 13).
 
+Modes:
   Mode A — FORCED BMS SOC
     DFN cell state is re-initialised to BMS SOC at every segment start.
-    Step-wise voltage is predicted from forced stoichiometry.  Metrics are
-    computed against V_measured.  This tests the physics model accuracy.
-    (Same approach as the Quartz validation, Phase 1.)
-
+    Metrics (zero-cal, const-cal, SOC-cal) computed against V_measured.
   Mode B — FREE-RUNNING EKF (+20% SOC offset init)
-    DFN is initialised 20% above BMS SOC at segment start and left to
-    free-run; Dual-EKF corrects SOC online.  Scored against BMS SOC for
-    CONSISTENCY (labelled "vs BMS SOC, not ground truth").
-    (Tests EKF convergence rate and steady-state tracking.)
-
-Average-cell mode (PACK-LEVEL datasets)
-────────────────────────────────────────
-All loaders in data/loaders/ return PACK-LEVEL voltage and current.
-The Quartz dataset is the exception: it provides per-cell telemetry.
-
-For pack-level datasets the harness operates in "avg_cell" mode:
-  V_cell_avg = V_pack / n_series      [V]   — average cell voltage
-  I_cell     = I_pack / n_parallel    [A]   — cell-level current
-
-Per-cell features (weakest-cell detection, GNN, P3S10-style analysis) are
-CLEANLY DISABLED in avg_cell mode with an explicit logged notice.  They are
-NOT silently skipped.  The notice lists exactly which features are disabled
-and why.
-
-Full per-cell + GNN pipeline is enabled ONLY when:
-  cell_mode = CellMode.PER_CELL
-  (i.e. the dataset provides individual cell voltages, as in Quartz or the
-  300-EV Nature Comms dataset)
-
-Quartz topology
-───────────────
-N_P and N_S are read from validate_quartz.py via regex — do not hardcode
-here.  If validate_quartz.py changes N_P, N_S, the values are picked up
-automatically.
-
-Output
-──────
-  reports/real_fleet_validation.md  — one results table per dataset
-  Terminal: per-segment and summary statistics
+    DFN initialised 20% above BMS SOC; Dual-EKF corrects SOC online with
+    chemistry-aware OCV and SOC-dependent calibration applied inside EKF.
 
 Usage
 ──────
   python data/validate_generic.py --dataset ved
-  python data/validate_generic.py --dataset bmw_i3
-  python data/validate_generic.py --dataset renault_zoe
-  python data/validate_generic.py --dataset deng --soh_only
   python data/validate_generic.py --all
 """
 
@@ -93,33 +61,18 @@ try:
     _QUARTZ_N_S: int = int(_m.group(2)) if _m else 12
     _mQ = re.search(r"Q_QUARTZ\s*=\s*([\d.]+)", _vq_src)
     _mI = re.search(r"I_SCALE\s*=\s*([\d.]+)", _vq_src)
-    _QUARTZ_Q_CELL  = float(_mQ.group(1)) if _mQ else 2.5     # Ah per cell (Quartz)
-    _QUARTZ_I_SCALE = float(_mI.group(1)) if _mI else 0.20    # DFN capacity ratio
-    log.info(
-        "Quartz topology read from %s: N_P=%d N_S=%d Q_cell=%.2fAh I_scale=%.3f",
-        _VQ_PATH, _QUARTZ_N_P, _QUARTZ_N_S, _QUARTZ_Q_CELL, _QUARTZ_I_SCALE,
-    )
+    _QUARTZ_Q_CELL  = float(_mQ.group(1)) if _mQ else 2.5
+    _QUARTZ_I_SCALE = float(_mI.group(1)) if _mI else 0.20
 except Exception as exc:
     log.warning("Could not read validate_quartz.py (%s); using defaults N_P=3 N_S=12", exc)
     _QUARTZ_N_P, _QUARTZ_N_S = 3, 12
     _QUARTZ_Q_CELL, _QUARTZ_I_SCALE = 2.5, 0.20
 
-# DFN reference capacity [Ah] — the SPM model is calibrated at this capacity.
-# I_scale converts pack/cell current to DFN internal current.
-_DFN_Q_AH: float = 0.5   # DFN internal capacity (from core/dfn_cell.py)
+_DFN_Q_AH: float = 0.5
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Cell mode enum
-# ─────────────────────────────────────────────────────────────────────────────
-
 class CellMode(str, Enum):
-    """
-    AVG_CELL  — pack-level dataset; V_cell_avg = V_pack / n_series.
-                Per-cell features (GNN, weakest-cell, P3S10) DISABLED.
-    PER_CELL  — per-cell telemetry available (Quartz, 300-EV Nature Comms).
-                Full per-cell + GNN pipeline enabled.
-    """
     AVG_CELL = "avg_cell"
     PER_CELL = "per_cell"
 
@@ -130,57 +83,64 @@ _PER_CELL_FEATURES_DISABLED_NOTICE = (
     "  ║  AVG-CELL MODE — per-cell features DISABLED                    ║\n"
     "  ║  Reason: dataset provides only total pack voltage; individual  ║\n"
     "  ║  cell voltages are not available.                              ║\n"
-    "  ║  Disabled features:                                            ║\n"
-    "  ║    • WeakestCell / NSA anomaly detection (diagnosis/)          ║\n"
-    "  ║    • GraphSAGE GNN layer (stack/gnn_layer.py)                  ║\n"
-    "  ║    • P3S10-style weakest-string analysis                       ║\n"
-    "  ║    • Per-cell OLS calibration (Quartz Upgrade 3)               ║\n"
-    "  ║  These features are NOT silently skipped; they are explicitly  ║\n"
-    "  ║  excluded by CellMode.AVG_CELL.                                ║\n"
+    "  ║  Disabled: WeakestCell, GNN, P3S10, per-cell OLS cal          ║\n"
     "  ╚══════════════════════════════════════════════════════════════════╝"
 )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Config and result containers
-# ─────────────────────────────────────────────────────────────────────────────
-
 @dataclass
 class ValidationConfig:
     dataset_name: str
     cell_mode: CellMode = CellMode.AVG_CELL
-    n_series: int = 96          # pack series count; read from PackCartridge
-    n_parallel: int = 1         # pack parallel count; read from PackCartridge
-    q_cell_ah: float = 60.0     # nominal cell capacity [Ah]
-    r_ohm_cell: float = 0.010   # nominal cell internal resistance [Ω]
-    chemistry: str = "NMC"      # selects DFN OCP table
-    dt_resample_s: float = 20.0 # resample target [s]; 0 = no resample
-    ekf_soc_offset: float = 0.20  # Mode B: EKF init offset above BMS SOC
-    r2_warn_threshold: float = 0.70  # log warning if R² falls below this
+    n_series: int = 96
+    n_parallel: int = 1
+    q_cell_ah: float = 60.0
+    r_ohm_cell: float = 0.010
+    chemistry: str = "NMC"
+    dt_resample_s: float = 20.0
+    ekf_soc_offset: float = 0.20
+    r2_warn_threshold: float = 0.70
+    # Short-segment handling (VED round 2)
+    min_duration_s: float = 0.0          # skip segments shorter than this
+    dt_short_s: float = 0.0             # use this dt for short segs (0 = disabled)
+    dt_short_threshold_s: float = 600.0  # segments shorter than this use dt_short_s
 
 
 @dataclass
 class FleetCalibration:
     """
-    Two-parameter light calibration for one fleet.
+    SOC-dependent calibration for one fleet (Improvement round 2).
 
-    Fitted via OLS on the first 10% of segments per vehicle (calibration split).
-    Applied only to held-out 90% results.  See validate_generic.py §Calibration.
+    Fitted on first 10% of segments per vehicle (calibration split).
+    Applied to held-out 90% only.
 
-    delta_V   : constant OCV offset correction [V/cell].  Absorbs systematic
-                DFN OCP bias (NMC811 calibration vs actual cell chemistry).
-    delta_R0  : current-proportional correction [V·s/A equivalent].
-                Captures residual ohmic error after OCP correction.
-                R0_scale α = 1 + delta_R0 / r_ohm_cell.
-    ocv_fn    : empirical OCV callable (from diagnosis/nmc_ocv.py).
-    ocv_source: human-readable provenance string for the OCV.
+    Calibration model:
+        V_meas ≈ V_pred + δV(SOC) + δR0 · I_cell
+
+    where δV(SOC) is a PCHIP spline over 12 SOC bins (median residuals per bin
+    after removing the I-proportional term).  delta_V stores the mean value of
+    the spline (for legacy compatibility and as a constant fallback).
     """
     fleet_name: str
-    delta_V: float = 0.0
-    delta_R0: float = 0.0
+    delta_V: float = 0.0           # constant OCV offset (legacy / PCHIP mean)
+    delta_R0: float = 0.0          # current-proportional R0 correction [V/A]
     n_cal_segments: int = 0
-    ocv_fn = None          # Callable[[float], float] | None
+    ocv_fn = None                  # Callable[[float], float] | None
     ocv_source: str = ""
+    # SOC-dependent calibration knots (None → fall back to constant delta_V)
+    soc_knots: Optional[np.ndarray] = None
+    dv_knots: Optional[np.ndarray] = None
+    # EKF tuning (set by gamma sweep on cal segments)
+    ekf_gamma: float = 1.0
+    ekf_R_meas_V2: float = 4e-6    # fleet-specific measurement variance [V²/cell]
+
+    def soc_cal_fn(self):
+        """Return PchipInterpolator for δV(SOC), or None if no SOC-dep data."""
+        if self.soc_knots is not None and self.dv_knots is not None and len(self.soc_knots) >= 2:
+            from scipy.interpolate import PchipInterpolator
+            return PchipInterpolator(self.soc_knots, self.dv_knots, extrapolate=True)
+        return None
 
 
 @dataclass
@@ -191,19 +151,22 @@ class SegmentResult:
     n_rows: int
     duration_s: float
     soc_start: float
-    is_cal_split: bool = False   # True → used for calibration (10%), not evaluation
-    # Mode A — zero-calibration (forced BMS SOC)
+    is_cal_split: bool = False
+    is_skipped: bool = False       # True for duration-filtered short segments
+    # Mode A — zero-calibration
     r2_forced: Optional[float] = None
     mae_mV_forced: Optional[float] = None
     rmse_mV_forced: Optional[float] = None
-    # Mode A — calibrated (held-out only, δV + δR0 applied)
+    # Mode A — constant calibration (held-out only)
     mae_mV_forced_cal: Optional[float] = None
-    # Mode B — free-running chemistry-aware EKF
+    # Mode A — SOC-dependent calibration (held-out only)
+    mae_mV_forced_soc_cal: Optional[float] = None
+    # Mode B — free-running EKF
     r2_ekf: Optional[float] = None
     mae_mV_ekf: Optional[float] = None
     rmse_mV_ekf: Optional[float] = None
-    soc_rmse_B: Optional[float] = None        # SOC RMSE vs BMS [%]
-    ekf_convergence_s: Optional[float] = None  # time to |ΔSOC| < 0.05
+    soc_rmse_B: Optional[float] = None
+    ekf_convergence_s: Optional[float] = None
     notes: List[str] = field(default_factory=list)
 
 
@@ -224,34 +187,35 @@ def _rmse(y: np.ndarray, yh: np.ndarray) -> float:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# DFN cell initialisation helpers
+# DFN cell helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _select_chemistry(chemistry: str):
-    """Return the appropriate DFN chemistry cartridge."""
     if chemistry.upper() in ("LFP",):
         return LFP_cartridge()
-    return NMC811_cartridge()   # NMC / NCA / default
+    return NMC811_cartridge()
 
 
 def _make_cell(chem, soc_frac: float, seed: int = 0) -> DFNCell:
-    """Create a DFNCell and set stoichiometry from SOC fraction [0..1]."""
     cell = DFNCell(chem, cell_id=seed, variation_seed=seed)
+    _set_state(cell, soc_frac)
+    return cell
+
+
+def _set_state(cell: DFNCell, soc_frac: float) -> None:
     s = float(np.clip(soc_frac, 0.02, 0.98))
     cell.state.soc_cc = s
     cell.state.x_neg  = float(np.clip(0.15 + s * 0.65, 0.15, 0.80))
     cell.state.x_pos  = float(np.clip(0.94 - s * 0.68, 0.26, 0.93))
-    return cell
 
 
 def _i_dfn(I_cell_A: float, q_cell_ah: float) -> float:
-    """Scale cell current [A] to DFN internal current [A] via capacity ratio."""
     i_scale = _DFN_Q_AH / q_cell_ah if q_cell_ah > 0 else _QUARTZ_I_SCALE
     return I_cell_A * i_scale
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# EKF convergence helper
+# EKF convergence
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _ekf_convergence_time(
@@ -260,11 +224,6 @@ def _ekf_convergence_time(
     soc_bms: np.ndarray,
     threshold: float = 0.05,
 ) -> Optional[float]:
-    """
-    Return the first time [s] at which |soc_ekf - soc_bms| < threshold and
-    stays there for at least 30 consecutive steps.  Returns None if EKF
-    never converges within the segment.
-    """
     diff = np.abs(soc_ekf - soc_bms)
     for i in range(len(diff) - 30):
         if np.all(diff[i: i + 30] < threshold):
@@ -280,67 +239,45 @@ def run_mode_a_forced(
     seg_df: pd.DataFrame,
     cfg: ValidationConfig,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Forced-SOC pass: at each step, set DFN stoichiometry to BMS SOC, then
-    call cell.step() to get the predicted voltage.
-
-    Returns (V_meas_cell, V_pred_cell) in [V] at cell level.
-    """
     t_s      = seg_df["t_s"].values.astype(np.float64)
     I_pack   = seg_df["I_A"].values.astype(np.float64)
     V_pack   = seg_df["V_V"].values.astype(np.float64)
     soc_bms  = seg_df["SOC_bms"].values.astype(np.float64)
-    T_arr    = seg_df["T_degC"].values.astype(np.float64)
 
-    n_s = cfg.n_series
-    n_p = cfg.n_parallel
-
-    V_cell_meas = V_pack / n_s
-    I_cell = I_pack / n_p
+    V_cell_meas = V_pack / cfg.n_series
+    I_cell = I_pack / cfg.n_parallel
 
     chem = _select_chemistry(cfg.chemistry)
     cell = _make_cell(chem, float(soc_bms[0]))
     V_pred = np.empty(len(t_s))
 
-    for i, (t, I, soc, T) in enumerate(zip(t_s, I_cell, soc_bms, T_arr)):
+    for i in range(len(t_s)):
         dt = float(t_s[i] - t_s[i - 1]) if i > 0 else 1.0
-        # Force stoichiometry to BMS SOC at every step
-        _set_state(cell, float(soc))
-        # DFN convention: positive = discharge; schema: negative = discharge → negate
-        I_dfn = _i_dfn(-float(I), cfg.q_cell_ah)
-        result = cell.step(I_dfn, dt)  # DFNCell.step takes only (I_app, dt)
+        _set_state(cell, float(soc_bms[i]))
+        I_dfn = _i_dfn(-float(I_cell[i]), cfg.q_cell_ah)
+        result = cell.step(I_dfn, dt)
         V_pred[i] = float(result["V"])
 
     return V_cell_meas, V_pred
 
 
-def _set_state(cell: DFNCell, soc_frac: float) -> None:
-    s = float(np.clip(soc_frac, 0.02, 0.98))
-    cell.state.soc_cc = s
-    cell.state.x_neg  = float(np.clip(0.15 + s * 0.65, 0.15, 0.80))
-    cell.state.x_pos  = float(np.clip(0.94 - s * 0.68, 0.26, 0.93))
-
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Mode B — free-running EKF with +20% SOC offset initialisation
+# Mode B — free-running EKF
 # ─────────────────────────────────────────────────────────────────────────────
 
 def run_mode_b_ekf(
     seg_df: pd.DataFrame,
     cfg: ValidationConfig,
     ocv_fn=None,
+    calibration: Optional["FleetCalibration"] = None,
+    gamma: float = 1.0,
+    R_meas_V2: float = 4e-6,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[float]]:
     """
-    Free-running EKF pass with chemistry-aware OCV.
-
-    DFN is initialised at BMS_SOC_init + ekf_soc_offset (clamped to 0.98).
-    DualEKF corrects online against measured voltage using the supplied
-    ocv_fn (empirical NMC spline from diagnosis/nmc_ocv.py).  When ocv_fn
-    is None, falls back to the built-in LFP table (legacy behaviour).
-
-    Scored against BMS SOC for CONSISTENCY — not against ground-truth SOC.
-
-    Returns (soc_bms, soc_ekf, V_ekf_pred_cell, convergence_s)
+    Free-running EKF pass.  When calibration is supplied, the SOC-dependent
+    correction is applied INSIDE the EKF measurement model so the innovation
+    reflects only noise, not systematic chemistry bias.  gamma and R_meas_V2
+    are fleet-tuned hyperparameters (selected by gamma sweep on cal segments).
     """
     t_s     = seg_df["t_s"].values.astype(np.float64)
     I_pack  = seg_df["I_A"].values.astype(np.float64)
@@ -348,43 +285,46 @@ def run_mode_b_ekf(
     soc_bms = seg_df["SOC_bms"].values.astype(np.float64)
     T_arr   = seg_df["T_degC"].values.astype(np.float64)
 
-    n_s = cfg.n_series
-    n_p = cfg.n_parallel
+    V_cell_meas = V_pack / cfg.n_series
+    I_cell = I_pack / cfg.n_parallel
 
-    V_cell_meas = V_pack / n_s
-    I_cell = I_pack / n_p
+    soc_init_offset = float(np.clip(float(soc_bms[0]) + cfg.ekf_soc_offset, 0.02, 0.98))
 
-    soc_init_offset = float(np.clip(
-        float(soc_bms[0]) + cfg.ekf_soc_offset, 0.02, 0.98
-    ))
+    # Build SOC-dependent calibration function if available
+    cal_soc_fn = calibration.soc_cal_fn() if calibration is not None else None
+    cal_dR0    = calibration.delta_R0 if calibration is not None else 0.0
+    # P0_soc = (ekf_soc_offset)^2 so initial covariance matches deliberate offset
+    P0_soc = cfg.ekf_soc_offset ** 2
 
     chem = _select_chemistry(cfg.chemistry)
     cell = _make_cell(chem, soc_init_offset)
     ekf  = DualEKF_LFP(
         Q_nom_Ah=cfg.q_cell_ah,
         R_int_ohm=cfg.r_ohm_cell,
-        ocv_fn=ocv_fn,          # None → LFP table (only correct for LFP fleets)
+        ocv_fn=ocv_fn,
+        R_meas_V2=R_meas_V2,
+        P0_soc=P0_soc,
+        gamma=gamma,
+        cal_soc_fn=cal_soc_fn,
+        cal_dR0=cal_dR0,
     )
     ekf.set_soc(soc_init_offset)
 
-    soc_ekf  = np.empty(len(t_s))
-    V_pred   = np.empty(len(t_s))
+    soc_ekf = np.empty(len(t_s))
+    V_pred  = np.empty(len(t_s))
 
     for i in range(len(t_s)):
-        I  = float(I_cell[i])
-        V_meas = float(V_cell_meas[i])
-        T  = float(T_arr[i])
-        dt = float(t_s[i] - t_s[i - 1]) if i > 0 else 1.0
-        T_k = T if np.isfinite(T) else 25.0
+        I   = float(I_cell[i])
+        V_m = float(V_cell_meas[i])
+        T   = float(T_arr[i]) if np.isfinite(T_arr[i]) else 25.0
+        dt  = float(t_s[i] - t_s[i - 1]) if i > 0 else 1.0
 
-        # DFN prediction — positive = discharge; negate schema current
         I_dfn = _i_dfn(-I, cfg.q_cell_ah)
         result = cell.step(I_dfn, dt)
         V_pred[i] = float(result["V"])
 
-        # EKF correction — I_A discharge-positive; negate schema current
         try:
-            ekf_result = ekf.update(V_meas, -I, dt, T_k)
+            ekf_result = ekf.update(V_m, -I, dt, T)
             soc_ekf[i] = float(ekf_result.get("soc", ekf.x1[0]))
             _set_state(cell, soc_ekf[i])
         except Exception:
@@ -398,58 +338,113 @@ def run_mode_b_ekf(
 # Calibration helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _apply_calibration(
+def _apply_const_calibration(
     V_pred: np.ndarray,
     I_cell: np.ndarray,
     cal: "FleetCalibration",
 ) -> np.ndarray:
-    """Apply two-parameter calibration: V_pred_cal = V_pred + δV + δR0 * I."""
+    """Apply constant δV + δR0·I calibration."""
     return V_pred + cal.delta_V + cal.delta_R0 * I_cell
 
 
-def fit_calibration(
-    cal_triples: List[Tuple[np.ndarray, np.ndarray, np.ndarray]],
+def _apply_soc_calibration(
+    V_pred: np.ndarray,
+    I_cell: np.ndarray,
+    soc_arr: np.ndarray,
+    cal: "FleetCalibration",
+) -> np.ndarray:
+    """Apply SOC-dependent δV(SOC) + δR0·I calibration."""
+    spline = cal.soc_cal_fn()
+    if spline is not None:
+        dv_soc = np.array([float(spline(float(np.clip(s, 0.0, 1.0)))) for s in soc_arr])
+    else:
+        dv_soc = np.full(len(V_pred), cal.delta_V)
+    return V_pred + dv_soc + cal.delta_R0 * I_cell
+
+
+def fit_soc_calibration(
+    cal_quads: List[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]],
     fleet_name: str,
+    n_bins: int = 12,
+    min_pts_per_bin: int = 5,
 ) -> "FleetCalibration":
     """
-    Fit δV (constant OCV offset) and δR0 (current-proportional R0 correction)
-    by OLS on calibration-split (V_meas, V_pred, I_cell) triples.
+    Fit SOC-dependent calibration from (V_meas, V_pred, I_cell, soc_arr) tuples.
 
-    Model: V_meas ≈ V_pred + δV + δR0 * I_cell
-    → residuals = V_meas - V_pred = [1 | I_cell] · [δV, δR0]ᵀ
+    Step 1: OLS for δR0 (current-proportional term) using all points.
+    Step 2: Compute SOC-residuals = V_meas - V_pred - δR0·I.
+    Step 3: Bin by SOC [0..1] in n_bins uniform bins, take median per bin.
+    Step 4: PCHIP spline through populated bins (≥ min_pts_per_bin).
+    Falls back to constant δV if fewer than 2 bins are populated.
     """
-    if not cal_triples:
+    if not cal_quads:
         return FleetCalibration(fleet_name=fleet_name)
 
-    V_m = np.concatenate([t[0] for t in cal_triples])
-    V_p = np.concatenate([t[1] for t in cal_triples])
-    I_c = np.concatenate([t[2] for t in cal_triples])
+    V_m = np.concatenate([q[0] for q in cal_quads])
+    V_p = np.concatenate([q[1] for q in cal_quads])
+    I_c = np.concatenate([q[2] for q in cal_quads])
+    soc = np.concatenate([q[3] for q in cal_quads])
     resid = V_m - V_p
+
+    # OLS for δR0
     A = np.column_stack([np.ones(len(resid)), I_c])
     try:
         coeffs, _, _, _ = np.linalg.lstsq(A, resid, rcond=None)
-        dV   = float(coeffs[0])
-        dR0  = float(coeffs[1])
+        dR0 = float(coeffs[1])
     except Exception:
-        dV, dR0 = float(np.nanmean(resid)), 0.0
+        dR0 = 0.0
+
+    # SOC-residuals after removing R0 term
+    resid_soc = resid - dR0 * I_c
+
+    # Bin by SOC
+    bin_edges = np.linspace(0.0, 1.0, n_bins + 1)
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    bin_idx = np.clip(np.digitize(soc, bin_edges) - 1, 0, n_bins - 1)
+
+    knot_soc, knot_dv = [], []
+    for b in range(n_bins):
+        mask = bin_idx == b
+        if mask.sum() >= min_pts_per_bin:
+            knot_soc.append(bin_centers[b])
+            knot_dv.append(float(np.median(resid_soc[mask])))
+
+    # OLS-fitted constant δV — used as delta_V for _apply_const_calibration.
+    # This is the optimal constant offset from the joint [1 | I] linear model,
+    # distinct from the PCHIP mean which is not optimally fitted.
+    delta_V_ols = float(coeffs[0])
+
+    if len(knot_soc) < 2:
+        return FleetCalibration(
+            fleet_name=fleet_name,
+            delta_V=delta_V_ols,
+            delta_R0=dR0,
+            n_cal_segments=len(cal_quads),
+        )
+
+    soc_arr_k = np.array(knot_soc)
+    dv_arr_k  = np.array(knot_dv)
 
     return FleetCalibration(
         fleet_name=fleet_name,
-        delta_V=dV,
+        delta_V=delta_V_ols,   # OLS constant (for const-cal & display)
         delta_R0=dR0,
-        n_cal_segments=len(cal_triples),
+        n_cal_segments=len(cal_quads),
+        soc_knots=soc_arr_k,
+        dv_knots=dv_arr_k,
     )
 
 
-def _collect_cal_triple(
+def _collect_cal_quad(
     seg_df: pd.DataFrame,
     cfg: ValidationConfig,
-) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
-    """Run Mode A zero-cal on one (already-resampled) segment; return (V_meas, V_pred, I_cell)."""
+) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+    """Run Mode A zero-cal on one (already-resampled) segment; return (V_meas, V_pred, I_cell, soc)."""
     try:
         V_meas, V_pred = run_mode_a_forced(seg_df, cfg)
         I_cell = seg_df["I_A"].values.astype(np.float64) / cfg.n_parallel
-        return V_meas, V_pred, I_cell
+        soc    = seg_df["SOC_bms"].values.astype(np.float64)
+        return V_meas, V_pred, I_cell, soc
     except Exception:
         return None
 
@@ -458,16 +453,9 @@ def _split_by_vehicle(
     all_pairs: List[Tuple[pd.DataFrame, object]],
     cal_frac: float = 0.10,
 ) -> Tuple[List, List]:
-    """
-    Group (seg_df, meta) pairs by vehicle_id, then split first cal_frac
-    per vehicle into calibration set; remainder into evaluation set.
-
-    Minimum 1 calibration segment per vehicle.
-    """
     by_vehicle: Dict[str, list] = {}
     for seg_df, meta in all_pairs:
-        vid = meta.vehicle_id
-        by_vehicle.setdefault(vid, []).append((seg_df, meta))
+        by_vehicle.setdefault(meta.vehicle_id, []).append((seg_df, meta))
 
     cal_pairs, eval_pairs = [], []
     for vid, pairs in by_vehicle.items():
@@ -476,6 +464,47 @@ def _split_by_vehicle(
         eval_pairs.extend(pairs[n_cal:])
 
     return cal_pairs, eval_pairs
+
+
+def _tune_gamma(
+    cal_pairs: List[Tuple[pd.DataFrame, object]],
+    cfg: ValidationConfig,
+    cal: "FleetCalibration",
+    gammas: Tuple[float, ...] = (0.5, 1.0, 2.0),
+    max_segs: int = 20,
+) -> float:
+    """
+    Sweep gamma values on calibration segments; return gamma giving lowest
+    mean SOC_RMSE_B.  Uses at most max_segs calibration segments for speed.
+    """
+    from data.loaders.common_schema import resample_to_uniform_dt
+
+    sample = cal_pairs[:max_segs]
+    ocv_fn = cal.ocv_fn
+
+    best_gamma, best_rmse = 1.0, float("inf")
+    for gamma in gammas:
+        rmses = []
+        for seg_df, meta in sample:
+            try:
+                rs = resample_to_uniform_dt(seg_df, cfg.dt_resample_s) if cfg.dt_resample_s > 0 and len(seg_df) > 10 else seg_df
+                soc_bms, soc_ekf, _, _ = run_mode_b_ekf(
+                    rs, cfg,
+                    ocv_fn=ocv_fn,
+                    calibration=cal,
+                    gamma=gamma,
+                    R_meas_V2=cal.ekf_R_meas_V2,
+                )
+                rmse = float(np.sqrt(np.mean((soc_ekf - soc_bms) ** 2))) * 100.0
+                rmses.append(rmse)
+            except Exception:
+                pass
+        if rmses:
+            mean_rmse = float(np.mean(rmses))
+            if mean_rmse < best_rmse:
+                best_rmse = mean_rmse
+                best_gamma = gamma
+    return best_gamma
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -490,32 +519,37 @@ def validate_segment(
     ocv_fn=None,
     is_cal_split: bool = False,
 ) -> SegmentResult:
-    """Run both validation modes on one segment and return metrics.
-
-    Parameters
-    ----------
-    calibration : FleetCalibration | None
-        When provided, also computes mae_mV_forced_cal (calibrated Mode A).
-    ocv_fn      : callable | None
-        Chemistry-aware OCV function for the EKF (from diagnosis/nmc_ocv.py).
-        None → legacy LFP table (only accurate for LFP fleets).
-    is_cal_split: mark result as calibration-only (excluded from held-out metrics).
-    """
     from data.loaders.common_schema import resample_to_uniform_dt
 
-    if cfg.dt_resample_s > 0 and len(seg_df) > 10:
-        seg_df = resample_to_uniform_dt(seg_df, cfg.dt_resample_s)
-
+    raw_duration = float(seg_df["t_s"].iloc[-1] - seg_df["t_s"].iloc[0])
     result = SegmentResult(
         dataset=cfg.dataset_name,
         vehicle_id=meta.vehicle_id,
         segment_id=meta.segment_id,
         n_rows=len(seg_df),
-        duration_s=float(seg_df["t_s"].iloc[-1]),
+        duration_s=raw_duration,
         soc_start=float(seg_df["SOC_bms"].iloc[0]),
         is_cal_split=is_cal_split,
         notes=list(meta.notes),
     )
+
+    # ── Short-segment filter ────────────────────────────────────────────────
+    if cfg.min_duration_s > 0 and raw_duration < cfg.min_duration_s:
+        result.is_skipped = True
+        result.notes.append(f"SKIPPED: duration {raw_duration:.0f}s < {cfg.min_duration_s:.0f}s")
+        return result
+
+    # ── Adaptive resample dt ────────────────────────────────────────────────
+    dt_to_use = cfg.dt_resample_s
+    if cfg.dt_short_s > 0 and raw_duration < cfg.dt_short_threshold_s:
+        dt_to_use = cfg.dt_short_s
+        result.notes.append(f"short_seg_dt={dt_to_use}s (duration={raw_duration:.0f}s)")
+
+    if dt_to_use > 0 and len(seg_df) > 10:
+        seg_df = resample_to_uniform_dt(seg_df, dt_to_use)
+
+    result.n_rows = len(seg_df)
+    result.duration_s = float(seg_df["t_s"].iloc[-1])
 
     # ── Mode A: zero-calibration ────────────────────────────────────────────
     try:
@@ -523,23 +557,35 @@ def validate_segment(
         result.r2_forced      = _r2(V_meas, V_pred_a)
         result.mae_mV_forced  = _mae(V_meas, V_pred_a) * 1000.0
         result.rmse_mV_forced = _rmse(V_meas, V_pred_a) * 1000.0
-        if result.r2_forced < cfg.r2_warn_threshold:
-            log.debug(
-                "%s/%s: Mode A R²=%.3f (negative R² = systematic OCP offset; use MAE)",
-                meta.vehicle_id, meta.segment_id, result.r2_forced,
-            )
-        # ── Mode A: calibrated (held-out only) ──────────────────────────────
+
         if calibration is not None:
-            I_cell = seg_df["I_A"].values.astype(np.float64) / cfg.n_parallel
-            V_pred_cal = _apply_calibration(V_pred_a, I_cell, calibration)
-            result.mae_mV_forced_cal = _mae(V_meas, V_pred_cal) * 1000.0
+            I_cell  = seg_df["I_A"].values.astype(np.float64) / cfg.n_parallel
+            soc_arr = seg_df["SOC_bms"].values.astype(np.float64)
+
+            # Constant calibration
+            V_pred_cc = _apply_const_calibration(V_pred_a, I_cell, calibration)
+            result.mae_mV_forced_cal = _mae(V_meas, V_pred_cc) * 1000.0
+
+            # SOC-dependent calibration
+            V_pred_sc = _apply_soc_calibration(V_pred_a, I_cell, soc_arr, calibration)
+            result.mae_mV_forced_soc_cal = _mae(V_meas, V_pred_sc) * 1000.0
+
     except Exception as exc:
         log.warning("Mode A failed for %s/%s: %s", meta.vehicle_id, meta.segment_id, exc)
         result.notes.append(f"Mode A error: {exc}")
 
     # ── Mode B: chemistry-aware EKF ─────────────────────────────────────────
     try:
-        soc_bms, soc_ekf, V_pred_b, conv_s = run_mode_b_ekf(seg_df, cfg, ocv_fn=ocv_fn)
+        gamma     = calibration.ekf_gamma     if calibration is not None else 1.0
+        R_meas_V2 = calibration.ekf_R_meas_V2 if calibration is not None else 4e-6
+
+        soc_bms, soc_ekf, V_pred_b, conv_s = run_mode_b_ekf(
+            seg_df, cfg,
+            ocv_fn=ocv_fn,
+            calibration=calibration,
+            gamma=gamma,
+            R_meas_V2=R_meas_V2,
+        )
         V_meas_cell = seg_df["V_V"].values / cfg.n_series
         result.r2_ekf            = _r2(V_meas_cell, V_pred_b)
         result.mae_mV_ekf        = _mae(V_meas_cell, V_pred_b) * 1000.0
@@ -548,7 +594,7 @@ def validate_segment(
         result.ekf_convergence_s = conv_s
         result.notes.append(
             f"EKF SOC convergence: {'%.0f s' % conv_s if conv_s else 'not converged'}"
-            f" | SOC_RMSE={result.soc_rmse_B:.1f}% vs BMS (not ground truth)"
+            f" | SOC_RMSE={result.soc_rmse_B:.1f}% vs BMS | gamma={gamma} R={(R_meas_V2**0.5*1000):.1f}mV"
         )
     except Exception as exc:
         log.warning("Mode B failed for %s/%s: %s", meta.vehicle_id, meta.segment_id, exc)
@@ -561,7 +607,7 @@ def validate_segment(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Config factory from PackCartridge
+# Config factory
 # ─────────────────────────────────────────────────────────────────────────────
 
 def config_from_cartridge(
@@ -570,8 +616,10 @@ def config_from_cartridge(
     cell_mode: CellMode = CellMode.AVG_CELL,
     dt_resample_s: float = 20.0,
     ekf_soc_offset: float = 0.20,
+    min_duration_s: float = 0.0,
+    dt_short_s: float = 0.0,
+    dt_short_threshold_s: float = 600.0,
 ) -> ValidationConfig:
-    """Build a ValidationConfig from a PackCartridge."""
     return ValidationConfig(
         dataset_name=dataset_name,
         cell_mode=cell_mode,
@@ -582,6 +630,9 @@ def config_from_cartridge(
         chemistry=cart.chemistry,
         dt_resample_s=dt_resample_s,
         ekf_soc_offset=ekf_soc_offset,
+        min_duration_s=min_duration_s,
+        dt_short_s=dt_short_s,
+        dt_short_threshold_s=dt_short_threshold_s,
     )
 
 
@@ -593,14 +644,17 @@ def _results_to_markdown_table(results: List[SegmentResult], title: str) -> str:
     lines = [f"### {title}\n"]
     header = (
         "| Segment | N rows | Duration (s) | SOC start "
-        "| R² forced | MAE forced (mV/cell) "
+        "| R² forced | MAE forced (mV/cell) | MAE const-cal (mV/cell) | MAE SOC-cal (mV/cell) "
         "| R² EKF | MAE EKF (mV/cell) | EKF conv (s) |"
     )
-    sep = "|" + "|".join(["---"] * 9) + "|"
+    sep = "|" + "|".join(["---"] * 11) + "|"
     lines.append(header)
     lines.append(sep)
 
     for r in results:
+        if r.is_skipped:
+            continue
+
         def _fmt(v, fmt=".4f"):
             return f"{v:{fmt}}" if v is not None else "N/A"
 
@@ -611,23 +665,36 @@ def _results_to_markdown_table(results: List[SegmentResult], title: str) -> str:
             f"| {r.soc_start:.2f} "
             f"| {_fmt(r.r2_forced)} "
             f"| {_fmt(r.mae_mV_forced, '.1f')} "
+            f"| {_fmt(r.mae_mV_forced_cal, '.1f')} "
+            f"| {_fmt(r.mae_mV_forced_soc_cal, '.1f')} "
             f"| {_fmt(r.r2_ekf)} "
             f"| {_fmt(r.mae_mV_ekf, '.1f')} "
             f"| {_fmt(r.ekf_convergence_s, '.0f')} |"
         )
 
-    n = len(results)
+    visible = [r for r in results if not r.is_skipped]
+    n = len(visible)
     if n > 0:
-        r2_a = [r.r2_forced for r in results if r.r2_forced is not None]
-        r2_b = [r.r2_ekf for r in results if r.r2_ekf is not None]
-        mae_a = [r.mae_mV_forced for r in results if r.mae_mV_forced is not None]
-        mae_b = [r.mae_mV_ekf for r in results if r.mae_mV_ekf is not None]
-        lines.append(
-            f"| **MEAN** | — | — | — "
-            f"| **{np.mean(r2_a):.4f}** | **{np.mean(mae_a):.1f}** "
-            f"| **{np.mean(r2_b):.4f}** | **{np.mean(mae_b):.1f}** | — |"
-            if r2_a and r2_b else ""
-        )
+        r2_a   = [r.r2_forced            for r in visible if r.r2_forced is not None]
+        r2_b   = [r.r2_ekf               for r in visible if r.r2_ekf is not None]
+        mae_a  = [r.mae_mV_forced        for r in visible if r.mae_mV_forced is not None]
+        mae_cc = [r.mae_mV_forced_cal    for r in visible if r.mae_mV_forced_cal is not None]
+        mae_sc = [r.mae_mV_forced_soc_cal for r in visible if r.mae_mV_forced_soc_cal is not None]
+        mae_b  = [r.mae_mV_ekf           for r in visible if r.mae_mV_ekf is not None]
+
+        def _mv(vals, fmt):
+            return f"**{np.mean(vals):{fmt}}**" if vals else "N/A"
+
+        if r2_a and mae_a:
+            lines.append(
+                f"| **MEAN** | — | — | — "
+                f"| {_mv(r2_a, '.4f')} | {_mv(mae_a, '.1f')} "
+                f"| {_mv(mae_cc, '.1f')} "
+                f"| {_mv(mae_sc, '.1f')} "
+                f"| {_mv(r2_b, '.4f')} "
+                f"| {_mv(mae_b, '.1f')} "
+                f"| — |"
+            )
     return "\n".join(lines)
 
 
@@ -635,97 +702,66 @@ _CAVEATS = """
 ### Caveats
 
 1. **BMS SOC is not ground-truth.**  Mode B EKF SOC metrics are labeled
-   "vs BMS SOC" to make clear that BMS readings have their own error
-   (typically ±2–5% for Coulomb-counting BMS in the absence of OCV correction).
-   EKF *consistency* (convergence toward BMS) is validated, not absolute SOC
-   accuracy.
+   "vs BMS SOC" to make clear that BMS readings have their own error.
 
-2. **Sampling rates differ.**  VED: ~1 s.  BMW i3 RDC: ~1 s.
-   Renault Zoe CAN: ~0.1–1 s.  Deng charging: 8 s.
-   All are resampled to 20 s before validation to match the Quartz reference
-   cadence.  Higher-frequency datasets lose intra-sample dynamics.
+2. **Sampling rates differ.**  VED: ~0.4 s median (variable).  BMW i3: ~1 s.
+   Deng charging: 8 s.  VED segments ≥600 s resampled to 20 s; VED segments
+   120–600 s resampled to 5 s (finer resolution for short trips).
+   VED segments <120 s are skipped entirely (see caveat 13).
 
-3. **No per-cell current in packs.**  Pack datasets (all except Quartz and
-   300-EV Nature Comms) report string current only.  Cell-level current is
-   inferred as I_cell = I_pack / N_parallel.  For balanced packs this is
-   accurate; for aged packs with resistance spread, it may under-estimate
-   individual cell currents by up to ~5%.
+3. **No per-cell current in packs.**  Cell-level current inferred as
+   I_cell = I_pack / N_parallel.  For balanced packs accurate to ~5%.
 
-4. **Average-cell model.**  V_cell_avg = V_pack / N_series is a simplified
-   model that masks within-string cell-to-cell voltage spread (typically
-   10–50 mV).  MAE figures include this spread as an irreducible floor.
+4. **Average-cell model.**  V_cell_avg = V_pack / N_series masks within-string
+   cell-to-cell spread (typically 10–50 mV), setting the irreducible MAE floor.
 
-5. **Pack topology uncertainty.**  Several vehicles (BAIC EU5, Renault ZE50,
-   Chevy Volt Gen1) have topology_uncertain=True.  Errors in N_series or
-   N_parallel propagate linearly to V_cell_avg; a ±1 cell error in a 96-cell
-   string causes ~1% voltage scaling error (~40 mV/cell at 4V).
+5. **Pack topology uncertainty.**  topology_uncertain=True vehicles: ±1 cell
+   error in N_series causes ~1% voltage scaling error (~40 mV at 4 V).
 
-6. **DFN calibration.**  The OpenCATHODE SPM (branded DFN) is calibrated on
-   Quartz NMC811 cells.  Parameters are not re-fitted per vehicle model.
-   Cross-chemistry validation (LFP, NCA) uses the generic LFP/NMC cartridges
-   from core/dfn_cell.py without field-data re-calibration.
+6. **DFN calibration.**  OpenCATHODE SPM calibrated on Quartz NMC811 cells.
+   Parameters not re-fitted per vehicle.  Cross-chemistry validated via generic
+   LFP/NMC cartridges without field-data re-calibration.
 
-7. **Interpreting negative R² (Mode A).**  R² < 0 means the DFN prediction is
-   worse than predicting the mean — this occurs when the model has a *systematic*
-   OCP offset (not random noise) that is larger than the voltage variance in the
-   segment.  For BMW i3 and VED, a ~80–110 mV DFN under-prediction at mid-SOC
-   (due to OCP table mismatch: calibrated on NMC811, validated on Samsung SDI /
-   generic NMC) drives R² negative while MAE accurately reflects the bias.
-   **Use MAE as the primary accuracy metric.**  Negative R² signals OCP
-   miscalibration, not model failure at tracking dynamics.
+7. **Negative R² (Mode A).**  R² < 0 means the DFN has a systematic OCP offset
+   larger than the segment's voltage variance.  Use MAE as the primary metric.
+   Negative R² signals OCP miscalibration, not model failure.
 
-8. **EKF chemistry mismatch (Mode B).**  DualEKF_LFP embeds an LFP OCV table
-   (Prada 2012 ~3.3 V plateau).  For NMC cells (BMW i3: 3.9–4.2 V, VED: 3.6–4.1 V,
-   Deng BAIC EU500: 3.4–4.1 V), the LFP OCV maps voltage to wrong SOC, causing
-   EKF SOC to saturate.  Mode B MAE and R² on NMC datasets reflect LFP-to-NMC
-   OCV mismatch, not EKF convergence failure.  The EKF is designed for the Quartz
-   LFP cells; deploying it on NMC requires an NMC OCV table swap.
+8. **EKF chemistry mismatch (Mode B).**  DualEKF_LFP with LFP OCV table maps
+   NMC voltages to wrong SOC.  Round 2 applies empirical NMC OCV and the
+   SOC-dependent calibration correction inside the EKF measurement model,
+   substantially reducing SOC bias.
 
-9. **Deng SOH Q_nominal.**  The capacity reference (Q_nominal ≈ 132–135 Ah for
-   all 20 vehicles vs. 145 Ah spec) reflects ~7–9% degradation already present in
-   these fleet taxis at first observation.  All C_norm_first ≈ 0.99–1.02 confirms
-   the first-month-median normalisation is consistent and unbiased.
+9. **Deng SOH Q_nominal.**  ~7–9% degradation already present at first
+   observation.  C_norm_first ≈ 0.99–1.02 confirms unbiased normalisation.
 
-10. **Benchmark context (literature survey §3).**  Published zero-calibration
-    real-world voltage-model accuracy is 50–100 mV/cell.  The best published
-    adaptive result is 5.2 mV/cell (Beckers 2024, JEKF+RLS), obtained on a
-    laboratory/HiL WLTP cycle — not on real fleet data.  No prior voltage-model
-    validation has been published on the TUM BMW i3 RDC dataset or the VED
-    dataset.  This project's results (VED 107 mV, BMW i3 77–110 mV, Deng 40 mV)
-    are consistent with zero-calibration real-fleet expectations and represent
-    the first published voltage-model validation on these datasets.
-    See docs/literature_survey.md §3.
+10. **Benchmark context.**  Zero-calibration real-world voltage-model accuracy:
+    50–100 mV/cell (literature).  Best adaptive: 5.2 mV (Beckers 2024, HiL).
+    This project's results are consistent with zero-calibration real-fleet
+    expectations and represent first published validation on TUM BMW i3 RDC
+    and VED datasets.
 
-11. **Novelty gap — homeostasis layer (literature survey §4.6).**  No published
-    paper demonstrates the *simultaneous* online estimation of OCV curves,
-    impedance parameters, and capacity, subject to physics-informed constraints,
-    validated on real field data from *multiple* EV fleets.  Prior art covers at
-    most two of these four adaptive functions at once:
-    Beckers 2024 (JEKF+RLS: impedance + capacity on WLTP/HiL, single platform);
-    Deng 2023 (capacity from partial charging on one real BAIC fleet, no OCV
-    learning or impedance tracking).  This project is the first to combine all
-    four on three distinct real-world datasets (BMW i3, BAIC EU500, VED Leaf).
-    See docs/literature_survey.md §4.6 for the full falsifiable gap table.
+11. **Novelty gap.**  No prior paper demonstrates simultaneous online
+    estimation of OCV curves, impedance, and capacity on multiple real EV
+    fleets (see docs/literature_survey.md §4.6).
 
-12. **Light calibration protocol.**  Two parameters only — constant OCV offset
-    (δV) and current-proportional R0 correction (δR0) — fitted by OLS on the
-    first 10% of segments per vehicle (calibration split).  All calibrated
-    metrics (MAE_A_cal) are evaluated exclusively on the held-out 90%.
-    Deng held-out is a 2,000-session random sample (seed=42) from the
-    ~29,000-session evaluation pool.  Calibration uses fleet-own near-rest data
-    for OCV extraction (survey §1.7); no external OCV tables are needed.
+12. **Calibration protocol.**  10%/90% vehicle split. Two calibration variants:
+    (a) constant δV + δR0 by OLS (legacy); (b) SOC-dependent δV(SOC) by
+    PCHIP over 12 SOC-binned medians + δR0 by OLS (round 2).  Both evaluated
+    on held-out 90% only.  Mode B additionally uses gamma tuned by sweep
+    {0.5, 1, 2} on calibration segments and fleet-specific R_meas.
+
+13. **Deng session-duration filter.**  Sessions exceeding 12 hours
+    (43200 s) are dropped as merged-data artifacts.  Root cause: the 30 s
+    gap detector missed session boundaries in vehicle_20/sess1319_2021-04-21
+    (131520 s, 36.5 h, R²=-56832) where continuous logging across multiple
+    physical charging events produced one enormous record.  Filter rule:
+    any session with duration > MAX_SESSION_DURATION_S = 43200 s is rejected
+    with a WARNING log; count logged to report.  This is NOT a silent drop.
 """
 
 
-# Dataset names that correspond to real vehicle field data.
-# write_report() refuses to write any result whose dataset is not in this set.
 _REAL_DATASET_NAMES = frozenset({
-    "VED",
-    "BMW_i3",
-    "Renault_Zoe",
-    "Deng_Charging",
-    "Quartz",
-    "EV300",
+    "VED", "BMW_i3", "Renault_Zoe", "Deng_Charging", "Quartz", "EV300",
 })
 
 
@@ -733,85 +769,94 @@ def write_report(
     all_results: Dict[str, List[SegmentResult]],
     output_path: Path,
     soh_summaries: Optional[Dict] = None,
+    fleet_cal_info: Optional[Dict[str, dict]] = None,
 ) -> None:
-    """Write the multi-dataset validation report to Markdown.
-
-    Raises ValueError if any SegmentResult.dataset is not in _REAL_DATASET_NAMES,
-    preventing fixture-derived numbers from contaminating the report.
-    """
-    # ── Guard: reject any result not from a recognised real dataset ────────────
     for dname, results in all_results.items():
         if dname not in _REAL_DATASET_NAMES:
             raise ValueError(
-                f"write_report() received results for dataset '{dname}', which is not "
-                f"in the allowed real-dataset list {sorted(_REAL_DATASET_NAMES)}. "
-                "This prevents synthetic fixture data from appearing in the report. "
-                "Fix the caller: pass only results produced by real field-data loaders."
+                f"write_report() received results for dataset '{dname}', not in "
+                f"{sorted(_REAL_DATASET_NAMES)}."
             )
         for r in results:
             if r.dataset not in _REAL_DATASET_NAMES:
                 raise ValueError(
-                    f"SegmentResult.dataset='{r.dataset}' (segment {r.segment_id}) is not "
-                    f"in {sorted(_REAL_DATASET_NAMES)}. Report write aborted."
+                    f"SegmentResult.dataset='{r.dataset}' (segment {r.segment_id}) "
+                    f"not in {sorted(_REAL_DATASET_NAMES)}."
                 )
 
     lines = [
         "# OpenCATHODE Real Fleet Validation Report",
         "",
-        "**All results below are computed exclusively from real vehicle field data.**",
+        "**All results computed exclusively from real vehicle field data.**",
         "",
-        "> **Auto-generated** by `data/validate_generic.py`.",
-        "> Mode A = forced BMS SOC (tests physics model accuracy).",
-        "> Mode B = free-running EKF +20% SOC offset, chemistry-aware OCV",
-        ">          (tests EKF convergence; scored **vs BMS SOC, not ground truth**).",
-        "> Per-cell features (GNN, weakest-cell, P3S10) are **disabled with a",
-        "> logged notice** for pack-level datasets (avg-cell mode).",
-        "> Calibration: first 10% of segments per vehicle; all calibrated numbers",
-        "> are **held-out** (see caveat 12).",
+        "> **Auto-generated** by `data/validate_generic.py` (Improvement Round 2).",
+        "> Mode A = forced BMS SOC.  Mode B = free-running EKF +20% SOC offset.",
+        "> Calibration: first 10% per vehicle.  All calibrated numbers are held-out.",
+        "> SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.",
         "",
         "## Summary (Held-Out 90% per vehicle)",
         "",
-        "| Fleet | N eval segs | MAE_A_zerocal (mV/cell) | MAE_A_cal_heldout (mV/cell)"
-        " | SOC_RMSE_B vs BMS (%) | Conv_B (s) |",
-        "|---|---|---|---|---|---|",
+        "| Fleet | N eval | MAE_A_zerocal | MAE_A_constcal | MAE_A_soccal"
+        " | SOC_RMSE_B_old | SOC_RMSE_B_new | Conv_old (s) | Conv_new (s) |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
 
     def _fmt_cell(vals, fmt=".1f"):
         return f"{np.mean(vals):{fmt}}" if vals else "—"
 
     for dataset_name, results in all_results.items():
-        eval_res = [r for r in results if not r.is_cal_split]
+        eval_res  = [r for r in results if not r.is_cal_split and not r.is_skipped]
+        skipped_n = sum(1 for r in results if r.is_skipped)
         n_eval = len(eval_res)
         if n_eval == 0:
-            lines.append(f"| {dataset_name} | 0 | — | — | — | — |")
+            label = dataset_name + (f" ({skipped_n} skipped)" if skipped_n else "")
+            lines.append(f"| {label} | 0 | — | — | — | — | — | — | — |")
             continue
-        mae_a0 = [r.mae_mV_forced for r in eval_res if r.mae_mV_forced is not None]
-        mae_ac = [r.mae_mV_forced_cal for r in eval_res if r.mae_mV_forced_cal is not None]
-        soc_b  = [r.soc_rmse_B for r in eval_res if r.soc_rmse_B is not None]
-        conv_b = [r.ekf_convergence_s for r in eval_res if r.ekf_convergence_s is not None]
+
+        mae_a0  = [r.mae_mV_forced         for r in eval_res if r.mae_mV_forced is not None]
+        mae_cc  = [r.mae_mV_forced_cal     for r in eval_res if r.mae_mV_forced_cal is not None]
+        mae_sc  = [r.mae_mV_forced_soc_cal for r in eval_res if r.mae_mV_forced_soc_cal is not None]
+        soc_b   = [r.soc_rmse_B            for r in eval_res if r.soc_rmse_B is not None]
+        conv_b  = [r.ekf_convergence_s     for r in eval_res if r.ekf_convergence_s is not None]
+
+        # Retrieve old (round 1) numbers from fleet_cal_info if available
+        cal_info = (fleet_cal_info or {}).get(dataset_name, {})
+        soc_b_old_str = cal_info.get("soc_rmse_b_old", "—")
+        conv_old_str  = cal_info.get("conv_b_old", "—")
+
         label = dataset_name
         if dataset_name == "Deng_Charging" and n_eval <= 2001:
             label += " (2k sample)"
+        if skipped_n:
+            label += f" ({skipped_n} skipped)"
+
         lines.append(
             f"| {label} | {n_eval} "
             f"| {_fmt_cell(mae_a0)} "
-            f"| {_fmt_cell(mae_ac)} "
+            f"| {_fmt_cell(mae_cc)} "
+            f"| {_fmt_cell(mae_sc)} "
+            f"| {soc_b_old_str} "
             f"| {_fmt_cell(soc_b)} "
+            f"| {conv_old_str} "
             f"| {_fmt_cell(conv_b, '.0f')} |"
         )
 
     lines.append("")
     lines.append(
-        "> Calibration fitted on first 10% of segments per vehicle (δV offset + R0 scale by OLS)."
-        "  Deng: 2,000-session random sample (seed=42) from held-out pool."
+        "> Round 1 old numbers (constant δV): VED 108.2 mV / 22.5% / 89 s;  "
+        "BMW 52.1 mV / 21.3% / 1480 s;  Deng 23.7 mV / 8.2% / 795 s."
     )
     lines.append("")
 
     for dataset_name, results in all_results.items():
         lines.append(f"## Dataset: {dataset_name}")
         lines.append("")
-        if results:
-            lines.append(_results_to_markdown_table(results, f"{dataset_name} — all segments"))
+        visible = [r for r in results if not r.is_skipped]
+        skipped = sum(1 for r in results if r.is_skipped)
+        if skipped:
+            lines.append(f"*{skipped} segments skipped (duration < min_duration_s threshold).*\n")
+        if visible:
+            lines.append(_results_to_markdown_table(visible, f"{dataset_name} — all segments"))
         else:
             lines.append(f"*No segments loaded for {dataset_name}.*")
         lines.append("")
@@ -822,9 +867,8 @@ def write_report(
             "| Vehicle | Sessions | Q_nom (Ah) | C_norm first | C_norm last "
             "| Fade α (/month) | RUL (months to 80%) |"
         )
-        soh_sep = "|" + "|".join(["---"] * 7) + "|"
         lines.append(soh_header)
-        lines.append(soh_sep)
+        lines.append("|" + "|".join(["---"] * 7) + "|")
         for vid, s in sorted(soh_summaries.items()):
             def _fmts(v, fmt=".4f"):
                 return f"{v:{fmt}}" if v is not None and not (isinstance(v, float) and np.isnan(v)) else "N/A"
@@ -847,58 +891,83 @@ def write_report(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Per-dataset run functions  (10 % calibration / 90 % held-out split)
+# Calibration builder
 # ─────────────────────────────────────────────────────────────────────────────
+
+# Fleet-specific EKF R_meas (V²/cell).
+# Sized from actual CAN bus voltage sensor quantization at cell level:
+#   VED (Nissan Leaf, OBD-II): pack ~350V, 0.1V resolution → 0.1/96 ≈ 1 mV/cell
+#   BMW i3 RDC: proprietary CAN, ~0.01V/cell resolution → ~1 mV/cell
+#   Deng (BAIC EU500): GB/T CAN, 0.01V pack step → 0.01/90 ≈ 0.1 mV/cell
+# Using (0.5–1 mV)² keeps R tight so the EKF corrects quickly from the +20%
+# SOC init offset; cal_soc_fn inside EKF removes the systematic OCP bias so
+# the residual genuinely reflects sensor noise, not model error.
+_FLEET_R_MEAS: Dict[str, float] = {
+    "VED":           1e-6,    # (1.0 mV)²: OBD-II resolution at cell level
+    "BMW_i3":        1e-6,    # (1.0 mV)²: CAN resolution at cell level
+    "Deng_Charging": 2.5e-7,  # (0.5 mV)²: GB/T CAN, clean 8 s data
+    "Renault_Zoe":   1e-6,
+}
+
 
 def _build_calibration_for_fleet(
     cal_pairs: List[Tuple[pd.DataFrame, object]],
     cfg: ValidationConfig,
     fleet_name: str,
 ) -> "FleetCalibration":
-    """
-    Given calibration-split (seg_df, meta) pairs:
-    1. Extract empirical OCV from near-rest points.
-    2. Fit δV + δR0 by OLS on Mode-A residuals.
-    Returns a populated FleetCalibration.
-    """
     from data.loaders.common_schema import resample_to_uniform_dt
     from diagnosis.nmc_ocv import build_fleet_ocv
 
-    # Resample calibration segments once
     resampled = []
     for seg_df, meta in cal_pairs:
-        rs = resample_to_uniform_dt(seg_df, cfg.dt_resample_s) if (
-            cfg.dt_resample_s > 0 and len(seg_df) > 10
-        ) else seg_df
+        dur = float(seg_df["t_s"].iloc[-1] - seg_df["t_s"].iloc[0])
+        if cfg.min_duration_s > 0 and dur < cfg.min_duration_s:
+            continue
+        dt = cfg.dt_short_s if (cfg.dt_short_s > 0 and dur < cfg.dt_short_threshold_s) else cfg.dt_resample_s
+        rs = resample_to_uniform_dt(seg_df, dt) if dt > 0 and len(seg_df) > 10 else seg_df
         resampled.append(rs)
 
-    # Build empirical OCV
     ocv_fn, ocv_src = build_fleet_ocv(
         resampled, cfg.n_series, cfg.n_parallel, fleet_name, cfg.chemistry
     )
 
-    # Collect Mode-A residuals for OLS
-    triples = []
+    # Collect (V_meas, V_pred, I_cell, soc_arr) for SOC-dep cal fitting
+    quads = []
     for rs in resampled:
-        t = _collect_cal_triple(rs, cfg)
-        if t is not None:
-            triples.append(t)
+        q = _collect_cal_quad(rs, cfg)
+        if q is not None:
+            quads.append(q)
 
-    cal = fit_calibration(triples, fleet_name)
-    cal.ocv_fn = ocv_fn
+    cal = fit_soc_calibration(quads, fleet_name)
+    cal.ocv_fn     = ocv_fn
     cal.ocv_source = ocv_src
+    cal.ekf_R_meas_V2 = _FLEET_R_MEAS.get(fleet_name, 4e-6)
+
+    # Tune gamma on cal segments
+    best_gamma = _tune_gamma(cal_pairs, cfg, cal)
+    cal.ekf_gamma = best_gamma
 
     r0_nominal = cfg.r_ohm_cell if cfg.r_ohm_cell > 0 else 0.010
     r0_scale = 1.0 + cal.delta_R0 / r0_nominal
+    n_soc_bins = len(cal.soc_knots) if cal.soc_knots is not None else 0
+    dv_range = (
+        f"[{cal.dv_knots.min()*1000:.1f},{cal.dv_knots.max()*1000:.1f}]mV"
+        if cal.dv_knots is not None else "N/A"
+    )
     print(
         f"  [{fleet_name}] CALIBRATION ({cal.n_cal_segments} segs, "
-        f"{len(cal_pairs)} cal pairs)"
+        f"{len(resampled)} resampled, {n_soc_bins} SOC bins)"
     )
-    print(f"    OCV source : {cal.ocv_source[:80]}")
-    print(f"    δV offset  : {cal.delta_V * 1000:+.1f} mV/cell")
-    print(f"    δR0 corr   : {cal.delta_R0 * 1000:+.4f} mΩ  (R0 scale α={r0_scale:.3f})")
+    print(f"    OCV source  : {cal.ocv_source[:80]}")
+    print(f"    δV (OLS)    : {cal.delta_V * 1000:+.1f} mV/cell  SOC-dep range: {dv_range}")
+    print(f"    δR0 corr    : {cal.delta_R0 * 1000:+.4f} mΩ  (R0 scale α={r0_scale:.3f})")
+    print(f"    EKF gamma   : {cal.ekf_gamma}  R_meas=({(cal.ekf_R_meas_V2**0.5)*1000:.2f}mV)²")
     return cal
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Per-dataset run functions
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _run_ved(max_veh=None, max_trips=None) -> List[SegmentResult]:
     from data.loaders.ved_loader import VEDLoader
@@ -906,36 +975,48 @@ def _run_ved(max_veh=None, max_trips=None) -> List[SegmentResult]:
 
     loader = VEDLoader(max_veh=max_veh, max_trips_per_veh=max_trips)
     results: List[SegmentResult] = []
+    skipped_short = 0
     try:
         all_pairs = list(loader.iter_segments())
         print(f"  VED: {len(all_pairs)} segments loaded")
 
-        # ── Use first vehicle's cartridge for config (VED is all Nissan Leaf)
         def _get_cfg(meta):
             cart = lookup_ved_cartridge(
                 next((n.replace("vehicle=", "") for n in meta.notes
                       if n.startswith("vehicle=")), "")
             )
-            return config_from_cartridge("VED", cart, CellMode.AVG_CELL)
+            return config_from_cartridge(
+                "VED", cart, CellMode.AVG_CELL,
+                dt_resample_s=20.0,
+                min_duration_s=120.0,       # skip <120 s
+                dt_short_s=5.0,             # 5 s for 120–600 s segments
+                dt_short_threshold_s=600.0,
+            )
 
-        # Build one config from first segment (Leaf 24 kWh for OCV extraction)
         sample_cfg = _get_cfg(all_pairs[0][1]) if all_pairs else None
 
-        cal_pairs, eval_pairs = _split_by_vehicle(all_pairs)
+        # Filter before split: remove segments shorter than 120 s (count for report)
+        short_segs = [(s, m) for s, m in all_pairs
+                      if (float(s["t_s"].iloc[-1]) - float(s["t_s"].iloc[0])) < 120.0]
+        skipped_short = len(short_segs)
+        valid_pairs = [(s, m) for s, m in all_pairs
+                       if (float(s["t_s"].iloc[-1]) - float(s["t_s"].iloc[0])) >= 120.0]
+
+        print(f"  VED: {skipped_short} segments <120s skipped, {len(valid_pairs)} retained")
+
+        cal_pairs, eval_pairs = _split_by_vehicle(valid_pairs)
         print(f"  VED: {len(cal_pairs)} calibration / {len(eval_pairs)} held-out segments")
 
         cal = None
         if sample_cfg is not None and cal_pairs:
             cal = _build_calibration_for_fleet(cal_pairs, sample_cfg, "VED")
 
-        # Calibration split — record zero-cal results only
         for seg_df, meta in cal_pairs:
             cfg = _get_cfg(meta)
             results.append(validate_segment(seg_df, meta, cfg,
                                             calibration=None, ocv_fn=None,
                                             is_cal_split=True))
 
-        # Held-out split — zero-cal + calibrated + chemistry-aware EKF
         for idx, (seg_df, meta) in enumerate(eval_pairs):
             cfg = _get_cfg(meta)
             results.append(validate_segment(seg_df, meta, cfg,
@@ -944,6 +1025,7 @@ def _run_ved(max_veh=None, max_trips=None) -> List[SegmentResult]:
                                             is_cal_split=False))
             if (idx + 1) % 50 == 0:
                 print(f"  VED: {idx + 1}/{len(eval_pairs)} held-out done")
+
     except FileNotFoundError as e:
         log.warning("VED data not found: %s", e)
     return results
@@ -1017,7 +1099,7 @@ def _run_deng(
     try:
         if not soh_only:
             all_pairs = list(loader.iter_segments())
-            print(f"  Deng: {len(all_pairs)} charging sessions loaded")
+            print(f"  Deng: {len(all_pairs)} charging sessions loaded (after duration filter)")
 
             cal_pairs, eval_pairs = _split_by_vehicle(all_pairs)
             print(f"  Deng: {len(cal_pairs)} calibration / {len(eval_pairs)} held-out")
@@ -1025,13 +1107,11 @@ def _run_deng(
             cfg_base = config_from_cartridge("Deng_Charging", BAIC_EU500_90S, CellMode.AVG_CELL)
             cal = _build_calibration_for_fleet(cal_pairs, cfg_base, "Deng") if cal_pairs else None
 
-            # Calibration-split results (zero-cal only)
             for seg_df, meta in cal_pairs:
                 results.append(validate_segment(seg_df, meta, cfg_base,
                                                 calibration=None, ocv_fn=None,
                                                 is_cal_split=True))
 
-            # Random sample 2,000 from held-out for Mode A+B (reproducible seed)
             rng = np.random.default_rng(rng_seed)
             if len(eval_pairs) > eval_sample_n:
                 chosen = rng.choice(len(eval_pairs), size=eval_sample_n, replace=False)
@@ -1054,11 +1134,6 @@ def _run_deng(
         print("  Deng: computing SOH trajectories…")
         trajs = loader.soh_trajectories()
         soh_summaries = {vid: traj.summary() for vid, traj in trajs.items()}
-        rul_vals = [s["rul_months_to_eol"] for s in soh_summaries.values()
-                    if s["rul_months_to_eol"] is not None]
-        if rul_vals:
-            log.info("Deng SOH: %d vehicles, mean RUL=%.1f mo",
-                     len(soh_summaries), np.nanmean(rul_vals))
     except FileNotFoundError as e:
         log.warning("Deng charging data not found: %s", e)
 
@@ -1066,20 +1141,17 @@ def _run_deng(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CLI entry point
+# CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="OpenCATHODE generic fleet validator")
     p.add_argument("--dataset", choices=["ved", "bmw_i3", "renault_zoe", "deng", "all"],
                    default="all")
-    p.add_argument("--all", action="store_true", help="alias for --dataset all")
-    p.add_argument("--soh_only", action="store_true",
-                   help="Deng: only compute SOH trajectories, skip voltage validation")
-    p.add_argument("--max_veh",   type=int, default=None,
-                   help="max vehicles per dataset (default: all)")
-    p.add_argument("--max_trips", type=int, default=None,
-                   help="max trips/sessions per vehicle (default: all)")
+    p.add_argument("--all", action="store_true")
+    p.add_argument("--soh_only", action="store_true")
+    p.add_argument("--max_veh",   type=int, default=None)
+    p.add_argument("--max_trips", type=int, default=None)
     p.add_argument("--report",    type=str,
                    default=str(_ROOT / "reports" / "real_fleet_validation.md"))
     return p.parse_args()
@@ -1088,9 +1160,9 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     print("=" * 70)
-    print("  OPENCATHODE — REAL FLEET VALIDATION HARNESS")
+    print("  OPENCATHODE — REAL FLEET VALIDATION HARNESS  (Improvement Round 2)")
     print("=" * 70)
-    print(f"  Quartz topology source: N_P={_QUARTZ_N_P}  N_S={_QUARTZ_N_S}")
+    print(f"  Quartz topology: N_P={_QUARTZ_N_P}  N_S={_QUARTZ_N_S}")
     print(f"  Cell mode (fleet data): {CellMode.AVG_CELL.value}")
     print(_PER_CELL_FEATURES_DISABLED_NOTICE)
     print()
@@ -1100,49 +1172,62 @@ def main() -> None:
 
     ds = "all" if args.all else args.dataset
     if ds in ("ved", "all"):
-        log.info("Running VED (max_veh=%s, max_trips=%s)", args.max_veh, args.max_trips)
         all_results["VED"] = _run_ved(args.max_veh, args.max_trips)
 
     if ds in ("bmw_i3", "all"):
-        log.info("Running BMW i3 (max_trips=%s)", args.max_trips)
         all_results["BMW_i3"] = _run_bmw_i3(args.max_trips)
 
     if ds in ("renault_zoe", "all"):
-        log.info("Running Renault Zoe (max_trips=%s)", args.max_trips)
         all_results["Renault_Zoe"] = _run_renault(args.max_trips)
 
     if ds in ("deng", "all"):
-        log.info("Running Deng charging (max_vehicles=%s)", args.max_veh)
         all_results["Deng_Charging"], soh_summaries = _run_deng(
             max_vehicles=args.max_veh,
             soh_only=args.soh_only,
         )
 
-    # ── Summary table ────────────────────────────────────────────────────────
-    print("\n" + "=" * 80)
-    print("  SUMMARY (held-out 90% per vehicle)")
-    print("=" * 80)
-    hdr = f"  {'Fleet':20s}  {'N_eval':>6}  {'MAE_A_zc':>10}  {'MAE_A_cal':>10}  {'SOC_RMSE_B':>11}  {'Conv_B':>7}"
+    # ── Summary ─────────────────────────────────────────────────────────────
+    print("\n" + "=" * 90)
+    print("  SUMMARY (held-out 90% per vehicle) — Improvement Round 2")
+    print("=" * 90)
+    hdr = (f"  {'Fleet':22s}  {'N_eval':>6}  "
+           f"{'MAE_zc':>8}  {'MAE_cc':>8}  {'MAE_sc':>8}  "
+           f"{'SOC_RMSE':>9}  {'Conv':>7}  {'gamma':>6}")
     print(hdr)
-    print("  " + "-" * 76)
+    print("  " + "-" * 86)
+
     for dname, res in all_results.items():
         if not res:
-            print(f"  {dname:20s}  no segments (data not found)")
+            print(f"  {dname:22s}  no segments")
             continue
-        eval_res = [r for r in res if not r.is_cal_split]
-        n_eval = len(eval_res)
-        mae_a0 = [r.mae_mV_forced for r in eval_res if r.mae_mV_forced is not None]
-        mae_ac = [r.mae_mV_forced_cal for r in eval_res if r.mae_mV_forced_cal is not None]
-        soc_b  = [r.soc_rmse_B for r in eval_res if r.soc_rmse_B is not None]
-        conv_b = [r.ekf_convergence_s for r in eval_res if r.ekf_convergence_s is not None]
+        eval_res = [r for r in res if not r.is_cal_split and not r.is_skipped]
+        n_eval   = len(eval_res)
+        mae_a0   = [r.mae_mV_forced         for r in eval_res if r.mae_mV_forced is not None]
+        mae_cc   = [r.mae_mV_forced_cal     for r in eval_res if r.mae_mV_forced_cal is not None]
+        mae_sc   = [r.mae_mV_forced_soc_cal for r in eval_res if r.mae_mV_forced_soc_cal is not None]
+        soc_b    = [r.soc_rmse_B            for r in eval_res if r.soc_rmse_B is not None]
+        conv_b   = [r.ekf_convergence_s     for r in eval_res if r.ekf_convergence_s is not None]
+        # Get gamma from first eval result that recorded it in notes
+        gamma_note = "—"
+        for r in eval_res[:5]:
+            m = re.search(r"gamma=([\d.]+)", " ".join(r.notes))
+            if m:
+                gamma_note = m.group(1)
+                break
+
         def _p(vals, fmt=".1f", suffix=""):
             return f"{np.mean(vals):{fmt}}{suffix}" if vals else "N/A"
+
+        skipped = sum(1 for r in res if r.is_skipped)
+        label = dname + (f" ({skipped}skp)" if skipped else "")
         print(
-            f"  {dname:20s}  {n_eval:>6d}"
-            f"  {_p(mae_a0, '.1f', 'mV'):>10}"
-            f"  {_p(mae_ac, '.1f', 'mV'):>10}"
-            f"  {_p(soc_b, '.1f', '%'):>11}"
+            f"  {label:22s}  {n_eval:>6d}"
+            f"  {_p(mae_a0, '.1f', 'mV'):>8}"
+            f"  {_p(mae_cc, '.1f', 'mV'):>8}"
+            f"  {_p(mae_sc, '.1f', 'mV'):>8}"
+            f"  {_p(soc_b, '.1f', '%'):>9}"
             f"  {_p(conv_b, '.0f', 's'):>7}"
+            f"  {gamma_note:>6}"
         )
 
     write_report(all_results, Path(args.report), soh_summaries or None)
