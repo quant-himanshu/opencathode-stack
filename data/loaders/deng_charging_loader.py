@@ -84,6 +84,13 @@ _DENG_CHARGING_NEGATIVE: bool = True
 # Session gap threshold: gaps larger than this indicate a new charging session
 _SESSION_GAP_S: float = 30.0
 
+# Maximum plausible charging session duration.
+# BAIC EU500: DC fast 50kW ≈ 1h, AC 6.6kW ≈ 8h.
+# Sessions exceeding this are merged data artifacts (duplicate timestamps or
+# continuous logging across multiple physical sessions without a gap > 30 s).
+# Filter rule: drop and log; do NOT silently skip.
+MAX_SESSION_DURATION_S: float = 43200.0   # 12 hours
+
 # SOH: only sessions spanning this SOC window are used for capacity estimation
 SOC_WINDOW_LO: float = 0.10
 SOC_WINDOW_HI: float = 0.90
@@ -216,6 +223,22 @@ def _iter_sessions_in_file(
         I_mean = float(np.mean(I_A))
         if I_mean < 0:
             # Discharge-dominated session → skip (dataset is charging-only)
+            continue
+
+        # Filter rule: drop sessions whose duration exceeds the physical maximum.
+        # Root cause documented in reports/real_fleet_validation.md caveat 13:
+        # vehicle_20/sess1319_2021-04-21 (131520 s, 36.5 h) is a data artifact
+        # where the 30 s gap detector missed session boundaries, merging multiple
+        # physical charging sessions into one record.
+        session_duration = float(t_s[-1] - t_s[0]) if len(t_s) > 1 else 0.0
+        if session_duration > MAX_SESSION_DURATION_S:
+            log.warning(
+                "Deng/%s/sess%03d_%s: duration %.0f s > %.0f s threshold — "
+                "likely merged sessions (data artifact). DROPPED.",
+                vehicle_id, sess_num,
+                timestamps.iloc[i0].strftime("%Y-%m-%d") if not pd.isna(timestamps.iloc[i0]) else "unknown",
+                session_duration, MAX_SESSION_DURATION_S,
+            )
             continue
 
         seg_df = make_schema_df(t_s, I_A, V_raw, T_degC, soc)
