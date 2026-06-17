@@ -229,7 +229,8 @@ class OpenCATHODERealtime:
                     def __init__(self, c): self.cells = c
                 r = ChirpEIS().online_sweep(_FP(cells), verbose=False)
                 with self._eis_lock: self._eis_res = r or {}
-            except Exception: pass
+            except Exception as _eis_exc:
+                    print(f"[BMS] EIS sweep failed: {_eis_exc}")
         self._eis_thread = threading.Thread(target=_run, daemon=True)
         self._eis_thread.start()
 

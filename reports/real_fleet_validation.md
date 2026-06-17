@@ -5877,7 +5877,11 @@
 8. **EKF chemistry mismatch (Mode B).**  DualEKF_LFP with LFP OCV table maps
    NMC voltages to wrong SOC.  Round 2 applies empirical NMC OCV and the
    SOC-dependent calibration correction inside the EKF measurement model,
-   substantially reducing SOC bias.
+   substantially reducing SOC bias.  VED SOC_RMSE_B of 25.5% misses the
+   ≤25% target by 0.5% due to LMO-NMC OCV mismatch: the PCHIP calibration
+   spans ~360 mV across SOC (range [-112, +248] mV), so δV evaluated at the
+   wrong SOC during the +20% init transient introduces a systematic innovation
+   bias that cannot be resolved without a measured LMO-NMC OCV table.
 
 9. **Deng SOH Q_nominal.**  ~7–9% degradation already present at first
    observation.  C_norm_first ≈ 0.99–1.02 confirms unbiased normalisation.

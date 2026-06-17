@@ -101,6 +101,14 @@ class DualEKF_LFP:
         return self._Q_base * factor * self._gamma
 
     def update(self, V_meas: float, I_A: float, dt_s: float, T_C: float = 25.0) -> dict:
+        """
+        EKF measurement update with SOC-dependent calibration correction.
+        Key design choice (Round 3): δV(SOC) from cal_soc_fn is added to V_pred
+        so the innovation (z - h(x)) is correct, but its derivative ∂δV/∂SOC is
+        NOT included in H. Treating the correction as locally constant keeps the
+        Kalman gain stable — adding dcal/dSOC to H produced erratic gain swings
+        from the PCHIP spline slope and destroyed BMW convergence (Round 2 bug).
+        """
         soc, v_pol = self.x1
         Q_eff = self.Q_nom * float(self.x2[0])
         R_use = float(self.x2[1])

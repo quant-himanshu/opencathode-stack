@@ -6,7 +6,7 @@ Improvement round 3:
   1. SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.
      Replaces constant δV for held-out Mode A.  Old and new both reported.
   2. Mode B: calibration applied inside EKF measurement model; fleet-specific
-     R_meas; adaptive-Q gamma sweep {0.5, 1, 2} on cal segments.
+     R_meas; adaptive-Q gamma sweep {0.5, 1, 2, 4} on cal segments.
   3. VED short-segment: skip <120 s, use dt=5 s for 120–600 s segments.
   4. Deng anomaly: sessions >12 h dropped as merged-data artifacts (see caveat 13).
 
@@ -748,7 +748,7 @@ _CAVEATS = """
     (a) constant δV + δR0 by OLS (legacy); (b) SOC-dependent δV(SOC) by
     PCHIP over 12 SOC-binned medians + δR0 by OLS (round 2).  Both evaluated
     on held-out 90% only.  Mode B additionally uses gamma tuned by sweep
-    {0.5, 1, 2} on calibration segments and fleet-specific R_meas.
+    {0.5, 1, 2, 4} on calibration segments and fleet-specific R_meas.
 
 13. **Deng session-duration filter.**  Sessions exceeding 12 hours
     (43200 s) are dropped as merged-data artifacts.  Root cause: the 30 s
