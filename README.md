@@ -156,9 +156,13 @@ python data/validate_quartz.py
 
 # Run standalone EKF validation
 python diagnosis/dual_ekf_lfp.py
+
+# Reproduce headline fleet validation (~30 min, requires VED/BMW/Deng data)
+python -u data/validate_generic.py --all
+python scripts/audit_independent.py
 ```
 
-**Requirements:** `numpy scipy torch pandas pyarrow`
+**Requirements:** `numpy scipy torch pandas pyarrow natsort` (see `requirements.txt`)
 
 ---
 
