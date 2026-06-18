@@ -4,22 +4,22 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Validation](https://img.shields.io/badge/MAE-18.6mV-brightgreen)](data/validate_quartz.py)
-[![R²](https://img.shields.io/badge/R²-0.9810-brightgreen)](data/validate_quartz.py)
+[![R²](https://img.shields.io/badge/R²-0.9217-brightgreen)](data/validate_quartz.py)
 
-A six-layer physics-informed BMS stack combining Doyle-Fuller-Newman electrochemistry, GraphSAGE multi-cell state estimation, Dual EKF SOC tracking, Negative Selection anomaly detection, and ACO+Kuramoto action control — validated on 634,450 real datapoints from a 36-cell NMC automotive WLTP pack.
+A six-layer physics-informed BMS stack with validated core (DFN-SPM electrochemistry, Dual EKF SOC tracking, EIS impedance calibration) and prototype pack-management extensions (GraphSAGE GNN multi-cell estimation, Negative Selection anomaly detection, ACO+Kuramoto action control) — validated on 12,690 independent 20 s windows (634,450 raw rows) from a 36-cell NMC automotive WLTP pack.
 
 ---
 
 ## Key Results
 
-| Metric | Value | Benchmark |
+| Metric | Value | Notes |
 |---|---|---|
-| Voltage MAE | **18.6 mV** | Industry standard < 20 mV ✅ |
-| R² (all rows) | **0.9810** across 36 cells ✅ | — |
-| R² (sensor-update rows) | **0.9217** | — |
-| EKF mode | **Self-predicting** — no BMS SOC input ✅ | — |
-| Real datapoints | **634,450** (Quartz WLTP) | — |
-| EIS R² | **0.9999** (RWTH Aachen) | — |
+| Voltage MAE | **18.6 mV** (RMSE 38.4 mV) | Industry standard < 20 mV ✅ |
+| R² (sensor-update rows) | **0.9217** across 36 cells | **primary metric** — genuinely new measurements |
+| R² (all rows) | 0.9810 | secondary — inflated by repeated readings (see note) |
+| EKF mode | **Self-predicting** — no forced BMS SOC input | — |
+| Dataset | **12,690 independent 20 s windows** (from 634,450 raw rows) | Quartz WLTP, 36 cells |
+| EIS fit R² | **0.9999** | RWTH Aachen, offline 2RC+CPE fit |
 | Step time | **54 µs/cell** p99 | Real-time 1 Hz ✅ |
 
 ---
@@ -74,7 +74,8 @@ A six-layer physics-informed BMS stack combining Doyle-Fuller-Newman electrochem
 | Cell chemistry | NMC811 (confirmed, V_ocv ≈ 4.19 V at SOC 98%) |
 | Raw datapoints | 634,450 rows · 70.5 h · 10 WLTP cycles |
 | Resampled | 12,690 × 20 s windows |
-| **R² (all rows)** | **0.9810** (mean across 36 cells) |
+| **R² (sensor-update rows)** | **0.9217** (primary metric) |
+| **R² (all rows)** | 0.9810 (all rows — inflated by repeated readings) |
 | **MAE** | **18.6 mV** |
 | RMSE | 38.4 mV |
 | Cells R² > 0.90 | 36 / 36 |
@@ -82,7 +83,7 @@ A six-layer physics-informed BMS stack combining Doyle-Fuller-Newman electrochem
 | SOC mode | Self-predicting EKF — no BMS SOC forced |
 | Temperature gradient ΔT | 5.59 °C (P3S2 = 41.4 °C → P1S7 = 35.8 °C) |
 
-> **Note:** R² from all-row evaluation is 0.9810. The previously reported 0.8657 used forced BMS SOC with NMC OCP on 20 s resampled data where ~83% of timestamps carry repeated sensor readings (6-min update interval). The EKF self-predicting mode resolves this by tracking voltage continuously.
+**Note on R²:** The primary metric is **0.9217**, on sensor-update rows (timestamps with genuinely new measurements). The all-rows 0.9810 is reported for completeness but is inflated because ~83% of timestamps are repeated sensor readings (6-min BMS update interval) that are trivial to predict. We foreground the conservative 0.9217.
 
 ### EIS — RWTH Aachen
 
@@ -96,17 +97,19 @@ A six-layer physics-informed BMS stack combining Doyle-Fuller-Newman electrochem
 
 ---
 
-## vs Competition
+## Positioning vs Related Tools
+
+> **Note:** PyBaMM is a forward physics *simulator* — a different category of tool. With calibrated parameters it is highly accurate for offline cell simulation (more accurate than OpenCATHODE on clean single-trip SOC). The table compares *deployment* features for online field estimation, not simulation fidelity. See `scripts/compare_pybamm_all.py`.
 
 | Feature | PyBaMM | Commercial BMS | **OpenCATHODE Stack** |
 |---|---|---|---|
-| Multi-cell GNN state estimation | ❌ | ❌ | ✅ |
+| Multi-cell GNN state estimation | ❌ | ❌ | 🔬 prototype |
 | No BMS dependency (self-predicting EKF) | ❌ | ❌ | ✅ |
-| ChirpEIS online impedance | ❌ | ❌ | ✅ |
-| Real-time 1 Hz | ❌ (50–500 ms/cell) | ✅ | ✅ (54 µs/cell) |
+| ChirpEIS impedance (offline-validated) | ❌ | ❌ | ✅ |
+| Real-time embedded BMS | ❌ (offline simulator) | ✅ | ✅ (54 µs/cell) |
 | 5-constraint physics safety (TCOs) | ❌ | ❌ | ✅ |
 | Adaptive EKF (flat-plateau aware) | ❌ | ❌ | ✅ |
-| Kuramoto SOC synchronisation | ❌ | ❌ | ✅ |
+| Kuramoto SOC synchronisation | ❌ | ❌ | 🔬 prototype |
 | Open source | ✅ | ❌ | ✅ |
 
 ---
@@ -162,7 +165,7 @@ python -u data/validate_generic.py --all
 python scripts/audit_independent.py
 ```
 
-**Requirements:** `numpy scipy torch pandas pyarrow natsort` (see `requirements.txt`)
+**Requirements:** `numpy scipy torch pandas pyarrow natsort matplotlib` (see `requirements.txt`)
 
 ---
 
@@ -192,6 +195,6 @@ python scripts/audit_independent.py
   author  = {Sharma, Himanshu},
   year    = {2026},
   url     = {https://github.com/quant-himanshu/opencathode-stack},
-  note    = {MAE 18.6 mV, R²=0.9810, 36-cell Quartz WLTP validated}
+  note    = {MAE 18.6 mV, R²=0.9217 (sensor-update rows), 36-cell Quartz WLTP validated}
 }
 ```
