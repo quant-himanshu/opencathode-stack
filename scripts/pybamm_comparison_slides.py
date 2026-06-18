@@ -302,14 +302,13 @@ def _build_deck() -> None:
     _add_para(tf3, "", size=6)
 
     _add_para(tf3,
-              "③ The PCHIP fleet calibration is what makes the EKF competitive",
+              "③ Fleet SOC accuracy is OCV-model-limited (sourced numbers)",
               size=13, bold=True, color=NAVY, space_before=6)
     _add_para(tf3,
-              "Validated SOC RMSE is 5–8% after fleet PCHIP calibration (12-bin "
-              "δV(SOC) correction on 10% held-out cal split).  This comparison shows "
-              "WHY that calibration matters: the dominant single-trip error is OCV "
-              "model mismatch — exactly what PCHIP fixes.  Without it the EKF is "
-              "no better than Coulomb counting; with it, it is.",
+              "Mode B (free-running EKF, +20% init offset, PCHIP cal, held-out 90%): "
+              "Deng BAIC 11.9% · BMW i3 20.8% · VED 25.5% SOC RMSE.  "
+              "Spread reflects OCV-model chemistry mismatch, not filter instability — "
+              "the EKF converges and stays bounded; accuracy is gated by OCV table quality.",
               size=10.5, color=COAL, space_before=4)
     _add_para(tf3, "", size=6)
 
@@ -348,11 +347,11 @@ def _build_deck() -> None:
                   size=11, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
     _add_para(tf_stat, "", size=4)
     stats = [
-        ("SOC RMSE (fleet, w/ PCHIP cal)",  "5–8%"),
-        ("Voltage MAE (Quartz WLTP 36-cell)", "18.6 mV  ✓  < 20 mV target"),
-        ("R²  (634 450 real datapoints)",    "0.981"),
-        ("Step latency  (54 µs/cell)",       "real-time 1 Hz  ✓"),
-        ("Current-bias Δ at +2%",            "≤ 0.1 pp  (EKF)  vs  0.7 pp  (PyBaMM)"),
+        ("Voltage MAE (Quartz WLTP, 36 cells)", "18.6 mV  ✓  < 20 mV target"),
+        ("Fleet SOC RMSE (Deng / BMW / VED)",   "11.9% / 20.8% / 25.5%  — OCV-limited"),
+        ("Current-bias Δ at +2%",               "≤ 0.1 pp  (EKF)  vs  0.7 pp  (PyBaMM)"),
+        ("Step latency  (54 µs/cell)",           "real-time 1 Hz  ✓"),
+        ("Bias-immune via",                      "V_meas closed-loop Kalman update"),
     ]
     for label, val in stats:
         _add_para(tf_stat, f"  {label}:", size=9, bold=True, color=NAVY, space_before=4)

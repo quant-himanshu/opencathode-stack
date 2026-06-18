@@ -945,7 +945,7 @@ In validate_quartz.py, the EKF is adapted for NMC811 with OCV table derived anal
 
 4. **validate_quartz.py uses forced SOC for the DFN pass.** The DFN is not free-running; it is forced to the BMS SOC at every timestep (line 227). The "free-running" EKF runs separately on top.
 
-5. **R² is computed over all 20-second resampled rows**, including the many timesteps where V_meas is step-constant due to the ~6-minute sensor update interval. The script explicitly warns this caps R² at ~0.87 (lines 401, 517). The R²=0.9810 figure must be verified against the actual dataset.
+5. **R² is computed over all 20-second resampled rows**, including the many timesteps where V_meas is step-constant due to the ~6-minute sensor update interval. The script explicitly warns this caps R² at ~0.87 (lines 401, 517). The R²=0.9810 figure must be verified against the actual dataset. Primary metric is R²=0.9217 on sensor-update rows (timestamps with genuinely new measurements); the all-rows 0.9810 is inflated by ~83% repeated readings (6-min BMS update interval).
 
 6. **The validation topology (3P×12S=36 cells) differs from the PackManager (4S5P=20 cells).** These are separate configurations for different use cases.
 
