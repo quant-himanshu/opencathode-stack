@@ -27,8 +27,11 @@ A six-layer physics-informed BMS stack. The electrochemistry core (DFN-SPM, Dual
 | Deng BAIC EU500 | DualEKF | SOC RMSE | 11.9 % | |
 | VED Michigan (38 segments, 30 vehicles) | DualEKF | MAE (scale-cal) | **40.7 mV** | OBD-II resolution limited |
 | DFN step time | benchmark | p99 latency | **47 µs/cell** | MacBook M-series single core |
+| Deng BAIC EU500 (30,135 sessions, 20 vehicles) | Stress-Fatigue + SEI Degradation (Module 2) | MAE ΔSOH | **3.7% SOH** | SEI dominates; 6/16 held-out vehicles R²>0 |
 
 **Note on Quartz R²:** The 0.9217 figure is on rows with genuinely new sensor readings (~17% of timestamps). The 0.9810 uses all rows — 83% are repeated BMS readings (6-min update interval) that are trivial to predict. We foreground 0.9217.
+
+**Note on Module 2 (Stress-Fatigue + SEI Degradation):** Two models were compared: stress-only (ΔSOH = β·D^γ) and combined (ΔSOH = β·D^γ + λ·√t). The SEI calendar term dominates: λ=0.026 SOH/√yr → ~4% fade at 2.3 years, while the stress term (D_final≈0.002) contributes ≈3.5×10⁻⁹ ΔSOH — negligible. The key data limitation: 2-year fade signal (~3.8% SOH) is comparable to per-session BMS capacity noise (~2.8% SOH std), giving SNR<1 for 8/20 vehicles and negative R² for most. MAE_ΔSOH ≈ 3.7% for both models — limited by data noise, not model choice. 5 vehicles show apparent capacity recovery (BMS recalibration or seasonal effects) which no monotone model can fit. The finding is the driver: SEI/calendar aging dominates over mechanical stress-fatigue for normal urban BAIC EU500 operation over 2 years.
 
 **Note on NASA B0018:** The DualEKF uses an OCV function fitted empirically from 10 calibration discharge cycles (IR-drop compensation, not GITT). This introduces ~27 mV OCV approximation error. The Sanyo NMC chemistry (B0018) differs from the NMC811 DFN cartridge — so the DFN layer is not used directly here. MAE ~102 mV reflects both the OCV approximation error and the chemistry gap.
 
@@ -118,9 +121,16 @@ opencathode-stack/
 │   └── policy_engine.py     # ACO routing + Kuramoto sync      [prototype]
 ├── deploy/
 │   └── realtime_bms.py      # 1 Hz real-time BMS loop
+├── degradation/
+│   ├── deng_loader.py       # Load + clean Deng fleet, chemistry detect  [Module 2]
+│   ├── cycle_segmentor.py   # Session segmentation (30-min gap)          [Module 2]
+│   ├── stress_model.py      # DIS stress proxy (DoD × C-rate × Arrhenius)[Module 2]
+│   ├── fatigue.py           # Rainflow + Palmgren-Miner damage            [Module 2]
+│   └── soh_predictor.py     # D → SOH power-law, calibrated on V01–V04  [Module 2]
 ├── data/
 │   ├── validate_quartz.py   # 36-cell WLTP validation script   [PRIMARY VALIDATION]
 │   ├── validate_generic.py  # Fleet validation (VED/BMW/Deng)
+│   ├── validate_deng_degradation.py  # Module 2 end-to-end runner
 │   └── quartz_wltp/         # 10 × parquet files (634k rows, real data)
 │   ├── bmw_i3/              # 70 CSV files, real trips (BMW CAN)
 │   ├── deng20/              # 20 CSV files, real 20-vehicle fleet

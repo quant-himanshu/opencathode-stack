@@ -60,6 +60,24 @@
       "mae_scale_cal_mv": 40.7,
       "soc_rmse_pct": 20.2,
       "was_real_data": true
+    },
+    "deng_degradation_module2": {
+      "note": "Module 2 v2: stress+SEI degradation. See data/deng_degradation_report.json",
+      "dataset": "Deng BAIC EU500 (20 vehicles, 30135 sessions, 2019-2021)",
+      "chemistry": "NMC (auto-detected from cell voltage 3.50-4.26 V, all 20 vehicles)",
+      "models_compared": [
+        "Model A: ΔSOH = β_s · D^γ_s (stress-only)",
+        "Model B: ΔSOH = β_c · D^γ_c + λ·√t (stress + SEI calendar)"
+      ],
+      "model_B_params": {"lambda": 0.026393, "beta": 22.0944, "gamma": 3.63},
+      "dominant_driver": "SEI/calendar aging (100% of modelled fade at 2.3 yr; stress term ≈ 3.5e-9)",
+      "held_out_mae_dsoh_A": 0.0369,
+      "held_out_mae_dsoh_B": 0.0373,
+      "held_out_r2_max_B": 0.1913,
+      "n_held_out_positive_r2": 6,
+      "data_snr": "SNR < 1 for 8/20 vehicles; 5 vehicles show negative fade (BMS recal/seasonal). R² not reliable — use MAE_ΔSOH.",
+      "limitation": "2-year observation window; fade signal (~3.8% SOH) comparable to BMS noise (~2.8% SOH std). Needs 5+ yr data or lab cycling to validate stress term.",
+      "was_real_data": true
     }
   }
 }
