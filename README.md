@@ -28,10 +28,13 @@ A six-layer physics-informed BMS stack. The electrochemistry core (DFN-SPM, Dual
 | VED Michigan (38 segments, 30 vehicles) | DualEKF | MAE (scale-cal) | **40.7 mV** | OBD-II resolution limited |
 | DFN step time | benchmark | p99 latency | **47 µs/cell** | MacBook M-series single core |
 | Deng BAIC EU500 (30,135 sessions, 20 vehicles) | Stress-Fatigue + SEI Degradation (Module 2) | MAE ΔSOH | **3.7% SOH** | SEI dominates; 6/16 held-out vehicles R²>0 |
+| NASA PCoE B0005/B0006/B0007/B0018 (lab cycling) | Stress-Fatigue Module 2 (within-cell fit) | R² | **0.9725** | 1C, DoD≈100% lab regime where stress-fatigue applies |
 
 **Note on Quartz R²:** The 0.9217 figure is on rows with genuinely new sensor readings (~17% of timestamps). The 0.9810 uses all rows — 83% are repeated BMS readings (6-min update interval) that are trivial to predict. We foreground 0.9217.
 
-**Note on Module 2 (Stress-Fatigue + SEI Degradation):** Two models were compared: stress-only (ΔSOH = β·D^γ) and combined (ΔSOH = β·D^γ + λ·√t). The SEI calendar term dominates: λ=0.026 SOH/√yr → ~4% fade at 2.3 years, while the stress term (D_final≈0.002) contributes ≈3.5×10⁻⁹ ΔSOH — negligible. The key data limitation: 2-year fade signal (~3.8% SOH) is comparable to per-session BMS capacity noise (~2.8% SOH std), giving SNR<1 for 8/20 vehicles and negative R² for most. MAE_ΔSOH ≈ 3.7% for both models — limited by data noise, not model choice. 5 vehicles show apparent capacity recovery (BMS recalibration or seasonal effects) which no monotone model can fit. The finding is the driver: SEI/calendar aging dominates over mechanical stress-fatigue for normal urban BAIC EU500 operation over 2 years.
+**Note on Module 2 (Stress-Fatigue + SEI Degradation — Deng field):** Two models were compared: stress-only (ΔSOH = β·D^γ) and combined (ΔSOH = β·D^γ + λ·√t). The SEI calendar term dominates: λ=0.026 SOH/√yr → ~4% fade at 2.3 years, while the stress term (D_final≈0.002) contributes ≈3.5×10⁻⁹ ΔSOH — negligible. The key data limitation: 2-year fade signal (~3.8% SOH) is comparable to per-session BMS capacity noise (~2.8% SOH std), giving SNR<1 for 8/20 vehicles and negative R² for most. MAE_ΔSOH ≈ 3.7% for both models — limited by data noise, not model choice. 5 vehicles show apparent capacity recovery (BMS recalibration or seasonal effects) which no monotone model can fit. The finding is the driver: SEI/calendar aging dominates over mechanical stress-fatigue for normal urban BAIC EU500 operation over 2 years.
+
+**Note on Module 2 (Stress-Fatigue — NASA PCoE lab validation):** The same Miner damage model validated on controlled NASA lab cycling (B0005/B0006/B0007/B0018: 1C, DoD≈100%, 132–168 cycles, direct capacity measurement, SNR≈50–99). Within-cell fit R²=0.9725 (mean over 4 cells, MAE=1.3% SOH) confirms the model correctly captures degradation trajectory shape in the appropriate regime. Cross-cell generalization is limited (R²=−0.68) by manufacturing batch variability: B0006 degrades 45% faster than B0005 at nearly identical cumulative damage D values, requiring per-cell β calibration. Key comparison: stress-fatigue R²=0.97 on controlled lab data (where it is the dominant mechanism) vs. R²=−1.8 on 2-year field data (where SEI/calendar aging dominates). This regime distinction is the central finding, consistent with Sulzer et al. (2021 Joule, doi:10.1016/j.joule.2021.08.020).
 
 **Note on NASA B0018:** The DualEKF uses an OCV function fitted empirically from 10 calibration discharge cycles (IR-drop compensation, not GITT). This introduces ~27 mV OCV approximation error. The Sanyo NMC chemistry (B0018) differs from the NMC811 DFN cartridge — so the DFN layer is not used directly here. MAE ~102 mV reflects both the OCV approximation error and the chemistry gap.
 
@@ -136,9 +139,11 @@ opencathode-stack/
 │   ├── deng20/              # 20 CSV files, real 20-vehicle fleet
 │   ├── ved/                 # 54 CSV files, real Michigan fleet
 │   └── nasa/
-│       └── B0018.mat        # Real NASA B0018 discharge data (132 cycles)
+│       ├── B0018.mat        # Real NASA B0018 discharge data (132 cycles)
+│       └── 5. Battery Data Set/1. BatteryAgingARC-FY08Q4.zip  # B0005–B0018 full aging dataset
 ├── validation/
-│   └── nasa_validator.py    # DualEKF on real NASA B0018 data
+│   ├── nasa_validator.py              # DualEKF on real NASA B0018 data
+│   └── nasa_degradation_validator.py  # Stress-fatigue model on NASA B0005/B0006/B0007/B0018
 └── main.py                  # Full stack demo + benchmark
 ```
 
@@ -180,6 +185,7 @@ python main.py
 | Deng BAIC EU500 fleet | `data/deng20/` | 20 CSV files | ✅ |
 | VED Michigan fleet | `data/ved/` | 54 CSV files | ✅ |
 | NASA B0018 18650 cell | `data/nasa/B0018.mat` | 8 MB | ✅ |
+| NASA PCoE B0005/B0006/B0007/B0018 | `data/nasa/5. Battery Data Set/` | zip archive | ✅ |
 | RWTH Aachen EIS spectra | `data/rwth/parsed_eis_cells.csv` | 350 rows | ✅ |
 
 ---

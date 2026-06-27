@@ -61,6 +61,18 @@
       "soc_rmse_pct": 20.2,
       "was_real_data": true
     },
+    "nasa_degradation_module2": {
+      "note": "Module 2 stress-fatigue on NASA PCoE lab data. See validation/nasa_degradation_validator.py",
+      "dataset": "NASA PCoE B0005/B0006/B0007/B0018 (Saha & Goebel 2009)",
+      "protocol": "1C CC discharge, DoD≈100%, T≈31–33°C, 132–168 cycles per cell",
+      "eval_A_within_cell_r2": 0.9725,
+      "eval_A_within_cell_mae": 0.0126,
+      "eval_B_cross_cell_r2": -0.6835,
+      "eval_B_cross_cell_note": "B0006 degrades 45% faster at similar D — manufacturing batch variability",
+      "deng_field_r2_for_comparison": -1.80,
+      "regime_comparison": "Within-cell R²=0.97 (YES — stress-fatigue works in lab regime) vs Deng field R²=-1.80 (NO — SEI regime, per Sulzer 2021 Joule)",
+      "was_real_data": true
+    },
     "deng_degradation_module2": {
       "note": "Module 2 v2: stress+SEI degradation. See data/deng_degradation_report.json",
       "dataset": "Deng BAIC EU500 (20 vehicles, 30135 sessions, 2019-2021)",
