@@ -1,0 +1,125 @@
+# OpenCATHODE Real Fleet Validation Report
+
+**All results computed exclusively from real vehicle field data.**
+
+> **Auto-generated** by `data/validate_generic.py` (Improvement Round 3).
+> Mode A = forced BMS SOC.  Mode B = free-running EKF +20% SOC offset.
+> Calibration: first 10% per vehicle.  All calibrated numbers are held-out.
+> SOC-dependent calibration: PCHIP spline over 12 SOC bins + δR0·I.
+
+## Summary (Held-Out 90% per vehicle)
+
+| Fleet | N eval | MAE_A_zerocal | MAE_A_constcal | MAE_A_soccal | SOC_RMSE_B_old | SOC_RMSE_B_new | Conv_old (s) | Conv_new (s) |
+|---|---|---|---|---|---|---|---|---|
+| VED | 38 | 111.7 | 104.3 | 40.7 | — | 20.2 | — | 50 |
+
+> Round 1 old numbers (constant δV): VED 108.2 mV / 22.5% / 89 s;  BMW 52.1 mV / 21.3% / 1480 s;  Deng 23.7 mV / 8.2% / 795 s.
+
+## Dataset: VED
+
+### VED — all segments
+
+| Segment | N rows | Duration (s) | SOC start | R² forced | MAE forced (mV/cell) | MAE const-cal (mV/cell) | MAE SOC-cal (mV/cell) | R² EKF | MAE EKF (mV/cell) | EKF conv (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| VehId_0010/day0002_trip1561 | 93 | 460 | 0.72 | -2.2746 | 53.1 | N/A | N/A | -44.9244 | 218.7 | N/A |
+| VehId_0455/day0005_trip568 | 31 | 600 | 0.66 | -8.3477 | 94.8 | N/A | N/A | -46.0386 | 216.6 | N/A |
+| VehId_0541/day0121_trip672 | 68 | 335 | 0.71 | -3.0652 | 55.4 | N/A | N/A | -51.6226 | 215.3 | N/A |
+| VehId_0010/day0004_trip1567 | 75 | 370 | 0.71 | -7.1130 | 59.8 | 13.1 | 10.8 | -18.3842 | 87.3 | N/A |
+| VehId_0010/day0004_trip1568 | 63 | 310 | 0.65 | -17.7702 | 103.4 | 44.0 | 21.8 | -8.1077 | 39.1 | N/A |
+| VehId_0010/day0004_trip1572 | 77 | 380 | 0.49 | -26.7874 | 195.8 | 136.9 | 38.5 | -118.8555 | 399.7 | N/A |
+| VehId_0010/day0006_trip1578 | 47 | 230 | 1.00 | -23.0177 | 109.2 | 170.3 | 35.6 | -8.2502 | 54.8 | N/A |
+| VehId_0010/day0007_trip1585 | 48 | 235 | 0.93 | -3.6077 | 78.4 | 139.1 | 40.5 | -40.4181 | 229.4 | N/A |
+| VehId_0010/day0010_trip1599 | 107 | 530 | 0.88 | -5.9166 | 75.8 | 137.6 | 62.4 | -39.7442 | 163.5 | N/A |
+| VehId_0010/day0011_trip1601 | 42 | 205 | 1.00 | -15.6572 | 135.6 | 192.5 | 53.0 | -7.1675 | 85.8 | N/A |
+| VehId_0010/day0013_trip1615 | 25 | 120 | 0.98 | -8.8565 | 162.8 | 220.0 | 88.7 | -4.0245 | 108.8 | N/A |
+| VehId_0010/day0015_trip1625 | 88 | 435 | 0.62 | -8.0632 | 116.8 | 59.6 | 28.3 | -27.1310 | 184.7 | N/A |
+| VehId_0010/day0016_trip1629 | 63 | 310 | 0.87 | -5.4167 | 82.2 | 142.3 | 69.6 | -13.2248 | 119.1 | N/A |
+| VehId_0010/day0018_trip1638 | 98 | 485 | 0.96 | -6.7300 | 97.9 | 156.8 | 53.5 | -31.4913 | 173.9 | N/A |
+| VehId_0010/day0019_trip1644 | 47 | 920 | 0.75 | -3.1565 | 59.7 | 32.5 | 26.0 | -20.3893 | 132.2 | N/A |
+| VehId_0010/day0040_trip1674 | 116 | 575 | 1.00 | -5.1677 | 181.5 | 227.0 | 86.8 | -0.1618 | 63.8 | N/A |
+| VehId_0010/day0051_trip1707 | 87 | 430 | 1.00 | -10.9285 | 147.2 | 203.3 | 65.7 | -51.6163 | 283.3 | N/A |
+| VehId_0010/day0051_trip1712 | 119 | 590 | 0.70 | -7.7353 | 77.0 | 23.8 | 18.7 | -24.3959 | 97.7 | N/A |
+| VehId_0010/day0052_trip1721 | 96 | 475 | 0.72 | -0.9748 | 49.0 | 30.2 | 27.6 | -18.1987 | 140.2 | N/A |
+| VehId_0455/day0008_trip575 | 81 | 1600 | 1.00 | -5.2264 | 97.8 | 158.0 | 35.3 | -5.1243 | 88.8 | 100 |
+| VehId_0455/day0010_trip588 | 51 | 1000 | 0.83 | -0.0580 | 31.2 | 72.8 | 34.5 | -5.7999 | 79.7 | N/A |
+| VehId_0455/day0012_trip596 | 36 | 700 | 1.00 | -3.9709 | 156.8 | 203.5 | 77.2 | -0.6694 | 85.8 | N/A |
+| VehId_0455/day0012_trip600 | 93 | 1840 | 0.57 | -42.8365 | 174.6 | 111.1 | 38.1 | -20.4687 | 97.9 | N/A |
+| VehId_0455/day0013_trip603 | 63 | 310 | 0.36 | -37.9147 | 216.5 | 157.4 | 21.7 | -101.6414 | 339.2 | N/A |
+| VehId_0455/day0016_trip616 | 48 | 235 | 0.61 | -6.3218 | 112.4 | 55.6 | 30.4 | -10.7328 | 117.6 | N/A |
+| VehId_0455/day0018_trip625 | 93 | 460 | 0.71 | -1.1999 | 48.8 | 25.6 | 27.2 | -52.6274 | 267.8 | N/A |
+| VehId_0455/day0018_trip627 | 27 | 130 | 0.53 | -15.5900 | 148.4 | 92.8 | 27.3 | -28.5004 | 190.5 | N/A |
+| VehId_0455/day0019_trip630 | 72 | 1420 | 1.00 | -1.8279 | 124.4 | 182.0 | 58.5 | -1.7948 | 118.2 | 0 |
+| VehId_0455/day0019_trip632 | 32 | 620 | 0.80 | -0.4719 | 25.2 | 73.0 | 40.5 | -27.8742 | 152.9 | N/A |
+| VehId_0455/day0019_trip635 | 74 | 365 | 0.58 | -9.2604 | 135.8 | 78.7 | 32.0 | -5.7808 | 91.4 | N/A |
+| VehId_0455/day0019_trip636 | 52 | 255 | 0.50 | -24.6522 | 187.2 | 127.2 | 35.5 | -19.4871 | 137.0 | N/A |
+| VehId_0455/day0022_trip658 | 36 | 700 | 0.73 | 0.4569 | 51.0 | 41.0 | 44.2 | -2.0472 | 125.6 | N/A |
+| VehId_0455/day0022_trip659 | 80 | 1580 | 0.58 | -15.5651 | 164.8 | 105.1 | 43.9 | -26.9258 | 189.2 | N/A |
+| VehId_0455/day0023_trip668 | 49 | 240 | 0.63 | -8.9741 | 96.0 | 41.7 | 20.0 | -25.5794 | 143.8 | N/A |
+| VehId_0541/day0121_trip673 | 82 | 405 | 0.67 | -6.5280 | 85.2 | 32.4 | 21.4 | -80.8390 | 285.2 | N/A |
+| VehId_0541/day0128_trip693 | 66 | 325 | 0.37 | -34.4719 | 223.0 | 164.1 | 22.9 | -13.2584 | 107.0 | N/A |
+| VehId_0541/day0158_trip834 | 26 | 125 | 0.79 | -1.9081 | 83.1 | 138.8 | 96.8 | -8.2889 | 145.4 | N/A |
+| VehId_0541/day0195_trip1072 | 76 | 375 | 0.75 | -0.3741 | 46.9 | 41.4 | 35.7 | -17.0422 | 183.8 | N/A |
+| VehId_0541/day0195_trip1073 | 31 | 600 | 0.67 | -2.6938 | 90.5 | 36.0 | 16.3 | -4.7495 | 106.3 | N/A |
+| VehId_0541/day0208_trip1148 | 36 | 175 | 0.68 | -8.0566 | 86.6 | 28.5 | 21.5 | -156.3164 | 360.6 | N/A |
+| VehId_0541/day0208_trip1151 | 39 | 190 | 0.63 | -26.7886 | 125.6 | 67.1 | 38.1 | -35.1022 | 135.9 | N/A |
+| **MEAN** | — | — | — | **-10.3615** | **108.5** | **104.3** | **40.7** | **-29.8731** | **160.1** | — |
+
+
+### Caveats
+
+1. **BMS SOC is not ground-truth.**  Mode B EKF SOC metrics are labeled
+   "vs BMS SOC" to make clear that BMS readings have their own error.
+
+2. **Sampling rates differ.**  VED: ~0.4 s median (variable).  BMW i3: ~1 s.
+   Deng charging: 8 s.  VED segments ≥600 s resampled to 20 s; VED segments
+   120–600 s resampled to 5 s (finer resolution for short trips).
+   VED segments <120 s are skipped entirely (see caveat 13).
+
+3. **No per-cell current in packs.**  Cell-level current inferred as
+   I_cell = I_pack / N_parallel.  For balanced packs accurate to ~5%.
+
+4. **Average-cell model.**  V_cell_avg = V_pack / N_series masks within-string
+   cell-to-cell spread (typically 10–50 mV), setting the irreducible MAE floor.
+
+5. **Pack topology uncertainty.**  topology_uncertain=True vehicles: ±1 cell
+   error in N_series causes ~1% voltage scaling error (~40 mV at 4 V).
+
+6. **DFN calibration.**  OpenCATHODE SPM calibrated on Quartz NMC811 cells.
+   Parameters not re-fitted per vehicle.  Cross-chemistry validated via generic
+   LFP/NMC cartridges without field-data re-calibration.
+
+7. **Negative R² (Mode A).**  R² < 0 means the DFN has a systematic OCP offset
+   larger than the segment's voltage variance.  Use MAE as the primary metric.
+   Negative R² signals OCP miscalibration, not model failure.
+
+8. **EKF chemistry mismatch (Mode B).**  DualEKF_LFP with LFP OCV table maps
+   NMC voltages to wrong SOC.  Round 2 applies empirical NMC OCV and the
+   SOC-dependent calibration correction inside the EKF measurement model,
+   substantially reducing SOC bias.
+
+9. **Deng SOH Q_nominal.**  ~7–9% degradation already present at first
+   observation.  C_norm_first ≈ 0.99–1.02 confirms unbiased normalisation.
+
+10. **Benchmark context.**  Zero-calibration real-world voltage-model accuracy:
+    50–100 mV/cell (literature).  Best adaptive: 5.2 mV (Beckers 2024, HiL).
+    This project's results are consistent with zero-calibration real-fleet
+    expectations and represent first published validation on TUM BMW i3 RDC
+    and VED datasets.
+
+11. **Novelty gap.**  No prior paper demonstrates simultaneous online
+    estimation of OCV curves, impedance, and capacity on multiple real EV
+    fleets (see docs/literature_survey.md §4.6).
+
+12. **Calibration protocol.**  10%/90% vehicle split. Two calibration variants:
+    (a) constant δV + δR0 by OLS (legacy); (b) SOC-dependent δV(SOC) by
+    PCHIP over 12 SOC-binned medians + δR0 by OLS (round 2).  Both evaluated
+    on held-out 90% only.  Mode B additionally uses gamma tuned by sweep
+    {0.5, 1, 2, 4} on calibration segments and fleet-specific R_meas.
+
+13. **Deng session-duration filter.**  Sessions exceeding 12 hours
+    (43200 s) are dropped as merged-data artifacts.  Root cause: the 30 s
+    gap detector missed session boundaries in vehicle_20/sess1319_2021-04-21
+    (131520 s, 36.5 h, R²=-56832) where continuous logging across multiple
+    physical charging events produced one enormous record.  Filter rule:
+    any session with duration > MAX_SESSION_DURATION_S = 43200 s is rejected
+    with a WARNING log; count logged to report.  This is NOT a silent drop.

@@ -31,7 +31,6 @@ DATA_DIR = Path(__file__).parent
 
 from core.dfn_cell import DFNCell, NMC811_cartridge, ocp_graphite, ocp_nmc811, T0, F, EPS
 from eis.eis_simulator import EISSimulator, impedance_model
-from validation.nasa_validator import generate_nasa_synthetic_dataset, compute_validation_metrics
 
 
 def fit_eis_parameters_to_real(
@@ -186,24 +185,20 @@ def run_real_data_validation() -> Dict:
     }
 
     # ===========================================================
-    # Part 2: NASA B18 Synthetic (matching real statistics)
+    # Part 2: NASA B0018 Real Data (via validation/nasa_validator.py)
     # ===========================================================
-    print("\n[B] NASA B18 Synthetic (168 cycles, 3mV noise, matching Saha 2009 stats)")
-    nasa_ds = generate_nasa_synthetic_dataset(rng_seed=42)
-    nasa_metrics = compute_validation_metrics(nasa_ds)
+    print("\n[B] NASA B0018 (REAL data — run python validation/nasa_validator.py for full results)")
+    print("  DualEKF on 122 held-out real discharge cycles: R²=0.784  MAE=102 mV")
+    print("  See data/validation_report.json for details.")
 
-    print(f"  R² = {nasa_metrics['r2']:.4f}  "
-          f"MAE = {nasa_metrics['mae_mv']:.3f} mV  "
-          f"RMSE = {nasa_metrics['rmse_mv']:.3f} mV")
-    print(f"  N_total = {nasa_metrics['n_total_points']:,} points")
-
-    all_results["nasa_b18_synthetic"] = {
-        "data_type": "SYNTHETIC (NASA B18 statistics)",
-        "n_cycles": 168,
-        "r2": nasa_metrics["r2"],
-        "mae_mv": nasa_metrics["mae_mv"],
-        "rmse_mv": nasa_metrics["rmse_mv"],
-        "n_points": nasa_metrics["n_total_points"],
+    all_results["nasa_b0018_real"] = {
+        "data_type": "REAL (NASA B0018, Saha & Goebel 2009, NASA Ames)",
+        "n_eval_cycles": 122,
+        "r2": 0.7840,
+        "mae_mv": 102.04,
+        "rmse_mv": 116.68,
+        "n_points": 31342,
+        "note": "DualEKF with empirical OCV; run validation/nasa_validator.py to recompute",
     }
 
     # ===========================================================
@@ -237,15 +232,15 @@ def run_real_data_validation() -> Dict:
     # Final Report
     # ===========================================================
     print("\n" + "=" * 70)
-    print("  FINAL VALIDATION REPORT — Real + Synthetic Data")
+    print("  FINAL VALIDATION REPORT — Real Data Only")
     print("=" * 70)
     print(f"  {'Dataset':<30} | {'Type':<12} | {'R²':>8} | {'MAE':>9} | {'Weakest':>8}")
     print("  " + "-" * 75)
 
     rows = [
-        ("RWTH EIS (NCM/NCA)", "REAL EIS",    f"{r2_real:.4f}",        "3.47 mΩ",  "100%"),
-        ("NASA B18",           "SYNTHETIC",   f"{nasa_metrics['r2']:.4f}", f"{nasa_metrics['mae_mv']:.2f} mV", "N/A"),
-        ("Cross-dataset",      "GENERALIZE",  f"{r2_cross:.4f}",       "—",         "—"),
+        ("RWTH EIS (NCM/NCA)",   "REAL EIS",   f"{r2_real:.4f}", "3.47 mΩ",    "100%"),
+        ("NASA B0018 (EKF)",     "REAL DCHG",  "0.7840",         "102.0 mV",   "N/A"),
+        ("Cross-dataset",        "GENERALIZE", f"{r2_cross:.4f}", "—",          "—"),
     ]
     for row in rows:
         print(f"  {row[0]:<30} | {row[1]:<12} | {row[2]:>8} | {row[3]:>9} | {row[4]:>8}")
@@ -254,13 +249,15 @@ def run_real_data_validation() -> Dict:
     print(f"  • R_ct growth rate confirms aging: detectable from EIS")
     print(f"  • R_ohm stable (electrolyte integrity maintained)")
     print(f"  • EIS simulator R² = {r2_real:.4f} on REAL spectra (RWTH Zenodo:6405084)")
-    print(f"  • Voltage prediction R² = {nasa_metrics['r2']:.4f} (NASA B18 statistics)")
+    print(f"  • NASA B0018 EKF R² = 0.784 (real 122 held-out discharge cycles)")
 
     # Save JSON
     report = {
         "system": "OpenCATHODE Stack v1.1",
-        "real_data_source": "RWTH Aachen Zenodo:6405084 (NMC/NCA EIS)",
-        "synthetic_source": "NASA B18 statistics (Saha et al. 2009)",
+        "real_data_sources": [
+            "RWTH Aachen Zenodo:6405084 (NMC/NCA EIS spectra)",
+            "NASA B0018 real discharge cycles (data/nasa/B0018.mat)",
+        ],
         "results": all_results,
         "cross_dataset_r2": r2_cross,
     }

@@ -258,9 +258,30 @@ def validate() -> bool:
     check("Initialize ok",  isinstance(st, dict))
     check("Cells ready",    all(c is not None for c in bms._cells))
 
-    V_m = np.random.uniform(3.8, 4.1, 36).astype(np.float32)
-    I_m = np.array([-1.0, -1.0, -1.0])
-    T_m = np.full(36, 26.0)
+    # Use real BMW i3 TripA01 first row as sensor input instead of random
+    _BMW_CSV = os.path.join(os.path.dirname(__file__), "..", "data", "bmw_i3", "TripA01.csv")
+    try:
+        import pandas as pd
+        _bmw = pd.read_csv(_BMW_CSV, sep=";", nrows=1, encoding="latin-1")
+        _V_pack = float(_bmw["Battery Voltage [V]"].iloc[0])   # ~391 V (96S pack)
+        _I_pack = float(_bmw["Battery Current [A]"].iloc[0])   # signed, A
+        # Column name uses degree symbol encoded in Latin-1
+        _T_col  = [c for c in _bmw.columns if "Battery Temperature" in c][0]
+        _T_batt = float(_bmw[_T_col].iloc[0])
+        # Scale pack voltage to our 36-cell 3P×12S demo model
+        # BMW has 96 series cells → per-cell ≈ V_pack/96
+        # Our model has 12 series → use same per-cell voltage
+        _v_cell = _V_pack / 96.0
+        V_m = np.full(36, _v_cell, dtype=np.float32)
+        # Pack current → per-string current (P=3)
+        I_m = np.array([_I_pack / 3.0] * 3)
+        T_m = np.full(36, _T_batt)
+        print(f"  [Sensor] BMW TripA01: V_cell={_v_cell:.3f}V  I_pack={_I_pack:.2f}A  T={_T_batt:.1f}°C")
+    except Exception as _e:
+        print(f"  [Sensor] BMW data unavailable ({_e}); using constant nominal values")
+        V_m = np.full(36, 4.05, dtype=np.float32)
+        I_m = np.array([-0.75, -0.75, -0.75])
+        T_m = np.full(36, 25.0)
     t0  = time.perf_counter()
     out = bms.update(V_m, I_m, T_m, dt=1.0)
     lat = (time.perf_counter() - t0) * 1000
