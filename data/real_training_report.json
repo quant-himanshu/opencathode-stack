@@ -1,7 +1,6 @@
 {
   "system": "OpenCATHODE Stack v1.1",
   "real_data_source": "RWTH Aachen Zenodo:6405084 (NMC/NCA EIS)",
-  "synthetic_source": "NASA B18 statistics (Saha et al. 2009)",
   "results": {
     "rwth_eis_real": {
       "data_type": "REAL EIS",
@@ -12,14 +11,17 @@
       "R_ct_growing": true,
       "weakest_cell_accuracy": 1.0
     },
-    "nasa_b18_synthetic": {
-      "data_type": "SYNTHETIC (NASA B18 statistics)",
-      "n_cycles": 168,
-      "r2": 0.9884499725917828,
-      "mae_mv": 2.396768450573754,
-      "rmse_mv": 3.0107950946867454,
-      "n_points": 84000
+    "nasa_b0018_real": {
+      "data_type": "REAL (NASA B0018, Saha & Goebel 2009)",
+      "n_eval_cycles": 122,
+      "r2": 0.784,
+      "mae_mv": 102.04,
+      "rmse_mv": 116.68
     }
   },
-  "cross_dataset_r2": 0.7527724917910406
+  "cross_dataset_r2": 0.7527724917910406,
+  "real_data_sources": [
+    "RWTH Aachen Zenodo:6405084 (NMC/NCA EIS spectra)",
+    "NASA B0018 real discharge cycles (data/nasa/B0018.mat)"
+  ]
 }

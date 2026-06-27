@@ -1,48 +1,43 @@
 {
   "system": "OpenCATHODE Stack v1.1",
-  "validation_dataset": "NASA B18 (synthetic, matching statistics)",
-  "n_cycles": 168,
-  "n_total_points": 84000,
+  "validation_dataset": "NASA B0018 (REAL data \u2014 Saha & Goebel 2009, NASA Ames)",
+  "data_file": "B0018.mat",
+  "validation_layer": "DualEKF_LFP with empirical OCV (B0018-specific)",
+  "n_discharge_cycles_total": 132,
+  "n_cal_cycles": 10,
+  "n_eval_cycles": 122,
+  "n_total_eval_points": 31342,
+  "calibration": {
+    "r_int_mohm": 98.18056900963924,
+    "ocv_poly_degree": 5,
+    "note": "OCV fitted from dynamic discharge + IR-drop compensation; not quasi-static GITT \u2014 introduces ~27 mV OCV approximation error"
+  },
   "metrics": {
-    "r2": 0.9884499725917828,
-    "mae_mv": 2.396768450573754,
-    "rmse_mv": 3.0107950946867454
+    "r2": 0.7839682513174456,
+    "mae_mv": 102.04371178762469,
+    "rmse_mv": 116.68128983650914
+  },
+  "per_cycle_r2_range": [
+    0.6633253782234048,
+    0.8670391191075226
+  ],
+  "per_cycle_mae_range_mv": [
+    74.7576010843962,
+    136.11407520558055
+  ],
+  "capacity_Ah": {
+    "initial": 1.8685276688831949,
+    "final": 1.3606817861369576,
+    "fade_pct": 27.178932975061215
   },
   "benchmarks": {
-    "step_mean_us": 41.87671797505269,
-    "step_p99_us": 48.675347934477024
+    "mean_us": 39.162243398701925,
+    "p50_us": 38.29100023722276,
+    "p99_us": 47.460921050515026
   },
-  "plating_warning_s": 24.0,
-  "capacity_fade": {
-    "initial_mAh": 500.0,
-    "final_mAh": 138.88888888888889,
-    "fade_pct_per_cycle": 0.0350140056022409
-  },
-  "comparison": {
-    "opencathode_original": {
-      "r2": 0.9844,
-      "mae_mv": 3.14,
-      "rmse_mv": 2.26,
-      "speed_us": 37,
-      "cells": 1,
-      "eis": false,
-      "gnn": false,
-      "real_time": true,
-      "nature_algos": false
-    },
-    "opencathode_stack": {
-      "r2": 0.9884499725917828,
-      "mae_mv": 2.396768450573754,
-      "rmse_mv": 3.0107950946867454,
-      "speed_us": 48.675347934477024,
-      "cells": 20,
-      "eis": true,
-      "gnn": true,
-      "real_time": true,
-      "nature_algos": true,
-      "plating_warning_s": 24.0
-    }
-  },
-  "generation_time_s": 3.5222894169855863,
-  "plot_path": "/Users/himanshusharma/Desktop/opencathode-stack/validation/../dashboard/final_validation.png"
+  "honest_limitations": [
+    "NMC811 DFN cartridge not applicable to Sanyo B0018 chemistry; EKF used instead",
+    "OCV fitted from dynamic discharge (not GITT): ~27 mV systematic OCV error",
+    "MAE ~100 mV reflects model-to-chemistry gap, not fundamental EKF limitation"
+  ]
 }
