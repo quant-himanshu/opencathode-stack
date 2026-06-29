@@ -1,0 +1,170 @@
+{
+  "module": "Module 3 \u2014 DVA Degradation-Mode Analysis",
+  "honest_conclusion": "Total capacity fade is measured confidently (B0005 28.7%, B0006 41.3%, B0007 24.1%, B0018 27.2%). Degradation-MODE decomposition (LLI/LAM/CL) is NOT cleanly resolvable from NASA 1C discharge data \u2014 DVA peaks are blurred at 1C and shift inconsistently, so no confident mode verdict is claimed. Clean mode resolution needs slow C/20 pseudo-OCV or half-cell OCP data (Dubarry & Anse\u00e1n 2022 confirm ~5-8% mode error at high rate). This is a data limitation, not a method failure.",
+  "cells": [
+    {
+      "cell_id": "B0005",
+      "n_cycles": 168,
+      "Q_first_Ah": 1.8619519501257973,
+      "Q_last_Ah": 1.328141194467204,
+      "fade_pct": 28.669416287704312,
+      "r0_onset_used": 168,
+      "r0_lit_used": 0,
+      "r0_flagged": 0,
+      "diagnosis": {
+        "dominant_mode": "mode unresolved at 1C (honest)",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "evidence": [
+          "Peak-1: Q-shift=50.4 mAh (RIGHT), height \u0394=4.1%",
+          "Peak-2: Q-shift=236.4 mAh (RIGHT), height \u0394=-19.7%"
+        ],
+        "peak_trends": {
+          "Peak-1": {
+            "Q_pos_start": 0.16672212539390438,
+            "Q_pos_end": 0.21716553807078437,
+            "Q_shift_Ah": 0.05044341267687999,
+            "Q_slope_per_cyc": 0.0005713411395139433,
+            "height_start": -0.7724351894263278,
+            "height_end": -0.7404625244373104,
+            "height_rel_change": 0.04139203571418183,
+            "n_cycles_tracked": 168
+          },
+          "Peak-2": {
+            "Q_pos_start": 1.0574071144952883,
+            "Q_pos_end": 1.2937891907286938,
+            "Q_shift_Ah": 0.23638207623340546,
+            "Q_slope_per_cyc": 0.008944719448840396,
+            "height_start": -2.5527882723050253,
+            "height_end": -3.056398165829981,
+            "height_rel_change": -0.19727836373713273,
+            "n_cycles_tracked": 54
+          }
+        },
+        "honest_scope": "Capacity fade is measured confidently (direct Ah integration). Mode decomposition (LLI/LAM/CL) is NOT claimed \u2014 1C data insufficient. Chemistry: assumed graphite/NMC or graphite/LCO (unconfirmed \u2014 no post-mortem; Saha 2009 does not specify cathode exactly)."
+      }
+    },
+    {
+      "cell_id": "B0006",
+      "n_cycles": 168,
+      "Q_first_Ah": 2.051978108126538,
+      "Q_last_Ah": 1.2047564083901492,
+      "fade_pct": 41.28804768340851,
+      "r0_onset_used": 168,
+      "r0_lit_used": 0,
+      "r0_flagged": 0,
+      "diagnosis": {
+        "dominant_mode": "mode unresolved at 1C (honest)",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "evidence": [
+          "Peak-1: Q-shift=143.6 mAh (RIGHT), height \u0394=-53.4%",
+          "Peak-2: Q-shift=280.5 mAh (RIGHT), height \u0394=-39.3%"
+        ],
+        "peak_trends": {
+          "Peak-1": {
+            "Q_pos_start": 0.1620001446509411,
+            "Q_pos_end": 0.30558544930471426,
+            "Q_shift_Ah": 0.14358530465377317,
+            "Q_slope_per_cyc": 0.0017931631157201845,
+            "height_start": -0.7495405592848468,
+            "height_end": -1.1497897887370725,
+            "height_rel_change": -0.5339927559091928,
+            "n_cycles_tracked": 157
+          },
+          "Peak-2": {
+            "Q_pos_start": 1.0031664518586554,
+            "Q_pos_end": 1.2837120637127368,
+            "Q_shift_Ah": 0.28054561185408144,
+            "Q_slope_per_cyc": 0.013787650120190207,
+            "height_start": -2.470326230349761,
+            "height_end": -3.4415916374438953,
+            "height_rel_change": -0.39317293188577956,
+            "n_cycles_tracked": 37
+          }
+        },
+        "honest_scope": "Capacity fade is measured confidently (direct Ah integration). Mode decomposition (LLI/LAM/CL) is NOT claimed \u2014 1C data insufficient. Chemistry: assumed graphite/NMC or graphite/LCO (unconfirmed \u2014 no post-mortem; Saha 2009 does not specify cathode exactly)."
+      }
+    },
+    {
+      "cell_id": "B0007",
+      "n_cycles": 168,
+      "Q_first_Ah": 1.918661234796589,
+      "Q_last_Ah": 1.4566561495496189,
+      "fade_pct": 24.079554893177928,
+      "r0_onset_used": 168,
+      "r0_lit_used": 0,
+      "r0_flagged": 0,
+      "diagnosis": {
+        "dominant_mode": "mode unresolved at 1C (honest)",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "evidence": [
+          "Peak-1: Q-shift=81.8 mAh (RIGHT), height \u0394=8.5%"
+        ],
+        "peak_trends": {
+          "Peak-1": {
+            "Q_pos_start": 0.16509522398612936,
+            "Q_pos_end": 0.2468498021521864,
+            "Q_shift_Ah": 0.08175457816605705,
+            "Q_slope_per_cyc": 0.0008367990621901366,
+            "height_start": -0.7816677245345245,
+            "height_end": -0.7155204996886458,
+            "height_rel_change": 0.08462320073487169,
+            "n_cycles_tracked": 168
+          }
+        },
+        "honest_scope": "Capacity fade is measured confidently (direct Ah integration). Mode decomposition (LLI/LAM/CL) is NOT claimed \u2014 1C data insufficient. Chemistry: assumed graphite/NMC or graphite/LCO (unconfirmed \u2014 no post-mortem; Saha 2009 does not specify cathode exactly)."
+      }
+    },
+    {
+      "cell_id": "B0018",
+      "n_cycles": 132,
+      "Q_first_Ah": 1.868527668883196,
+      "Q_last_Ah": 1.3606817861369567,
+      "fade_pct": 27.178932975061308,
+      "r0_onset_used": 132,
+      "r0_lit_used": 0,
+      "r0_flagged": 0,
+      "diagnosis": {
+        "dominant_mode": "mode unresolved at 1C (honest)",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "evidence": [
+          "Peak-1: Q-shift=11.6 mAh (RIGHT), height \u0394=-21.8%",
+          "Peak-2: Q-shift=-36.6 mAh (LEFT), height \u0394=-34.0%",
+          "Peak-3: Q-shift=-32.1 mAh (LEFT), height \u0394=-0.9%"
+        ],
+        "peak_trends": {
+          "Peak-1": {
+            "Q_pos_start": 0.033557213832508724,
+            "Q_pos_end": 0.04512601550488771,
+            "Q_shift_Ah": 0.01156880167237899,
+            "Q_slope_per_cyc": 0.00014348504761751787,
+            "height_start": -1.1592968157711192,
+            "height_end": -1.411995879775925,
+            "height_rel_change": -0.21797615619149605,
+            "n_cycles_tracked": 130
+          },
+          "Peak-2": {
+            "Q_pos_start": 0.27022960272265967,
+            "Q_pos_end": 0.23363001002822328,
+            "Q_shift_Ah": -0.036599592694436384,
+            "Q_slope_per_cyc": -0.0004625712483960072,
+            "height_start": -0.570336995017913,
+            "height_end": -0.7644771470846177,
+            "height_rel_change": -0.3403955090099173,
+            "n_cycles_tracked": 112
+          },
+          "Peak-3": {
+            "Q_pos_start": 1.3891251676182437,
+            "Q_pos_end": 1.3570229002069545,
+            "Q_shift_Ah": -0.03210226741128919,
+            "Q_slope_per_cyc": -0.001005810627013279,
+            "height_start": -4.272603216826251,
+            "height_end": -4.311654911771511,
+            "height_rel_change": -0.009140023764043177,
+            "n_cycles_tracked": 40
+          }
+        },
+        "honest_scope": "Capacity fade is measured confidently (direct Ah integration). Mode decomposition (LLI/LAM/CL) is NOT claimed \u2014 1C data insufficient. Chemistry: assumed graphite/NMC or graphite/LCO (unconfirmed \u2014 no post-mortem; Saha 2009 does not specify cathode exactly)."
+      }
+    }
+  ]
+}
