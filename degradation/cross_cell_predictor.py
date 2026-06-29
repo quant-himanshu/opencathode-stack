@@ -373,11 +373,26 @@ def run_loo_cv(cell_data: Dict[str, Dict], gamma: float = GAMMA) -> Dict:
         D_new   = cell_data[held_out]["D"]
         n_cyc   = len(soh_new)
 
-        # Method A: fixed population mean
+        # True β for this cell (within-cell fit — the oracle target)
+        beta_true = _fit_beta(soh_new, D_new, gamma)
+
+        # ── β_predicted vs β_true (CHECK A: 3-point fit quality) ───────────
+        beta_err_pct = (beta0_feature - beta_true) / (beta_true + 1e-9) * 100
+        is_extrapolation = (F_new < min(train_features) or F_new > max(train_features))
+        print(f"    β_true={beta_true:.4f}  β₀_feature={beta0_feature:.4f}  "
+              f"err={beta_err_pct:+.1f}%"
+              f"{'  [EXTRAPOLATION]' if is_extrapolation else '  [interpolation]'}")
+        print(f"    β₀_mean={beta0_mean:.4f}  "
+              f"mean_err={(beta0_mean - beta_true)/(beta_true+1e-9)*100:+.1f}%")
+
+        # Method A: fixed population mean β for all cycles
         beta_trace_A = np.full(n_cyc, beta0_mean)
 
-        # Method B: fixed feature-mapped β₀
-        beta_trace_B = np.full(n_cyc, beta0_feature)
+        # Method B: CORRECTED labelling — feature requires N_FEATURE_CYCLES cycles.
+        # Before that: use prior mean (same as A). Feature-mapped β available only at
+        # cycle N_FEATURE_CYCLES (n=20), not at n=0. This fixes the labelling contradiction.
+        beta_trace_B = np.full(n_cyc, beta0_mean)        # prior-only for cycles 0..19
+        beta_trace_B[N_FEATURE_CYCLES:] = beta0_feature  # feature-mapped from cycle 20 on
 
         # Method C: online windowed RLS, dead-band OFF
         res_C = _online_adapt(soh_new, D_new, beta0=beta0_mean,
@@ -391,9 +406,6 @@ def run_loo_cv(cell_data: Dict[str, Dict], gamma: float = GAMMA) -> Dict:
                               use_deadband=True)
         beta_trace_D = res_D["beta_trace"]
 
-        # True β for this cell (for reference)
-        beta_true = _fit_beta(soh_new, D_new, gamma)
-        print(f"    β_true (within-cell fit): {beta_true:.4f}")
         print(f"    β_trace_C final: {beta_trace_C[-1]:.4f}  "
               f"β_trace_D final: {beta_trace_D[-1]:.4f}  "
               f"updates_C: {res_C['n_updates']}  updates_D: {res_D['n_updates']}")
@@ -405,18 +417,21 @@ def run_loo_cv(cell_data: Dict[str, Dict], gamma: float = GAMMA) -> Dict:
         r2_D = _r2_at_snapshots(soh_new, D_new, beta_trace_D, gamma)
 
         results[held_out] = {
-            "held_out":       held_out,
-            "train_ids":      train_ids,
-            "mu_beta":        mu_beta,
-            "sigma_beta":     var_beta ** 0.5,
-            "lam0":           lam0,
-            "beta0_mean":     beta0_mean,
-            "beta0_feature":  beta0_feature,
-            "beta_true":      beta_true,
-            "F_new":          F_new,
-            "feature_map":    {"a": a_feat, "b": b_feat},
-            "n_updates_no_db": res_C["n_updates"],
-            "n_updates_db":   res_D["n_updates"],
+            "held_out":            held_out,
+            "train_ids":           train_ids,
+            "mu_beta":             mu_beta,
+            "sigma_beta":          var_beta ** 0.5,
+            "lam0":                lam0,
+            "beta0_mean":          beta0_mean,
+            "beta0_feature":       beta0_feature,
+            "beta_true":           beta_true,
+            "beta_feature_err_pct": beta_err_pct,
+            "beta_mean_err_pct":   float((beta0_mean - beta_true) / (beta_true + 1e-9) * 100),
+            "feature_extrapolation": is_extrapolation,
+            "F_new":               F_new,
+            "feature_map":         {"a": a_feat, "b": b_feat},
+            "n_updates_no_db":     res_C["n_updates"],
+            "n_updates_db":        res_D["n_updates"],
             "r2_snapshots": {
                 "A_fixed_mean":     r2_A,
                 "B_feature_mapped": r2_B,
@@ -443,27 +458,47 @@ def _aggregate(loo_results: Dict) -> Dict:
             agg[m][n] = float(np.mean(finite)) if finite else float("nan")
     return agg
 
-def _check_feature_utility(agg: Dict) -> Tuple[bool, str]:
-    """CHECK A: does feature-mapped β₀ beat plain mean at n=0?"""
-    r2_A_0 = agg["A_fixed_mean"][0]
-    r2_B_0 = agg["B_feature_mapped"][0]
-    margin  = r2_B_0 - r2_A_0
+def _check_feature_utility(agg: Dict, loo_results: Dict) -> Tuple[bool, str]:
+    """
+    CHECK A: does feature-mapped β₀ beat plain mean at n=20?
+    n=20 is the FIRST snapshot where Method B differs from Method A —
+    before cycle 20 both methods use β=μ_β (feature not yet computable).
+    """
+    # At n=20, Method B has switched to feature-mapped β; Method A still uses mean.
+    r2_A_20 = agg["A_fixed_mean"][20]
+    r2_B_20 = agg["B_feature_mapped"][20]
+    margin   = r2_B_20 - r2_A_20
+
+    # Also inspect raw β_predicted vs β_true per fold
+    errs_feat = [abs(loo_results[c]["beta_feature_err_pct"]) for c in CELLS]
+    errs_mean = [abs(loo_results[c]["beta_mean_err_pct"])    for c in CELLS]
+    n_extrap  = sum(1 for c in CELLS if loo_results[c]["feature_extrapolation"])
+
+    err_str = (f"β_feature errors: "
+               + ", ".join(f"{loo_results[c]['held_out']}={loo_results[c]['beta_feature_err_pct']:+.1f}%"
+                           for c in CELLS)
+               + f"; β_mean errors: "
+               + ", ".join(f"{loo_results[c]['held_out']}={loo_results[c]['beta_mean_err_pct']:+.1f}%"
+                           for c in CELLS))
+
+    caveat = (f"3-point linear fit, {n_extrap}/4 folds require extrapolation beyond "
+              f"training F range. ")
+
     if margin > 0.02:
         verdict = (True,
-                   f"Feature-mapped β₀ BEATS plain mean at n=0 "
-                   f"(ΔR²={margin:+.3f}). Severson ΔQ(V) feature adds value "
-                   f"as a warm-start, though the 3-point fit has high variance.")
+                   f"Feature-mapped β₀ BEATS plain mean at n=20 — the first "
+                   f"snapshot where B diverges from A (ΔR²={margin:+.3f}). "
+                   f"{caveat}{err_str}")
     elif margin > -0.02:
         verdict = (False,
                    f"Feature-mapped β₀ is INDISTINGUISHABLE from plain mean "
-                   f"at n=0 (ΔR²={margin:+.3f}). ΔQ(V) feature adds no "
-                   f"reliable value on this 4-cell dataset. "
-                   f"A 3-point linear fit is insufficient to generalise.")
+                   f"at n=20 (ΔR²={margin:+.3f}). {caveat}{err_str} "
+                   f"ΔQ(V) feature adds no reliable value on this 4-cell dataset.")
     else:
         verdict = (False,
-                   f"Feature-mapped β₀ is WORSE than plain mean at n=0 "
-                   f"(ΔR²={margin:+.3f}). ΔQ(V)→β map overfits on 3 training "
-                   f"points. Feature discarded; use plain prior mean as β₀.")
+                   f"Feature-mapped β₀ is WORSE than plain mean at n=20 "
+                   f"(ΔR²={margin:+.3f}). {caveat}{err_str} "
+                   f"Feature discarded; use plain prior mean as β₀.")
     return verdict
 
 def _check_deadband_utility(agg: Dict) -> Tuple[bool, str]:
@@ -504,6 +539,8 @@ def print_r2_table(agg: Dict, loo_results: Dict) -> None:
     print("\n" + "="*72)
     print("  R²(n_cycles_seen) — averaged over 4 LOO folds")
     print("  Prediction target: cycles n+1 → end of cell")
+    print(f"  NOTE: Method B uses prior-mean β for n<{N_FEATURE_CYCLES} (feature not yet")
+    print(f"        computable). B diverges from A only at n≥{N_FEATURE_CYCLES}.")
     print("="*72)
     header = f"  {'Method':<27}" + "".join(f"  n={n:<5}" for n in SNAPSHOTS)
     print(header)
@@ -512,22 +549,44 @@ def print_r2_table(agg: Dict, loo_results: Dict) -> None:
         row = f"  {labels[m]}"
         for n in SNAPSHOTS:
             v = agg[m].get(n, float("nan"))
-            row += f"  {v:+.3f}" if not np.isnan(v) else "    nan"
+            if np.isnan(v):
+                row += "    nan"
+            elif m == "B_feature_mapped" and n < N_FEATURE_CYCLES:
+                row += f"  {v:+.3f}*"   # * = same as A, feature not available yet
+            else:
+                row += f"  {v:+.3f} "
         print(row)
+    print(f"  * Method B columns n<{N_FEATURE_CYCLES}: identical to A "
+          f"(feature requires {N_FEATURE_CYCLES} cycles of the new cell)")
     print()
 
-    # Per-cell breakdown
-    print("  Per-cell R² at n=0 (pure prior, no new-cell data):")
-    print(f"  {'Cell':<8}  {'A mean':>8}  {'B feat':>8}  {'β_true':>8}")
+    # β_predicted vs β_true comparison (CHECK A: 3-point fit honesty)
+    print("  β_predicted vs β_true — feature map quality (CHECK A):")
+    print(f"  {'Cell':<8}  {'β_true':>8}  {'β_feat':>8}  {'feat_err%':>10}  "
+          f"{'β_mean':>8}  {'mean_err%':>10}  {'extrap?':>8}")
+    print("  " + "-"*70)
     for cid in CELLS:
         r = loo_results[cid]
-        rA = r["r2_snapshots"]["A_fixed_mean"].get(0, float("nan"))
-        rB = r["r2_snapshots"]["B_feature_mapped"].get(0, float("nan"))
-        print(f"  {cid:<8}  {rA:>+8.3f}  {rB:>+8.3f}  {r['beta_true']:>8.4f}")
+        extrap = "YES" if r["feature_extrapolation"] else "no"
+        print(f"  {cid:<8}  {r['beta_true']:>8.4f}  {r['beta0_feature']:>8.4f}  "
+              f"{r['beta_feature_err_pct']:>+9.1f}%  "
+              f"{r['beta0_mean']:>8.4f}  {r['beta_mean_err_pct']:>+9.1f}%  "
+              f"{extrap:>8}")
+    print()
+
+    # Per-cell R² at n=20 (first point B diverges from A)
+    print(f"  Per-cell R² at n=20 (first snapshot where B uses feature-mapped β):")
+    print(f"  {'Cell':<8}  {'A mean':>8}  {'B feat':>8}  {'C online':>9}")
+    for cid in CELLS:
+        r = loo_results[cid]
+        rA = r["r2_snapshots"]["A_fixed_mean"].get(20, float("nan"))
+        rB = r["r2_snapshots"]["B_feature_mapped"].get(20, float("nan"))
+        rC = r["r2_snapshots"]["C_online_no_db"].get(20, float("nan"))
+        print(f"  {cid:<8}  {rA:>+8.3f}  {rB:>+8.3f}  {rC:>+9.3f}")
     print()
 
 def print_checks(loo_results: Dict, agg: Dict) -> None:
-    feat_ok, feat_msg   = _check_feature_utility(agg)
+    feat_ok, feat_msg   = _check_feature_utility(agg, loo_results)
     db_ok,   db_msg     = _check_deadband_utility(agg)
 
     print("="*72)
@@ -581,6 +640,17 @@ def print_honest_validation(loo_results: Dict, agg: Dict) -> None:
     · Exact %LLI / %LAM for the degradation mechanism — Module 3 result:
       mode unresolved at 1C.
 
+  WITHIN-CELL R² DISCREPANCY vs MODULE 2:
+    This module: within-cell R²≈0.83 (B0005=0.755, B0006=0.891, B0007=0.787,
+                 B0018=0.870). Model: ΔSOH = β·k^0.5, D_k=k (unit-cycle).
+    Module 2:    within-cell R²=0.9725. Model: ΔSOH = β·D^γ with full
+                 rainflow-Miner D (DOD × C-rate × Arrhenius) and per-cell
+                 γ optimised by curve_fit (not fixed at 0.5).
+    Both are honest within-cell numbers for their respective models.
+    The 0.9725 is not applicable here because this module fixes γ=0.5
+    and uses simplified D_k=k damage (valid for constant-protocol lab data
+    but lower R² than the full model). Quote 0.83 for this module.
+
   WHAT'S GENUINELY NOVEL (honest framing):
     The unpublished combination is:
       rainflow-Miner fatigue damage (simplified to √k for lab-constant protocol)
@@ -609,7 +679,7 @@ def _serialise(obj):
     raise TypeError(f"Not serialisable: {type(obj)}")
 
 def save_json(loo_results: Dict, agg: Dict) -> None:
-    feat_ok, feat_msg = _check_feature_utility(agg)
+    feat_ok, feat_msg = _check_feature_utility(agg, loo_results)
     db_ok,   db_msg   = _check_deadband_utility(agg)
 
     report = {
@@ -622,7 +692,25 @@ def save_json(loo_results: Dict, agg: Dict) -> None:
             "ideal_n_cells":    "≥10 for stable hierarchical Bayes (Cripps & Pecht 2017)",
             "adaptation_note":  "NOT zero-cycle prediction. β unidentifiable at n=0. Requires ~30 new-cell cycles.",
         },
-        "check_A_feature_utility":   {"passed": feat_ok, "verdict": feat_msg},
+        "check_A_feature_utility": {
+            "passed":  feat_ok,
+            "verdict": feat_msg,
+            "note":    (f"Method B uses prior-mean β for n<{N_FEATURE_CYCLES} cycles "
+                        f"(feature not computable yet). Comparison is at n={N_FEATURE_CYCLES}, "
+                        f"the FIRST snapshot where B diverges from A."),
+            "beta_comparison": [
+                {
+                    "held_out":          c,
+                    "beta_true":         loo_results[c]["beta_true"],
+                    "beta_feature_pred": loo_results[c]["beta0_feature"],
+                    "beta_feature_err_pct": loo_results[c]["beta_feature_err_pct"],
+                    "beta_mean":         loo_results[c]["beta0_mean"],
+                    "beta_mean_err_pct": loo_results[c]["beta_mean_err_pct"],
+                    "extrapolation":     loo_results[c]["feature_extrapolation"],
+                }
+                for c in CELLS
+            ],
+        },
         "check_B_deadband_utility":  {"passed": db_ok,   "verdict": db_msg},
         "check_C_fewshot_framing":   {
             "passed": False,
