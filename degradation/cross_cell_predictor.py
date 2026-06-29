@@ -56,6 +56,7 @@ from scipy.optimize import curve_fit
 ROOT     = Path(__file__).resolve().parent.parent
 NASA_DIR = ROOT / "data" / "nasa"
 OUT_JSON = ROOT / "data" / "cross_cell_report.json"
+OUT_JSON_SEV = ROOT / "data" / "cross_cell_severson_report.json"
 
 # ── model constants ───────────────────────────────────────────────────────────
 CELLS   = ["B0005", "B0006", "B0007", "B0018"]
@@ -810,5 +811,736 @@ def main() -> None:
           f"online+db R²(n=30)={r2_D30:+.3f}  →  R²(n=50)={r2_D50:+.3f}")
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  Module 4 — Severson LFP extension  (run_severson)
+#
+#  124 A123 APR18650M1A LFP cells, 3 batches.  Leave-One-Batch-Out (LOBO) CV.
+#  Same model: ΔSOH = β · k^γ, γ=0.5, D_k=k.
+#  Feature: log10(var_k(Qdlin_k − Qdlin_ref)) on pre-computed 1000-pt LFP grid.
+#
+#  Key upgrade over 4-cell NASA run:
+#   · feature→β map is now a proper linear regression on ~83 training cells
+#   · R²_feat→β reported on TRAINING and on HELD-OUT cells separately
+#   · β_predicted vs β_true for all 124 cells (not just 4)
+#   · prior domination ratio λ₀/Σx² per fold
+#   · within-cell R² distribution (γ=0.5 adequacy check)
+#   · dead-band innovation magnitude check (LFP fades slowly — τ may gate updates)
+#
+#  Honest caveats wired in:
+#   · LFP feature range wide due to flat 3.3 V plateau; may degrade R²_feat→β
+#   · β variance partly protocol-driven (varied charge rates by design)
+#   · same manufacturer (A123), same test lab (MIT) — not cross-manufacturer
+#   · CHECK A reports training vs held-out R² separately; no tuning to rescue it
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_severson_cells() -> List[Dict]:
+    """Load 124 Severson cells via the severson_loader. Raises if files missing."""
+    sys.path.insert(0, str(ROOT / "data" / "loaders"))
+    import severson_loader
+    return severson_loader.load_severson(verbose=False)
+
+
+def _beta_regression(F_train: np.ndarray,
+                     B_train: np.ndarray) -> Tuple[float, float, float]:
+    """
+    OLS linear regression: β = a·F + b.
+    Returns (a, b, r2_training).
+    No regularisation, no outlier removal — report what the data gives.
+    """
+    F_m = float(np.mean(F_train))
+    B_m = float(np.mean(B_train))
+    ss_F = float(np.sum((F_train - F_m) ** 2))
+    a    = float(np.sum((F_train - F_m) * (B_train - B_m))) / (ss_F + 1e-15)
+    b    = B_m - a * F_m
+    B_pred = a * F_train + b
+    r2   = _r2(B_train, B_pred)
+    return a, b, r2
+
+
+def _run_lobo_cv(cells: List[Dict], gamma: float = GAMMA) -> Dict:
+    """
+    Leave-One-Batch-Out cross-validation on 124 Severson cells.
+
+    3 folds: held-out batch = 1, 2, or 3.
+    Within each fold:
+      1. Fit β_i per training cell → (μ_β, σ_β, λ₀)
+      2. Fit feature→β OLS on training cells → (a, b, R²_train)
+      3. For each held-out cell:
+           - compute β₀_feature = clip(a·F_new + b, 1e-6, ∞)
+           - run 4 methods (A/B/C/D)
+           - record R²(n_cycles_seen) and β prediction quality
+
+    Returns nested dict with per-fold and per-cell results.
+    """
+    results_by_cell: Dict = {}
+    fold_summaries:  List[Dict] = []
+
+    for held_batch in [1, 2, 3]:
+        train_cells = [c for c in cells if c["batch"] != held_batch]
+        test_cells  = [c for c in cells if c["batch"] == held_batch]
+        print(f"\n{'='*68}")
+        print(f"  LOBO fold: held-out Batch {held_batch}  "
+              f"({len(test_cells)} test, {len(train_cells)} train)")
+        print(f"{'='*68}")
+
+        # ── 1. Per-training-cell β fit ──────────────────────────────────
+        train_betas    = np.array([_fit_beta(c["soh"], c["D"], gamma)
+                                   for c in train_cells])
+        train_features = np.array([c["dqv_feature"] for c in train_cells])
+
+        # ── 2. Population prior ─────────────────────────────────────────
+        mu_beta  = float(np.mean(train_betas))
+        var_beta = float(np.var(train_betas, ddof=1))
+        sig_beta = float(var_beta ** 0.5)
+        lam0     = 1.0 / (var_beta + 1e-12)
+
+        # Prior domination ratio: compare λ₀ to expected Σx² in the
+        # adaptation window [freeze .. freeze+W] at cycle n≈30.
+        # x_k = k^γ, Σx² = Σ_{k=freeze}^{freeze+W} k  (γ=0.5, D_k=k)
+        window_sum_x2 = float(sum(
+            (k ** gamma) ** 2
+            for k in range(FREEZE_CYCLES, FREEZE_CYCLES + WINDOW_W + 1)
+        ))
+        prior_dom_ratio = lam0 / (window_sum_x2 + 1e-12)
+
+        print(f"  Prior: μ_β={mu_beta:.5f}  σ_β={sig_beta:.5f}  "
+              f"λ₀={lam0:.1f}")
+        print(f"  Window Σx²≈{window_sum_x2:.1f}  "
+              f"→ λ₀/Σx²={prior_dom_ratio:.1f}:1  "
+              f"{'[PRIOR DOMINATES]' if prior_dom_ratio > 10 else '[BALANCED]'}")
+
+        # ── 3. Feature→β regression on training cells ───────────────────
+        # Remove NaN features before fitting (shouldn't happen but guard)
+        valid_mask = np.isfinite(train_features) & np.isfinite(train_betas)
+        a_feat, b_feat, r2_feat_train = _beta_regression(
+            train_features[valid_mask], train_betas[valid_mask]
+        )
+        print(f"  Feature→β regression:  a={a_feat:.5f}  b={b_feat:.5f}  "
+              f"R²_train={r2_feat_train:.3f}")
+        feat_range_train = (float(train_features[valid_mask].min()),
+                            float(train_features[valid_mask].max()))
+
+        # ── 4. Evaluate each test cell ──────────────────────────────────
+        for cell in test_cells:
+            cid   = cell["cell_id"]
+            soh_n = cell["soh"]
+            D_n   = cell["D"]
+            F_new = cell["dqv_feature"]
+            n_cyc = len(soh_n)
+
+            # Oracle β (within-cell fit; used only for error reporting)
+            beta_true = _fit_beta(soh_n, D_n, gamma)
+
+            # Feature-mapped β₀
+            if np.isfinite(F_new):
+                beta0_feature = float(np.clip(a_feat * F_new + b_feat, 1e-6, None))
+                is_extrap = (F_new < feat_range_train[0] or
+                             F_new > feat_range_train[1])
+                beta_feat_err_pct = (beta0_feature - beta_true) / (beta_true + 1e-9) * 100
+            else:
+                beta0_feature    = mu_beta
+                is_extrap        = False
+                beta_feat_err_pct = float("nan")
+
+            beta_mean_err_pct = (mu_beta - beta_true) / (beta_true + 1e-9) * 100
+
+            # ── Method A: fixed population mean ─────────────────────────
+            beta_trace_A = np.full(n_cyc, mu_beta)
+
+            # ── Method B: fixed feature-mapped β₀ (no online update)
+            # Prior-mean for cycles 0..N_FEATURE_CYCLES-1 (feature not yet
+            # computable), feature-mapped β₀ from cycle N_FEATURE_CYCLES on.
+            beta_trace_B = np.full(n_cyc, mu_beta)
+            if n_cyc > N_FEATURE_CYCLES:
+                beta_trace_B[N_FEATURE_CYCLES:] = beta0_feature
+
+            # ── Method C: online RLS, dead-band OFF ─────────────────────
+            res_C = _online_adapt(soh_n, D_n, beta0=mu_beta,
+                                  mu_prior=mu_beta, lam0=lam0, gamma=gamma,
+                                  use_deadband=False)
+
+            # ── Method D: online RLS, dead-band ON ──────────────────────
+            res_D = _online_adapt(soh_n, D_n, beta0=mu_beta,
+                                  mu_prior=mu_beta, lam0=lam0, gamma=gamma,
+                                  use_deadband=True)
+
+            # Innovation magnitude check (for CHECK B)
+            innov_abs = np.abs(res_C["innovations"])
+            n_below_tau = int(np.sum(innov_abs < DEAD_BAND_TAU))
+            max_innov   = float(np.max(innov_abs)) if len(innov_abs) > 0 else 0.0
+
+            # ── R²(n_cycles_seen) ────────────────────────────────────────
+            r2_A = _r2_at_snapshots(soh_n, D_n, beta_trace_A, gamma)
+            r2_B = _r2_at_snapshots(soh_n, D_n, beta_trace_B, gamma)
+            r2_C = _r2_at_snapshots(soh_n, D_n, res_C["beta_trace"], gamma)
+            r2_D = _r2_at_snapshots(soh_n, D_n, res_D["beta_trace"], gamma)
+
+            results_by_cell[cid] = {
+                "cell_id":              cid,
+                "batch":                cell["batch"],
+                "held_out_batch":       held_batch,
+                "n_cycles":             n_cyc,
+                "cycle_life":           cell["cycle_life"],
+                # Population prior for this fold
+                "mu_beta":              mu_beta,
+                "sigma_beta":           sig_beta,
+                "lam0":                 lam0,
+                "prior_dom_ratio":      prior_dom_ratio,
+                # Feature regression for this fold
+                "feat_map_a":           a_feat,
+                "feat_map_b":           b_feat,
+                "r2_feat_train":        r2_feat_train,
+                "feat_range_train":     feat_range_train,
+                # Per-cell predictions
+                "dqv_feature":          F_new,
+                "beta_true":            beta_true,
+                "beta0_feature":        beta0_feature,
+                "beta0_mean":           mu_beta,
+                "beta_feat_err_pct":    beta_feat_err_pct,
+                "beta_mean_err_pct":    beta_mean_err_pct,
+                "feature_extrapolation": is_extrap,
+                # Adaptation diagnostics
+                "n_cycles_below_tau":   n_below_tau,
+                "max_innovation":       max_innov,
+                "n_updates_no_db":      res_C["n_updates"],
+                "n_updates_db":         res_D["n_updates"],
+                # R² snapshots
+                "r2_snapshots": {
+                    "A_fixed_mean":     r2_A,
+                    "B_feature_mapped": r2_B,
+                    "C_online_no_db":   r2_C,
+                    "D_online_db":      r2_D,
+                },
+            }
+
+        fold_summaries.append({
+            "held_batch":       held_batch,
+            "n_train":          len(train_cells),
+            "n_test":           len(test_cells),
+            "mu_beta":          mu_beta,
+            "sigma_beta":       sig_beta,
+            "lam0":             lam0,
+            "prior_dom_ratio":  prior_dom_ratio,
+            "r2_feat_train":    r2_feat_train,
+            "feat_map":         {"a": a_feat, "b": b_feat},
+            "feat_range_train": feat_range_train,
+        })
+
+    return {"cells": results_by_cell, "fold_summaries": fold_summaries}
+
+
+def _aggregate_lobo(lobo_results: Dict) -> Dict:
+    """
+    Average R²(n) across ALL 124 held-out cells per method.
+    Equal weight per cell (not per fold — folds have unequal sizes).
+    """
+    methods = ["A_fixed_mean", "B_feature_mapped", "C_online_no_db", "D_online_db"]
+    agg: Dict = {m: {} for m in methods}
+    cells_dict = lobo_results["cells"]
+    for n in SNAPSHOTS:
+        for m in methods:
+            vals = [
+                cells_dict[cid]["r2_snapshots"][m].get(n, float("nan"))
+                for cid in cells_dict
+            ]
+            finite = [v for v in vals if not np.isnan(v)]
+            agg[m][n] = float(np.mean(finite)) if finite else float("nan")
+    return agg
+
+
+def _within_cell_r2_distribution(cells: List[Dict],
+                                  gamma: float = GAMMA) -> Dict:
+    """
+    For each cell fit β on its own data and compute within-cell R².
+    This checks whether γ=0.5 is adequate for LFP.
+    """
+    r2s = []
+    betas = []
+    for c in cells:
+        b = _fit_beta(c["soh"], c["D"], gamma)
+        r2 = _r2_full(c["soh"], c["D"], b, gamma)
+        r2s.append(r2)
+        betas.append(b)
+    r2s   = np.array(r2s)
+    betas = np.array(betas)
+    n_poor = int(np.sum(r2s < 0.7))
+    n_ok   = int(np.sum(r2s >= 0.7))
+    return {
+        "r2_min":    float(r2s.min()),
+        "r2_p10":    float(np.percentile(r2s, 10)),
+        "r2_median": float(np.median(r2s)),
+        "r2_p90":    float(np.percentile(r2s, 90)),
+        "r2_max":    float(r2s.max()),
+        "n_poor_fit":  n_poor,   # R² < 0.7
+        "n_good_fit":  n_ok,
+        "beta_min":  float(betas.min()),
+        "beta_median": float(np.median(betas)),
+        "beta_max":  float(betas.max()),
+        "per_cell":  [{"cell_id": c["cell_id"],
+                       "r2_within": float(r2s[i]),
+                       "beta_within": float(betas[i])}
+                      for i, c in enumerate(cells)],
+    }
+
+
+def _check_feature_utility_severson(agg: Dict,
+                                     lobo_results: Dict) -> Tuple[bool, str]:
+    """
+    CHECK A (Severson): does feature-mapped β₀ beat plain mean at n=20?
+
+    Reports:
+    - ΔR² at n=20 (first snapshot where B diverges from A)
+    - R²_feat→β on training cells (per fold)
+    - R²_feat→β on ALL held-out cells (the honest test: training vs held-out)
+    - β prediction errors across all 124 held-out cells
+    """
+    r2_A_20 = agg["A_fixed_mean"][20]
+    r2_B_20 = agg["B_feature_mapped"][20]
+    margin   = r2_B_20 - r2_A_20
+
+    cells_dict = lobo_results["cells"]
+
+    # Held-out R²_feat→β: R² of (β₀_feature vs β_true) across all 124 cells
+    feat_pred  = np.array([cells_dict[c]["beta0_feature"]  for c in cells_dict
+                           if np.isfinite(cells_dict[c]["beta_feat_err_pct"])])
+    beta_true_ = np.array([cells_dict[c]["beta_true"]      for c in cells_dict
+                           if np.isfinite(cells_dict[c]["beta_feat_err_pct"])])
+    r2_feat_heldout = _r2(beta_true_, feat_pred) if len(feat_pred) > 1 else float("nan")
+
+    # Training R²_feat→β (average across 3 folds)
+    r2_feat_train_avg = float(np.mean([f["r2_feat_train"]
+                                       for f in lobo_results["fold_summaries"]]))
+
+    # β error statistics
+    errs_feat = np.array([abs(cells_dict[c]["beta_feat_err_pct"]) for c in cells_dict
+                          if np.isfinite(cells_dict[c]["beta_feat_err_pct"])])
+    errs_mean = np.array([abs(cells_dict[c]["beta_mean_err_pct"]) for c in cells_dict])
+    n_extrap  = sum(1 for c in cells_dict if cells_dict[c]["feature_extrapolation"])
+
+    err_summary = (
+        f"R²_feat→β: train_avg={r2_feat_train_avg:.3f} / held_out={r2_feat_heldout:.3f}  "
+        f"({n_extrap}/{len(cells_dict)} cells extrapolate outside training F-range).  "
+        f"β_feature MAE={np.mean(errs_feat):.1f}% vs β_mean MAE={np.mean(errs_mean):.1f}%."
+    )
+
+    if r2_feat_train_avg > 0.3 and r2_feat_heldout < 0.1:
+        training_vs_heldout = (
+            f"OVERFITTING DETECTED: train R²={r2_feat_train_avg:.3f} >> "
+            f"held-out R²={r2_feat_heldout:.3f}. "
+            f"The ΔQ(V) feature does not generalise cross-batch for LFP. "
+            f"LFP plateau noise likely corrupts the feature signal. "
+        )
+    elif r2_feat_heldout < 0.1:
+        training_vs_heldout = (
+            f"Feature→β regression is WEAK on held-out cells "
+            f"(R²_held_out={r2_feat_heldout:.3f}). "
+            f"The ΔQ(V) feature does not reliably predict β for LFP cells. "
+            f"LFP plateau noise (flat 3.3 V) likely inflates variance non-informatively. "
+        )
+    elif r2_feat_heldout > 0.3:
+        training_vs_heldout = (
+            f"Feature→β regression generalises cross-batch "
+            f"(train R²={r2_feat_train_avg:.3f}, held-out R²={r2_feat_heldout:.3f}). "
+        )
+    else:
+        training_vs_heldout = (
+            f"Feature→β regression is MODEST on held-out cells "
+            f"(train R²={r2_feat_train_avg:.3f}, held-out R²={r2_feat_heldout:.3f}). "
+        )
+
+    if margin > 0.02:
+        verdict = (True,
+                   f"Feature-mapped β₀ BEATS plain mean at n=20 (ΔR²={margin:+.3f}). "
+                   f"{training_vs_heldout}{err_summary}")
+    elif margin > -0.02:
+        verdict = (False,
+                   f"Feature-mapped β₀ INDISTINGUISHABLE from plain mean at n=20 "
+                   f"(ΔR²={margin:+.3f}). {training_vs_heldout}{err_summary}")
+    else:
+        verdict = (False,
+                   f"Feature-mapped β₀ WORSE than plain mean at n=20 "
+                   f"(ΔR²={margin:+.3f}). {training_vs_heldout}{err_summary}")
+    return verdict
+
+
+def _check_deadband_severson(agg: Dict, lobo_results: Dict) -> Tuple[bool, str]:
+    """
+    CHECK B (Severson): does dead-band ON beat dead-band OFF?
+
+    Additional check: what fraction of innovations fall BELOW τ?
+    LFP cells fade slowly → innovations may be small → dead-band may
+    actually gate updates here (unlike NASA where all innovations > τ).
+    """
+    r2_C_10  = agg["C_online_no_db"][10]
+    r2_D_10  = agg["D_online_db"][10]
+    r2_C_20  = agg["C_online_no_db"][20]
+    r2_D_20  = agg["D_online_db"][20]
+    margin_10 = r2_D_10 - r2_C_10
+    margin_20 = r2_D_20 - r2_C_20
+
+    cells_dict = lobo_results["cells"]
+    total_cycles = sum(c["n_cycles"] for c in cells_dict.values())
+    total_below  = sum(c["n_cycles_below_tau"] for c in cells_dict.values())
+    frac_gated   = total_below / max(total_cycles, 1)
+    max_innov_median = float(np.median([c["max_innovation"] for c in cells_dict.values()]))
+
+    db_activity = (
+        f"Dead-band τ={DEAD_BAND_TAU} SOH: {total_below}/{total_cycles} "
+        f"cycle-innovations below τ ({100*frac_gated:.1f}% gated). "
+        f"Median max|innovation| per cell = {max_innov_median:.4f} SOH."
+    )
+
+    if margin_20 > 0.02 or margin_10 > 0.02:
+        verdict = (True,
+                   f"Dead-band HELPS: R²(n=10) Δ={margin_10:+.3f}, "
+                   f"R²(n=20) Δ={margin_20:+.3f}. {db_activity}")
+    elif frac_gated > 0.05:
+        verdict = (False,
+                   f"Dead-band gates {100*frac_gated:.1f}% of updates but makes "
+                   f"NO MEASURABLE R² DIFFERENCE: n=10 Δ={margin_10:+.3f}, "
+                   f"n=20 Δ={margin_20:+.3f}. The gated updates were not improving "
+                   f"predictions anyway — λ₀ dominates. {db_activity}")
+    else:
+        verdict = (False,
+                   f"Dead-band makes NO MEASURABLE DIFFERENCE: "
+                   f"n=10 Δ={margin_10:+.3f}, n=20 Δ={margin_20:+.3f}. "
+                   f"Nearly all innovations exceed τ — no updates gated. {db_activity}")
+    return verdict
+
+
+def _print_severson_r2_table(agg: Dict, lobo_results: Dict,
+                              within_r2: Dict) -> None:
+    cells_dict = lobo_results["cells"]
+    methods = ["A_fixed_mean", "B_feature_mapped", "C_online_no_db", "D_online_db"]
+    labels  = {
+        "A_fixed_mean":     "A  Fixed mean (baseline)",
+        "B_feature_mapped": "B  Feature-mapped β₀   ",
+        "C_online_no_db":   "C  Online (no dead-band)",
+        "D_online_db":      "D  Online + dead-band  ",
+    }
+    print("\n" + "="*72)
+    print("  Severson LFP — R²(n_cycles_seen) averaged over 124 held-out cells")
+    print("  Evaluation: LOBO (Leave-One-Batch-Out), 3 folds")
+    print(f"  NOTE: Method B uses prior-mean β for n<{N_FEATURE_CYCLES}; "
+          f"diverges from A at n≥{N_FEATURE_CYCLES}.")
+    print("="*72)
+    header = f"  {'Method':<27}" + "".join(f"  n={n:<5}" for n in SNAPSHOTS)
+    print(header)
+    print("  " + "-"*68)
+    for m in methods:
+        row = f"  {labels[m]}"
+        for n in SNAPSHOTS:
+            v = agg[m].get(n, float("nan"))
+            if np.isnan(v):
+                row += "    nan"
+            elif m == "B_feature_mapped" and n < N_FEATURE_CYCLES:
+                row += f"  {v:+.3f}*"
+            else:
+                row += f"  {v:+.3f} "
+        print(row)
+    print(f"  * Method B n<{N_FEATURE_CYCLES}: identical to A (feature requires "
+          f"{N_FEATURE_CYCLES} cycles)")
+    print()
+
+    # Within-cell R² distribution (γ=0.5 adequacy)
+    w = within_r2
+    print("  Within-cell R² distribution (γ=0.5 fixed, D_k=k — adequacy check):")
+    print(f"    min={w['r2_min']:.3f}  p10={w['r2_p10']:.3f}  "
+          f"median={w['r2_median']:.3f}  p90={w['r2_p90']:.3f}  "
+          f"max={w['r2_max']:.3f}")
+    print(f"    Poor fits (R²<0.70): {w['n_poor_fit']}/{w['n_poor_fit']+w['n_good_fit']} cells")
+    if w["n_poor_fit"] > 10:
+        print(f"    NOTE: γ=0.5 gives poor within-cell fits for "
+              f"{w['n_poor_fit']} cells — the power-law model may not hold "
+              f"for all LFP degradation trajectories in this dataset.")
+    print()
+
+    # β distribution
+    print(f"  β distribution across 124 cells: "
+          f"min={w['beta_min']:.5f}  "
+          f"median={w['beta_median']:.5f}  "
+          f"max={w['beta_max']:.5f}")
+    print()
+
+    # LOBO fold summaries
+    print("  LOBO fold diagnostics:")
+    print(f"  {'Held batch':>11}  {'n_train':>7}  {'n_test':>6}  "
+          f"{'μ_β':>8}  {'σ_β':>8}  {'λ₀':>10}  {'λ₀/Σx²':>8}  "
+          f"{'R²feat(train)':>13}")
+    for fs in lobo_results["fold_summaries"]:
+        print(f"  {'Batch '+str(fs['held_batch']):>11}  "
+              f"{fs['n_train']:>7}  {fs['n_test']:>6}  "
+              f"{fs['mu_beta']:>8.5f}  {fs['sigma_beta']:>8.5f}  "
+              f"{fs['lam0']:>10.1f}  {fs['prior_dom_ratio']:>8.1f}  "
+              f"{fs['r2_feat_train']:>13.3f}")
+    print()
+
+    # β_predicted vs β_true — per-batch summary
+    print("  β_feature vs β_true by batch (all held-out cells):")
+    print(f"  {'Batch':>6}  {'n':>4}  {'β_true range':>14}  "
+          f"{'feat MAE%':>10}  {'mean MAE%':>10}  {'R²_feat→β':>10}  "
+          f"{'n_extrap':>8}")
+    for held_b in [1, 2, 3]:
+        batch_cells = [cells_dict[cid] for cid in cells_dict
+                       if cells_dict[cid]["batch"] == held_b]
+        bt   = np.array([c["beta_true"]        for c in batch_cells])
+        bf   = np.array([c["beta0_feature"]     for c in batch_cells])
+        bm   = np.array([c["beta0_mean"]        for c in batch_cells])
+        ferr = np.array([abs(c["beta_feat_err_pct"]) for c in batch_cells
+                         if np.isfinite(c["beta_feat_err_pct"])])
+        merr = np.array([abs(c["beta_mean_err_pct"]) for c in batch_cells])
+        r2fb = _r2(bt, bf) if len(bt) > 1 else float("nan")
+        n_ex = sum(1 for c in batch_cells if c["feature_extrapolation"])
+        print(f"  {held_b:>6}  {len(batch_cells):>4}  "
+              f"[{bt.min():.4f}, {bt.max():.4f}]  "
+              f"{np.mean(ferr):>9.1f}%  {np.mean(merr):>9.1f}%  "
+              f"{r2fb:>10.3f}  {n_ex:>8}")
+    print()
+
+
+def _print_severson_checks(lobo_results: Dict, agg: Dict,
+                            within_r2: Dict) -> None:
+    feat_ok, feat_msg = _check_feature_utility_severson(agg, lobo_results)
+    db_ok,   db_msg   = _check_deadband_severson(agg, lobo_results)
+
+    gamma_note = (
+        f"γ=0.5 ADEQUATE for {within_r2['n_good_fit']} cells (R²≥0.70), "
+        f"POOR for {within_r2['n_poor_fit']} cells (R²<0.70, "
+        f"median within-cell R²={within_r2['r2_median']:.3f})."
+    )
+    if within_r2["n_poor_fit"] > 20:
+        gamma_note += (
+            " The power-law ΔSOH=β·k^0.5 likely does not capture "
+            "all LFP degradation trajectories — some cells may have "
+            "a different functional form (concave / two-phase fade). "
+            "γ should be treated as approximate for LFP."
+        )
+
+    print("="*72)
+    print("  3 HONESTY CHECKS  (Severson LFP, 124-cell LOBO)")
+    print("="*72)
+
+    print(f"\n  CHECK A — ΔQ(V) feature utility (training vs held-out R²):")
+    print(f"    {'✓' if feat_ok else '✗'}  {feat_msg}")
+
+    print(f"\n  CHECK B — Dead-band utility + innovation magnitude:")
+    print(f"    {'✓' if db_ok else '✗'}  {db_msg}")
+
+    print(f"\n  CHECK C — Few-shot framing (structural):")
+    print(f"    ✗  NOT zero-cycle prediction. β unidentifiable at n=0. "
+          f"R²(n=0) reflects only the population prior. "
+          f"With 83-84 training cells the prior mean is better estimated "
+          f"than NASA's 3-cell prior, but a new cell can still fall outside "
+          f"the prior range (especially at manufacturing extremes or novel "
+          f"fast-charge protocols). Adaptation requires ~20–50 cycles.")
+
+    print(f"\n  CHECK γ — Power-law adequacy for LFP (additional):")
+    print(f"    {gamma_note}")
+    print()
+
+
+def _print_severson_scope(agg: Dict, within_r2: Dict,
+                          lobo_results: Dict) -> None:
+    r2_A0  = agg["A_fixed_mean"][0]
+    r2_D30 = agg["D_online_db"][30]
+    r2_D50 = agg["D_online_db"][50]
+    dom_ratios = [f["prior_dom_ratio"] for f in lobo_results["fold_summaries"]]
+
+    print("="*72)
+    print("  VALIDATION SCOPE — SEVERSON LFP")
+    print("="*72)
+    print(f"""
+  CAN claim:
+    · Cross-cell R² on 124 LFP cells (A123 APR18650M1A) using LOBO-CV
+      — the largest within-chemistry cross-cell validation in this stack.
+    · Prior mean R²(n=0) = {r2_A0:+.3f}. Online adaptation to
+      R²(n=30)={r2_D30:+.3f}, R²(n=50)={r2_D50:+.3f}.
+    · Whether ΔQ(V) feature warm-start generalises cross-batch (CHECK A).
+    · Whether dead-band gates LFP updates (LFP fades slowly — CHECK B).
+    · Within-cell R² distribution for γ=0.5 adequacy (CHECK γ).
+
+  CANNOT claim:
+    · Cross-manufacturer or cross-chemistry generalisation —
+      all 124 cells are A123 APR18650M1A, MIT test facility.
+    · Cross-chemistry comparison with NASA (NMC vs LFP, different feature
+      space, different degradation mechanism prominence).
+    · Zero-cycle early prediction (CHECK C — structural).
+
+  HONEST CAVEATS:
+    · β variance is partly PROTOCOL-driven: Severson varied charge C-rates
+      by design. Higher C-rate charge → higher β. The ΔQ(V) feature is
+      correlated with β FOR THIS REASON (Severson 2019 finding). In a
+      real deployment the charge protocol may be unknown or uncontrolled.
+    · LFP feature noise: dqv_feature range spans ~8 log-decades due to
+      voltage sensitivity on the flat 3.3 V LFP plateau. This may degrade
+      the feature→β regression relative to NMC.
+    · Prior domination ratios per fold: {[f'{r:.1f}:1' for r in dom_ratios]}.
+      {('Prior STILL dominates adaptation — λ₀/Σx² >> 1 even with 83-84 '
+        'training cells.') if min(dom_ratios) > 10 else
+       ('Prior no longer dominates — adaptation now makes a real contribution.')}
+    · γ=0.5 assumed (SEI ∝ √k). Median within-cell R²={within_r2['r2_median']:.3f}.
+      If LFP degradation is concave or two-phase for some cells,
+      the model is misspecified and R² will be lower than Module 2's 0.9725.
+
+  WHAT'S GENUINELY NOVEL vs NASA:
+    · 4 cells → 124 cells: feature→β map is now a proper regression,
+      not a 3-point interpolation.
+    · LOBO-CV is a cross-batch test — stronger than within-batch LOO-CV.
+    · Explicit training vs held-out R²_feat→β reveals whether the feature
+      signal survives the LFP plateau noise (CHECK A above).
+""")
+
+
+def _save_severson_json(lobo_results: Dict, agg: Dict,
+                        within_r2: Dict) -> None:
+    feat_ok, feat_msg = _check_feature_utility_severson(agg, lobo_results)
+    db_ok,   db_msg   = _check_deadband_severson(agg, lobo_results)
+
+    cells_dict = lobo_results["cells"]
+
+    # held-out R²_feat→β overall
+    feat_pred  = np.array([cells_dict[c]["beta0_feature"] for c in cells_dict
+                           if np.isfinite(cells_dict[c]["beta_feat_err_pct"])])
+    beta_true_ = np.array([cells_dict[c]["beta_true"]     for c in cells_dict
+                           if np.isfinite(cells_dict[c]["beta_feat_err_pct"])])
+    r2_feat_heldout = _r2(beta_true_, feat_pred) if len(feat_pred) > 1 else None
+
+    # β_predicted vs β_true table (all 124 cells, sorted by cell_id)
+    beta_table = sorted([
+        {
+            "cell_id":           cid,
+            "batch":             cells_dict[cid]["batch"],
+            "beta_true":         cells_dict[cid]["beta_true"],
+            "beta_feature_pred": cells_dict[cid]["beta0_feature"],
+            "beta_mean_pred":    cells_dict[cid]["beta0_mean"],
+            "beta_feat_err_pct": cells_dict[cid]["beta_feat_err_pct"],
+            "beta_mean_err_pct": cells_dict[cid]["beta_mean_err_pct"],
+            "dqv_feature":       cells_dict[cid]["dqv_feature"],
+            "extrapolation":     cells_dict[cid]["feature_extrapolation"],
+        }
+        for cid in cells_dict
+    ], key=lambda x: (x["batch"], x["cell_id"]))
+
+    report = {
+        "module": "Module 4 — Cross-Cell Degradation Prediction (Severson LFP)",
+        "model":  f"ΔSOH = β · k^{GAMMA}  (γ={GAMMA} fixed, D_k=k unit-cycle damage)",
+        "dataset": {
+            "name":         "Severson et al. (2019) Nature Energy 4:383–391",
+            "chemistry":    "LFP/graphite — A123 APR18650M1A, 1.1 Ah nominal",
+            "manufacturer": "A123, single test facility (MIT) — NOT cross-manufacturer",
+            "n_cells":      len(cells_dict),
+            "evaluation":   "Leave-One-Batch-Out (LOBO), 3 folds",
+            "honest_note":  (
+                "β variance is partly protocol-driven (varied charge C-rates). "
+                "LFP feature range wide due to flat 3.3 V plateau. "
+                "Cross-manufacturer generalisation NOT tested."
+            ),
+        },
+        "check_A_feature_utility": {
+            "passed":  feat_ok,
+            "verdict": feat_msg,
+            "r2_feat_heldout_overall": r2_feat_heldout,
+            "r2_feat_train_per_fold":  [f["r2_feat_train"]
+                                        for f in lobo_results["fold_summaries"]],
+            "note": (f"Method B uses prior-mean for n<{N_FEATURE_CYCLES} cycles. "
+                     f"Training and held-out R² reported separately to detect overfitting."),
+            "beta_table_all_124": beta_table,
+        },
+        "check_B_deadband_utility": {"passed": db_ok, "verdict": db_msg},
+        "check_C_fewshot_framing":  {
+            "passed": False,
+            "verdict": ("Structural — always fails. NOT zero-cycle prediction. "
+                        "R²(n=0) reflects population prior only."),
+        },
+        "check_gamma_adequacy": {
+            "gamma_fixed": GAMMA,
+            "model":       "ΔSOH = β · k^0.5",
+            "r2_within_cell_distribution": {
+                k: v for k, v in within_r2.items() if k != "per_cell"
+            },
+            "verdict": (
+                f"γ=0.5 gives adequate fits (R²≥0.70) for "
+                f"{within_r2['n_good_fit']}/{within_r2['n_good_fit']+within_r2['n_poor_fit']} "
+                f"cells (median R²={within_r2['r2_median']:.3f}). "
+                + ("Poor fits for many cells suggest the power-law model "
+                   "may be misspecified for some LFP degradation trajectories."
+                   if within_r2["n_poor_fit"] > 20 else
+                   "γ=0.5 is a reasonable approximation for this dataset.")
+            ),
+        },
+        "r2_snapshots_avg_124_cells": {
+            m: {str(n): v for n, v in vals.items()}
+            for m, vals in agg.items()
+        },
+        "lobo_fold_summaries": lobo_results["fold_summaries"],
+        "per_cell_r2_snapshots": {
+            cid: {
+                m: {str(n): v for n, v in snaps.items()}
+                for m, snaps in cells_dict[cid]["r2_snapshots"].items()
+            }
+            for cid in cells_dict
+        },
+    }
+
+    OUT_JSON_SEV.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(OUT_JSON_SEV), "w") as fh:
+        json.dump(report, fh, indent=2, default=_serialise)
+    print(f"\n[JSON] Saved → {OUT_JSON_SEV}")
+
+
+def run_severson() -> None:
+    """Module 4 on Severson 124-cell LFP dataset. LOBO-CV."""
+    print("OpenCATHODE — Module 4 (Severson LFP Extension)")
+    print(f"Model: ΔSOH = β · k^{GAMMA}  (γ={GAMMA} fixed, D_k=k unit-cycle)")
+    print(f"Evaluation: Leave-One-Batch-Out (LOBO), 3 folds")
+    print(f"Snapshots (cycles seen): {SNAPSHOTS}")
+    print()
+
+    # ── Load cells ──────────────────────────────────────────────────────────
+    print("Loading Severson cells via severson_loader (may take ~30 s)...")
+    try:
+        cells = _load_severson_cells()
+    except FileNotFoundError as e:
+        print(f"[ERROR] {e}")
+        sys.exit(1)
+    print(f"  Loaded {len(cells)} cells  "
+          f"(Batch 1: {sum(1 for c in cells if c['batch']==1)}, "
+          f"Batch 2: {sum(1 for c in cells if c['batch']==2)}, "
+          f"Batch 3: {sum(1 for c in cells if c['batch']==3)})")
+
+    # ── Within-cell R² distribution (γ=0.5 adequacy) ───────────────────────
+    print("\nComputing within-cell β fits and R² distribution (γ=0.5 check)...")
+    within_r2 = _within_cell_r2_distribution(cells, GAMMA)
+    print(f"  Within-cell R²: median={within_r2['r2_median']:.3f}  "
+          f"p10={within_r2['r2_p10']:.3f}  p90={within_r2['r2_p90']:.3f}")
+    print(f"  Poor fits (R²<0.70): {within_r2['n_poor_fit']} cells")
+    print(f"  β range: [{within_r2['beta_min']:.5f}, {within_r2['beta_max']:.5f}]  "
+          f"median={within_r2['beta_median']:.5f}")
+
+    # ── LOBO-CV ─────────────────────────────────────────────────────────────
+    print("\nRunning LOBO cross-validation (3 folds × up to 43 cells)...")
+    lobo_results = _run_lobo_cv(cells, GAMMA)
+
+    # ── Aggregate R²(n) over all 124 held-out cells ─────────────────────────
+    agg = _aggregate_lobo(lobo_results)
+
+    # ── Print results ────────────────────────────────────────────────────────
+    _print_severson_r2_table(agg, lobo_results, within_r2)
+    _print_severson_checks(lobo_results, agg, within_r2)
+    _print_severson_scope(agg, within_r2, lobo_results)
+
+    # ── Save JSON ────────────────────────────────────────────────────────────
+    _save_severson_json(lobo_results, agg, within_r2)
+
+    r2_A0  = agg["A_fixed_mean"][0]
+    r2_D30 = agg["D_online_db"][30]
+    r2_D50 = agg["D_online_db"][50]
+    print(f"\n  Summary: prior-only R²(n=0)={r2_A0:+.3f}  →  "
+          f"online+db R²(n=30)={r2_D30:+.3f}  →  R²(n=50)={r2_D50:+.3f}")
+
+
 if __name__ == "__main__":
-    main()
+    if "--severson" in sys.argv:
+        run_severson()
+    else:
+        main()
