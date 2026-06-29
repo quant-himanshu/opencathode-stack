@@ -22,6 +22,9 @@ data/ved/
 data/bmw_i3/
 data/deng20/
 
+# Severson 2019 LFP dataset — 3 × ~2 GB .mat files; download from data.matr.io/1/
+data/severson/
+
 # Embedded git repo
 data/iontech/
 
