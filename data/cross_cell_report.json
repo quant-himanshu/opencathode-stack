@@ -15,7 +15,46 @@
   },
   "check_A_feature_utility": {
     "passed": true,
-    "verdict": "Feature-mapped \u03b2\u2080 BEATS plain mean at n=0 (\u0394R\u00b2=+0.283). Severson \u0394Q(V) feature adds value as a warm-start, though the 3-point fit has high variance."
+    "verdict": "Feature-mapped \u03b2\u2080 BEATS plain mean at n=20 \u2014 the first snapshot where B diverges from A (\u0394R\u00b2=+0.402). 3-point linear fit, 2/4 folds require extrapolation beyond training F range. \u03b2_feature errors: B0005=-3.5%, B0006=-8.1%, B0007=-1.8%, B0018=+6.3%; \u03b2_mean errors: B0005=+15.5%, B0006=-33.8%, B0007=+41.9%, B0018=-0.5%",
+    "note": "Method B uses prior-mean \u03b2 for n<20 cycles (feature not computable yet). Comparison is at n=20, the FIRST snapshot where B diverges from A.",
+    "beta_comparison": [
+      {
+        "held_out": "B0005",
+        "beta_true": 0.019304406989713908,
+        "beta_feature_pred": 0.01862302488058335,
+        "beta_feature_err_pct": -3.529671096330029,
+        "beta_mean": 0.022289449966006968,
+        "beta_mean_err_pct": 15.46301227099842,
+        "extrapolation": false
+      },
+      {
+        "held_out": "B0006",
+        "beta_true": 0.02885442930495452,
+        "beta_feature_pred": 0.026510977631306054,
+        "beta_feature_err_pct": -8.121635564733637,
+        "beta_mean": 0.019106109194260094,
+        "beta_mean_err_pct": -33.78448303316725,
+        "extrapolation": true
+      },
+      {
+        "held_out": "B0007",
+        "beta_true": 0.01639404799973206,
+        "beta_feature_pred": 0.01609751677571747,
+        "beta_feature_err_pct": -1.80877356179329,
+        "beta_mean": 0.02325956962933425,
+        "beta_mean_err_pct": 41.87813291099958,
+        "extrapolation": true
+      },
+      {
+        "held_out": "B0018",
+        "beta_true": 0.02161987259333432,
+        "beta_feature_pred": 0.02298591936534012,
+        "beta_feature_err_pct": 6.31847714607808,
+        "beta_mean": 0.021517628098133495,
+        "beta_mean_err_pct": -0.47291902406103514,
+        "extrapolation": false
+      }
+    ]
   },
   "check_B_deadband_utility": {
     "passed": false,
@@ -35,8 +74,8 @@
       "100": -3.888949939137307
     },
     "B_feature_mapped": {
-      "0": 0.8119611579382098,
-      "10": 0.784127672760938,
+      "0": 0.5286075521371678,
+      "10": 0.44477829893636733,
       "20": 0.7606514194405528,
       "30": 0.7398889216572346,
       "50": 0.678094187857919,
@@ -73,6 +112,9 @@
       "beta0_mean": 0.022289449966006968,
       "beta0_feature": 0.01862302488058335,
       "beta_true": 0.019304406989713908,
+      "beta_feature_err_pct": -3.529671096330029,
+      "beta_mean_err_pct": 15.46301227099842,
+      "feature_extrapolation": false,
       "F_new": -3.455317845520025,
       "feature_map": {
         "a": 0.014612092303758623,
@@ -94,6 +136,9 @@
       "beta0_mean": 0.019106109194260094,
       "beta0_feature": 0.026510977631306054,
       "beta_true": 0.02885442930495452,
+      "beta_feature_err_pct": -8.121635564733637,
+      "beta_mean_err_pct": -33.78448303316725,
+      "feature_extrapolation": true,
       "F_new": -2.785845856738186,
       "feature_map": {
         "a": 0.011539237090615993,
@@ -115,6 +160,9 @@
       "beta0_mean": 0.02325956962933425,
       "beta0_feature": 0.01609751677571747,
       "beta_true": 0.01639404799973206,
+      "beta_feature_err_pct": -1.80877356179329,
+      "beta_mean_err_pct": 41.87813291099958,
+      "feature_extrapolation": true,
       "F_new": -3.6359044900742052,
       "feature_map": {
         "a": 0.014565918039194931,
@@ -136,6 +184,9 @@
       "beta0_mean": 0.021517628098133495,
       "beta0_feature": 0.02298591936534012,
       "beta_true": 0.02161987259333432,
+      "beta_feature_err_pct": 6.31847714607808,
+      "beta_mean_err_pct": -0.47291902406103514,
+      "feature_extrapolation": false,
       "F_new": -3.1914516311333485,
       "feature_map": {
         "a": 0.014551305863189012,
@@ -156,8 +207,8 @@
         "100": 0.8123436628976732
       },
       "B_feature_mapped": {
-        "0": 0.7512992506024719,
-        "10": 0.7229793327831715,
+        "0": 0.6830358313372038,
+        "10": 0.6491613476142364,
         "20": 0.6990813296794229,
         "30": 0.6809655252105047,
         "50": 0.6304494588817466,
@@ -190,8 +241,8 @@
         "100": -11.585063328280393
       },
       "B_feature_mapped": {
-        "0": 0.8597501262231497,
-        "10": 0.831948337881051,
+        "0": 0.35050234168948013,
+        "10": 0.18238594288902044,
         "20": 0.8032566868176007,
         "30": 0.7698631412441174,
         "50": 0.6142384932198162,
@@ -224,8 +275,8 @@
         "100": -3.5083856857478883
       },
       "B_feature_mapped": {
-        "0": 0.7857857132830663,
-        "10": 0.7595865683837493,
+        "0": 0.21143607116358532,
+        "10": 0.10456642678677552,
         "20": 0.7392685967095035,
         "30": 0.7300213269774212,
         "50": 0.7025226984100215,
@@ -258,8 +309,8 @@
         "100": -1.2746944054186176
       },
       "B_feature_mapped": {
-        "0": 0.8510095416441514,
-        "10": 0.8219964519957803,
+        "0": 0.869455964358402,
+        "10": 0.8429994784554369,
         "20": 0.8009990645556838,
         "30": 0.7787056931968951,
         "50": 0.7651661009200917,
