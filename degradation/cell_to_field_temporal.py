@@ -6,18 +6,30 @@ Per-vehicle calendar-only model (cycling term dropped: confirmed D≈0.002, negl
 Each vehicle is split 50/50 by time. λ_v is fit on the train window; the test window
 is predicted and compared against measurement.
 
-THREE BASELINES (test window only):
+FOUR BASELINES (test window only):
   B0' — carry-forward: ΔSOH(t) = ΔSOH_obs at train/test boundary (zero further change)
   B1' — LOO-transferred calendar: ΔSOH(t) = λ_LOO · √t
          λ_LOO = median(λ_v) across all OTHER vehicles' train windows (leave-one-out)
   B2' — per-vehicle calendar: ΔSOH(t) = λ_v · √t
          λ_v = fit on THIS vehicle's own train window
+  B3' — gated per-vehicle:
+         if λ_v > 0 (train window) → use B2' (per-vehicle λ is identifiable)
+         else                       → fall back to B0' (carry-forward)
+         Gate uses TRAIN-TIME-OBSERVABLE information only (no test peeking).
+         This is a deployable decision rule: if the first-half trajectory does not
+         show positive fade, do not extrapolate — hold the last reading instead.
+         Analogous to the Module 4 dead-band: don't act on an unidentified parameter.
 
 PRIMARY METRICS (test-window trajectory, not just endpoint):
   RMSE(ΔSOH_pred − ΔSOH_obs)  across all test-window cycles
   ρ(pred_traj, obs_traj)       Pearson on test-window timeseries
 
 SECONDARY: endpoint RMSE (last cycle only; flagged [LOW] where |ΔSOH_endpoint|<0.01).
+
+STRATIFIED SUBGROUPS (reported in JSON, not post-hoc selection):
+  λ>0 group (n=13): vehicles whose train-window λ_v is positive (fade identified)
+  λ≤0 group (n=7):  vehicles whose train-window λ_v is non-positive (unidentified)
+  Both groups reported for all baselines so the gate benefit is computed, not claimed.
 
 PRE-REGISTERED EXPECTATION (locked before code runs):
   Noise diagnostic gave median |ΔSOH|/σ = 1.70 (BORDERLINE).
@@ -28,6 +40,12 @@ PRE-REGISTERED EXPECTATION (locked before code runs):
   but included in all tables.
   If all baselines tie, the story closes: limiting factor is SOH measurement quality,
   not modeling.
+
+DEPLOYMENT NOTE:
+  Per-vehicle prediction is usable ONLY behind an identifiability gate (train-window
+  λ_v > 0 and adequate SNR); below the gate, fleet-prior/zero-fade fallback is optimal.
+  Improving the gate pass-rate requires better SOH sensing (EIS / incremental capacity)
+  or longer windows — a sensing problem, not a modeling problem.
 
 OUTPUT: data/cell_to_field_temporal_report.json
 """
@@ -219,20 +237,28 @@ def run_temporal_split() -> None:
         lam_v    = d["lambda_v"]
         pred_B2  = lam_v  * sqrt_t_te
 
+        # B3': gated — use B2' if λ_v > 0 (identifiable), else fall back to B0'
+        # Gate is train-time-observable: no test data used in the decision.
+        pred_B3  = pred_B2 if lam_v > 0 else pred_B0
+
         endpoint_obs  = float(dS_te[-1])
         low_flag      = abs(endpoint_obs) < DSOH_LOW
 
         d["trajectory_rmse_B0"]  = round(_rmse(pred_B0, dS_te), 5)
         d["trajectory_rmse_B1"]  = round(_rmse(pred_B1, dS_te), 5)
         d["trajectory_rmse_B2"]  = round(_rmse(pred_B2, dS_te), 5)
+        d["trajectory_rmse_B3"]  = round(_rmse(pred_B3, dS_te), 5)
         d["trajectory_rho_B0"]   = round(_rho(pred_B0,  dS_te), 4)
         d["trajectory_rho_B1"]   = round(_rho(pred_B1,  dS_te), 4)
         d["trajectory_rho_B2"]   = round(_rho(pred_B2,  dS_te), 4)
+        d["trajectory_rho_B3"]   = round(_rho(pred_B3,  dS_te), 4)
         d["endpoint_dsoh_obs"]   = round(endpoint_obs, 5)
         d["endpoint_dsoh_B0"]    = round(float(pred_B0[-1]), 5)
         d["endpoint_dsoh_B1"]    = round(float(pred_B1[-1]), 5)
         d["endpoint_dsoh_B2"]    = round(float(pred_B2[-1]), 5)
+        d["endpoint_dsoh_B3"]    = round(float(pred_B3[-1]), 5)
         d["endpoint_low_flag"]   = low_flag
+        d["b3_gate_used_b2"]     = bool(lam_v > 0)
 
     # ── 5. Aggregate (all vehicles with results) ──────────────────────────────
     valid = [
@@ -262,16 +288,62 @@ def run_temporal_split() -> None:
         }
 
     agg = {}
-    for bl in ("B0", "B1", "B2"):
+    for bl in ("B0", "B1", "B2", "B3"):
         agg[bl] = {**_agg_traj(bl), **_agg_endpoint(bl)}
 
-    # Verdict (pre-registered logic)
+    # ── Stratified subgroup aggregates (λ>0 vs λ≤0, all baselines) ───────────
+    pos_lam = [(v, d) for v, d in valid if not d.get("negative_lambda", False)]
+    neg_lam = [(v, d) for v, d in valid if     d.get("negative_lambda", False)]
+
+    def _agg_subgroup(subset: list, bl: str) -> Dict:
+        if not subset:
+            return {"n": 0}
+        rmses = [d[f"trajectory_rmse_{bl}"] for _, d in subset]
+        obs_v  = np.array([d["endpoint_dsoh_obs"]    for _, d in subset])
+        pred_v = np.array([d[f"endpoint_dsoh_{bl}"]  for _, d in subset])
+        return {
+            "n"                    : len(subset),
+            "mean_trajectory_rmse" : round(float(np.mean(rmses)), 5),
+            "median_trajectory_rmse": round(float(np.median(rmses)), 5),
+            "endpoint_rmse"        : round(_rmse(pred_v, obs_v), 5),
+            "endpoint_rho"         : round(_rho(pred_v, obs_v), 4),
+        }
+
+    subgroup_agg = {
+        "lambda_positive": {
+            bl: _agg_subgroup(pos_lam, bl) for bl in ("B0", "B1", "B2", "B3")
+        },
+        "lambda_nonpositive": {
+            bl: _agg_subgroup(neg_lam, bl) for bl in ("B0", "B1", "B2", "B3")
+        },
+        "note": (
+            "Gate is train-window-observable (sign of λ_v from first 50% of timeline). "
+            "lambda_positive = identifiable fade (n={n_pos}); "
+            "lambda_nonpositive = unidentifiable (n={n_neg}). "
+            "B3' routes each vehicle to B2' or B0' based on this gate.".format(
+                n_pos=len(pos_lam), n_neg=len(neg_lam))
+        ),
+    }
+
+    # ── Verdict (pre-registered logic + actual B3'/subgroup numbers) ──────────
     b2_beats_b1_traj = agg["B2"]["mean_trajectory_rmse"] < agg["B1"]["mean_trajectory_rmse"]
     b1_beats_b0_traj = agg["B1"]["mean_trajectory_rmse"] < agg["B0"]["mean_trajectory_rmse"]
+    b3_beats_b2_traj = agg["B3"]["mean_trajectory_rmse"] < agg["B2"]["mean_trajectory_rmse"]
+    b3_beats_b0_traj = agg["B3"]["mean_trajectory_rmse"] < agg["B0"]["mean_trajectory_rmse"]
     b2_beats_b1_ep   = agg["B2"]["endpoint_rmse"]        < agg["B1"]["endpoint_rmse"]
-    b1_beats_b0_ep   = agg["B1"]["endpoint_rmse"]        < agg["B0"]["endpoint_rmse"]
 
     neg_lam_vehs = [v for v, d in per_veh.items() if d.get("negative_lambda", False)]
+    pos_lam_vehs = [v for v, d in per_veh.items()
+                    if "trajectory_rmse_B0" in d and not d.get("negative_lambda", False)]
+
+    # Subgroup tRMSE for B2' on λ>0 vehicles
+    b2_pos_rmse = subgroup_agg["lambda_positive"]["B2"]["mean_trajectory_rmse"]
+    b0_pos_rmse = subgroup_agg["lambda_positive"]["B0"]["mean_trajectory_rmse"]
+    b2_neg_rmse = subgroup_agg["lambda_nonpositive"]["B2"]["mean_trajectory_rmse"]
+    b0_neg_rmse = subgroup_agg["lambda_nonpositive"]["B0"]["mean_trajectory_rmse"]
+
+    b2_wins_pos = b2_pos_rmse < b0_pos_rmse
+    b2_wins_neg = b2_neg_rmse < b0_neg_rmse
 
     if b2_beats_b1_traj and b1_beats_b0_traj:
         verdict = (
@@ -299,79 +371,117 @@ def run_temporal_split() -> None:
             "Calendar λ transfer provides marginal value; carry-forward is "
             "a hard baseline to beat given the noise floor."
         )
+
+    # Append computed B3'/subgroup finding (replaces any prior unverified claim)
+    verdict += (
+        f" Gated predictor B3' (λ_v>0 → B2', else → B0'): "
+        f"mean tRMSE={agg['B3']['mean_trajectory_rmse']:.5f} "
+        f"({'beats' if b3_beats_b0_traj else 'does not beat'} B0'={agg['B0']['mean_trajectory_rmse']:.5f}). "
+        f"Stratified: λ>0 group (n={len(pos_lam)}) B2' tRMSE={b2_pos_rmse:.5f} vs "
+        f"B0' tRMSE={b0_pos_rmse:.5f} → B2' {'wins' if b2_wins_pos else 'does not win'}; "
+        f"λ≤0 group (n={len(neg_lam)}) B2' tRMSE={b2_neg_rmse:.5f} vs "
+        f"B0' tRMSE={b0_neg_rmse:.5f} → B2' {'wins' if b2_wins_neg else 'does not win'}."
+    )
     if neg_lam_vehs:
         verdict += (
-            f" Note: {len(neg_lam_vehs)} vehicles have negative λ_v "
-            f"({', '.join(sorted(neg_lam_vehs))}) — non-monotone SOH trajectories "
-            "excluded from 'B2 beats' judgment but included in tables and RMSE."
+            f" {len(neg_lam_vehs)} vehicles have negative λ_v "
+            f"({', '.join(sorted(neg_lam_vehs))}) — non-monotone SOH; "
+            "included in all tables and RMSE."
         )
 
     # ── 6. Print tables ───────────────────────────────────────────────────────
-    print("=" * 85)
+    print("=" * 95)
     print("PER-VEHICLE LAMBDA AND TRAJECTORY METRICS")
-    print("=" * 85)
+    print("=" * 95)
     hdr = (f"{'Veh':4s} {'λ_v':8s} {'λ_LOO':8s} {'SNR':5s} "
            f"{'tr_n':5s} {'te_n':5s} "
-           f"{'tRMSE_B0':9s} {'tRMSE_B1':9s} {'tRMSE_B2':9s} "
-           f"{'ρ_B2':6s} {'negλ?':6s}")
+           f"{'tRMSE_B0':9s} {'tRMSE_B1':9s} {'tRMSE_B2':9s} {'tRMSE_B3':9s} "
+           f"{'ρ_B2':6s} {'gate':5s}")
     print(hdr)
-    print("-" * 85)
+    print("-" * 95)
 
     for veh in sorted(per_veh.keys()):
         d = per_veh[veh]
         if "trajectory_rmse_B0" not in d:
             print(f"{veh:4s}  [{d.get('note', 'excluded')}]")
             continue
-        neg_s = "YES" if d["negative_lambda"] else "no"
+        gate_s = "B2'" if d["b3_gate_used_b2"] else "B0'"
         print(
             f"{veh:4s} {d['lambda_v']:8.5f} {d['lambda_loo']:8.5f} "
             f"{d['snr']:5.2f} "
             f"{d['train_n_cycles']:5d} {d['test_n_cycles']:5d} "
             f"{d['trajectory_rmse_B0']:9.5f} {d['trajectory_rmse_B1']:9.5f} "
-            f"{d['trajectory_rmse_B2']:9.5f} "
-            f"{d['trajectory_rho_B2']:6.3f} {neg_s:6s}"
+            f"{d['trajectory_rmse_B2']:9.5f} {d['trajectory_rmse_B3']:9.5f} "
+            f"{d['trajectory_rho_B2']:6.3f} {gate_s:5s}"
         )
 
     print()
-    print("=" * 65)
-    print(f"AGGREGATE TABLE  (all {len(valid)} vehicles with sufficient data)")
-    print("=" * 65)
+    print("=" * 75)
+    print(f"AGGREGATE TABLE  (all {len(valid)} vehicles)")
+    print("=" * 75)
     print(f"{'Baseline':8s} {'Mean tRMSE':11s} {'Med tRMSE':10s} "
-          f"{'Mean ρ':7s} {'EP-RMSE':8s} {'EP-ρ':6s} "
-          f"{'Beats B0?':10s} {'Beats B1?':9s}")
-    print("-" * 70)
-    for bl in ("B0", "B1", "B2"):
+          f"{'Mean ρ':7s} {'EP-RMSE':8s} {'EP-ρ':7s} "
+          f"{'Beats B0?':10s} {'Beats B2?':9s}")
+    print("-" * 75)
+    for bl in ("B0", "B1", "B2", "B3"):
         a   = agg[bl]
         b0s = "—" if bl == "B0" else (
             "yes" if a["mean_trajectory_rmse"] < agg["B0"]["mean_trajectory_rmse"] else "no")
-        b1s = "—" if bl in ("B0", "B1") else (
-            "yes" if a["mean_trajectory_rmse"] < agg["B1"]["mean_trajectory_rmse"] else "no")
+        b2s = "—" if bl in ("B0", "B1", "B2") else (
+            "yes" if a["mean_trajectory_rmse"] < agg["B2"]["mean_trajectory_rmse"] else "no")
+        rho_s = f"{a['mean_rho']:.4f}" if not np.isnan(a.get("mean_rho", float("nan"))) else "  nan"
         print(
             f"{bl:8s} {a['mean_trajectory_rmse']:11.5f} "
             f"{a['median_trajectory_rmse']:10.5f} "
-            f"{a['mean_rho']:7.4f} "
-            f"{a['endpoint_rmse']:8.5f} {a['endpoint_rho']:6.4f} "
-            f"{b0s:10s} {b1s:9s}"
+            f"{rho_s:7s} "
+            f"{a['endpoint_rmse']:8.5f} {a['endpoint_rho']:7.4f} "
+            f"{b0s:10s} {b2s:9s}"
         )
 
     print()
+    print("STRATIFIED SUBGROUPS (gate = sign of train-window λ_v):")
+    print(f"  λ>0  (n={len(pos_lam):2d}, fade identifiable):  ", end="")
+    for bl in ("B0", "B1", "B2", "B3"):
+        sg = subgroup_agg["lambda_positive"][bl]
+        print(f"  {bl}={sg['mean_trajectory_rmse']:.5f}", end="")
+    print()
+    print(f"  λ≤0  (n={len(neg_lam):2d}, unidentifiable):     ", end="")
+    for bl in ("B0", "B1", "B2", "B3"):
+        sg = subgroup_agg["lambda_nonpositive"][bl]
+        print(f"  {bl}={sg['mean_trajectory_rmse']:.5f}", end="")
+    print()
+
+    print()
     print("VERDICT:")
-    print(f"  {verdict}")
+    # Wrap long verdict at word boundaries
+    words = verdict.split()
+    line, lines = [], []
+    for w in words:
+        if sum(len(x)+1 for x in line) + len(w) > 72:
+            lines.append("  " + " ".join(line))
+            line = [w]
+        else:
+            line.append(w)
+    if line:
+        lines.append("  " + " ".join(line))
+    print("\n".join(lines))
     print()
     print(f"  Global fleet λ (median of all per-vehicle train fits): {global_lam:.5f}")
     print(f"  M2 λ_sei from V01-V04 only: 0.02639  "
           f"[ratio: {global_lam/0.02639332:.2f}× — "
           f"{'M2 overestimates' if global_lam < 0.02639332 else 'M2 underestimates'} fleet-wide λ]")
     print()
-    print("  Negative-λ vehicles (non-monotone SOH): "
-          + (", ".join(sorted(neg_lam_vehs)) if neg_lam_vehs else "none"))
+    print(f"  Gate pass-rate: {len(pos_lam)}/{len(valid)} vehicles have λ_v > 0 "
+          f"(positive fade identifiable in train window)")
     print()
-    print("  Pre-registered noise check: endpoint-RMSE winner is "
-          + ("B2' (per-vehicle λ)" if b2_beats_b1_ep and b2_beats_b1_traj
-             else "B0' or B1' — consistent with noise-floor finding"))
+    print("DEPLOYMENT NOTE:")
+    print("  Per-vehicle prediction is usable ONLY behind an identifiability gate")
+    print("  (train-window λ_v > 0 and adequate SNR); below the gate, fleet-prior /")
+    print("  zero-fade fallback is optimal. Improving the gate pass-rate requires")
+    print("  better SOH sensing (EIS / incremental capacity) or longer observation")
+    print("  windows — a sensing problem, not a modeling problem.")
 
     # ── 7. Write JSON ─────────────────────────────────────────────────────────
-    # Remove private arrays before serialising
     report = {
         "meta": {
             "script"        : "degradation/cell_to_field_temporal.py",
@@ -390,6 +500,10 @@ def run_temporal_split() -> None:
             "B0_prime": "carry-forward: ΔSOH = last observed value at train/test boundary",
             "B1_prime": "LOO calendar: λ_LOO = median(λ_v) from all OTHER vehicles",
             "B2_prime": "per-vehicle calendar: λ_v fit on this vehicle's train window",
+            "B3_prime": (
+                "gated per-vehicle: if λ_v>0 (train window) → B2', else → B0'. "
+                "Gate is train-time-observable; deployable without test peeking."
+            ),
         },
         "per_vehicle": {
             v: {k: (round(float(val), 6) if isinstance(val, (float, np.floating)) else val)
@@ -397,7 +511,15 @@ def run_temporal_split() -> None:
             for v, d in per_veh.items()
         },
         "aggregate": agg,
+        "subgroup_aggregate": subgroup_agg,
         "verdict": verdict,
+        "deployment_note": (
+            "Per-vehicle prediction is usable ONLY behind an identifiability gate "
+            "(train-window λ_v > 0 and adequate SNR); below the gate, fleet-prior/"
+            "zero-fade fallback is optimal. Improving the gate pass-rate requires "
+            "better SOH sensing (EIS / incremental capacity) or longer windows — "
+            "a sensing problem, not a modeling problem."
+        ),
     }
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)

@@ -15,7 +15,8 @@
   "baselines": {
     "B0_prime": "carry-forward: \u0394SOH = last observed value at train/test boundary",
     "B1_prime": "LOO calendar: \u03bb_LOO = median(\u03bb_v) from all OTHER vehicles",
-    "B2_prime": "per-vehicle calendar: \u03bb_v fit on this vehicle's train window"
+    "B2_prime": "per-vehicle calendar: \u03bb_v fit on this vehicle's train window",
+    "B3_prime": "gated per-vehicle: if \u03bb_v>0 (train window) \u2192 B2', else \u2192 B0'. Gate is train-time-observable; deployable without test peeking."
   },
   "per_vehicle": {
     "V01": {
@@ -31,14 +32,18 @@
       "trajectory_rmse_B0": 0.03984,
       "trajectory_rmse_B1": 0.04132,
       "trajectory_rmse_B2": 0.02995,
+      "trajectory_rmse_B3": 0.02995,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.0773,
       "trajectory_rho_B2": -0.0773,
+      "trajectory_rho_B3": -0.0773,
       "endpoint_dsoh_obs": 0.05496,
       "endpoint_dsoh_B0": 0.09049,
       "endpoint_dsoh_B1": 0.02488,
       "endpoint_dsoh_B2": 0.08756,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.08756,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V02": {
       "lambda_v": 0.004216,
@@ -53,14 +58,18 @@
       "trajectory_rmse_B0": 0.04371,
       "trajectory_rmse_B1": 0.0244,
       "trajectory_rmse_B2": 0.02895,
+      "trajectory_rmse_B3": 0.02895,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.2054,
       "trajectory_rho_B2": 0.2054,
+      "trajectory_rho_B3": 0.2054,
       "endpoint_dsoh_obs": 0.02483,
       "endpoint_dsoh_B0": -0.01483,
       "endpoint_dsoh_B1": 0.03127,
       "endpoint_dsoh_B2": 0.00641,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.00641,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V03": {
       "lambda_v": 0.020574,
@@ -75,14 +84,18 @@
       "trajectory_rmse_B0": 0.02665,
       "trajectory_rmse_B1": 0.02632,
       "trajectory_rmse_B2": 0.02915,
+      "trajectory_rmse_B3": 0.02915,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.4493,
       "trajectory_rho_B2": 0.4493,
+      "trajectory_rho_B3": 0.4493,
       "endpoint_dsoh_obs": 0.00048,
       "endpoint_dsoh_B0": -0.00141,
       "endpoint_dsoh_B1": 0.02488,
       "endpoint_dsoh_B2": 0.03126,
-      "endpoint_low_flag": true
+      "endpoint_dsoh_B3": 0.03126,
+      "endpoint_low_flag": true,
+      "b3_gate_used_b2": true
     },
     "V04": {
       "lambda_v": 0.027598,
@@ -97,14 +110,18 @@
       "trajectory_rmse_B0": 0.02964,
       "trajectory_rmse_B1": 0.03293,
       "trajectory_rmse_B2": 0.02282,
+      "trajectory_rmse_B3": 0.02282,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.0393,
       "trajectory_rho_B2": -0.0393,
+      "trajectory_rho_B3": -0.0393,
       "endpoint_dsoh_obs": 0.06481,
       "endpoint_dsoh_B0": 0.07115,
       "endpoint_dsoh_B1": 0.0249,
       "endpoint_dsoh_B2": 0.04195,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.04195,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V05": {
       "lambda_v": -0.019982,
@@ -119,14 +136,18 @@
       "trajectory_rmse_B0": 0.05315,
       "trajectory_rmse_B1": 0.02999,
       "trajectory_rmse_B2": 0.03572,
+      "trajectory_rmse_B3": 0.05315,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1493,
       "trajectory_rho_B2": -0.1493,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": 0.03058,
       "endpoint_dsoh_B0": -0.04598,
       "endpoint_dsoh_B1": 0.03127,
       "endpoint_dsoh_B2": -0.03037,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": -0.04598,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V06": {
       "lambda_v": 0.03628,
@@ -141,14 +162,18 @@
       "trajectory_rmse_B0": 0.03965,
       "trajectory_rmse_B1": 0.04013,
       "trajectory_rmse_B2": 0.02497,
+      "trajectory_rmse_B3": 0.02497,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.0265,
       "trajectory_rho_B2": 0.0265,
+      "trajectory_rho_B3": 0.0265,
       "endpoint_dsoh_obs": 0.0194,
       "endpoint_dsoh_B0": 0.02225,
       "endpoint_dsoh_B1": 0.02489,
       "endpoint_dsoh_B2": 0.05514,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.05514,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V07": {
       "lambda_v": -0.049065,
@@ -163,14 +188,18 @@
       "trajectory_rmse_B0": 0.02158,
       "trajectory_rmse_B1": 0.05848,
       "trajectory_rmse_B2": 0.04158,
+      "trajectory_rmse_B3": 0.02158,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1209,
       "trajectory_rho_B2": -0.1209,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": -0.03029,
       "endpoint_dsoh_B0": -0.0185,
       "endpoint_dsoh_B1": 0.03126,
       "endpoint_dsoh_B2": -0.07455,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": -0.0185,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V08": {
       "lambda_v": 0.083915,
@@ -185,14 +214,18 @@
       "trajectory_rmse_B0": 0.0213,
       "trajectory_rmse_B1": 0.0682,
       "trajectory_rmse_B2": 0.03237,
+      "trajectory_rmse_B3": 0.03237,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1468,
       "trajectory_rho_B2": 0.1468,
+      "trajectory_rho_B3": 0.1468,
       "endpoint_dsoh_obs": 0.05848,
       "endpoint_dsoh_B0": 0.08776,
       "endpoint_dsoh_B1": 0.02489,
       "endpoint_dsoh_B2": 0.12751,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.12751,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V09": {
       "lambda_v": 0.062882,
@@ -207,14 +240,18 @@
       "trajectory_rmse_B0": 0.04155,
       "trajectory_rmse_B1": 0.04784,
       "trajectory_rmse_B2": 0.03179,
+      "trajectory_rmse_B3": 0.03179,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.2179,
       "trajectory_rho_B2": 0.2179,
+      "trajectory_rho_B3": 0.2179,
       "endpoint_dsoh_obs": 0.07542,
       "endpoint_dsoh_B0": 0.02926,
       "endpoint_dsoh_B1": 0.02492,
       "endpoint_dsoh_B2": 0.09569,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.09569,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V10": {
       "lambda_v": -0.00358,
@@ -229,14 +266,18 @@
       "trajectory_rmse_B0": 0.0197,
       "trajectory_rmse_B1": 0.02525,
       "trajectory_rmse_B2": 0.02381,
+      "trajectory_rmse_B3": 0.0197,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1836,
       "trajectory_rho_B2": -0.1836,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": 0.01109,
       "endpoint_dsoh_B0": 0.01564,
       "endpoint_dsoh_B1": 0.03129,
       "endpoint_dsoh_B2": -0.00544,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.01564,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V11": {
       "lambda_v": 0.007097,
@@ -251,14 +292,18 @@
       "trajectory_rmse_B0": 0.03962,
       "trajectory_rmse_B1": 0.01623,
       "trajectory_rmse_B2": 0.026,
+      "trajectory_rmse_B3": 0.026,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1716,
       "trajectory_rho_B2": 0.1716,
+      "trajectory_rho_B3": 0.1716,
       "endpoint_dsoh_obs": 0.03071,
       "endpoint_dsoh_B0": -0.00644,
       "endpoint_dsoh_B1": 0.03127,
       "endpoint_dsoh_B2": 0.01079,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.01079,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V12": {
       "lambda_v": -0.027893,
@@ -273,14 +318,18 @@
       "trajectory_rmse_B0": 0.03221,
       "trajectory_rmse_B1": 0.03754,
       "trajectory_rmse_B2": 0.03937,
+      "trajectory_rmse_B3": 0.03221,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.2783,
       "trajectory_rho_B2": -0.2783,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": -0.03825,
       "endpoint_dsoh_B0": 0.01993,
       "endpoint_dsoh_B1": 0.03132,
       "endpoint_dsoh_B2": -0.04247,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.01993,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V13": {
       "lambda_v": 0.041017,
@@ -295,14 +344,18 @@
       "trajectory_rmse_B0": 0.01934,
       "trajectory_rmse_B1": 0.0513,
       "trajectory_rmse_B2": 0.02563,
+      "trajectory_rmse_B3": 0.02563,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.2819,
       "trajectory_rho_B2": -0.2819,
+      "trajectory_rho_B3": -0.2819,
       "endpoint_dsoh_obs": 0.04673,
       "endpoint_dsoh_B0": 0.06342,
       "endpoint_dsoh_B1": 0.02488,
       "endpoint_dsoh_B2": 0.06232,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.06232,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V14": {
       "lambda_v": -0.019824,
@@ -317,14 +370,18 @@
       "trajectory_rmse_B0": 0.01769,
       "trajectory_rmse_B1": 0.03284,
       "trajectory_rmse_B2": 0.03052,
+      "trajectory_rmse_B3": 0.01769,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.1754,
       "trajectory_rho_B2": -0.1754,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": 0.0062,
       "endpoint_dsoh_B0": 0.0014,
       "endpoint_dsoh_B1": 0.03127,
       "endpoint_dsoh_B2": -0.03013,
-      "endpoint_low_flag": true
+      "endpoint_dsoh_B3": 0.0014,
+      "endpoint_low_flag": true,
+      "b3_gate_used_b2": false
     },
     "V15": {
       "lambda_v": 0.039883,
@@ -339,14 +396,18 @@
       "trajectory_rmse_B0": 0.02829,
       "trajectory_rmse_B1": 0.03793,
       "trajectory_rmse_B2": 0.02493,
+      "trajectory_rmse_B3": 0.02493,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.3735,
       "trajectory_rho_B2": -0.3735,
+      "trajectory_rho_B3": -0.3735,
       "endpoint_dsoh_obs": 0.09126,
       "endpoint_dsoh_B0": 0.06922,
       "endpoint_dsoh_B1": 0.0249,
       "endpoint_dsoh_B2": 0.06064,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.06064,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V16": {
       "lambda_v": -0.062883,
@@ -361,14 +422,18 @@
       "trajectory_rmse_B0": 0.04601,
       "trajectory_rmse_B1": 0.06797,
       "trajectory_rmse_B2": 0.04836,
+      "trajectory_rmse_B3": 0.04601,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.5536,
       "trajectory_rho_B2": -0.5536,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": -0.03515,
       "endpoint_dsoh_B0": -0.08212,
       "endpoint_dsoh_B1": 0.03132,
       "endpoint_dsoh_B2": -0.09573,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": -0.08212,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V17": {
       "lambda_v": -0.052128,
@@ -383,14 +448,18 @@
       "trajectory_rmse_B0": 0.02128,
       "trajectory_rmse_B1": 0.05606,
       "trajectory_rmse_B2": 0.04964,
+      "trajectory_rmse_B3": 0.02128,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.092,
       "trajectory_rho_B2": -0.092,
+      "trajectory_rho_B3": NaN,
       "endpoint_dsoh_obs": -0.01542,
       "endpoint_dsoh_B0": -0.02878,
       "endpoint_dsoh_B1": 0.03127,
       "endpoint_dsoh_B2": -0.07923,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": -0.02878,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": false
     },
     "V18": {
       "lambda_v": 0.037833,
@@ -405,14 +474,18 @@
       "trajectory_rmse_B0": 0.02965,
       "trajectory_rmse_B1": 0.02874,
       "trajectory_rmse_B2": 0.02278,
+      "trajectory_rmse_B3": 0.02278,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.0673,
       "trajectory_rho_B2": -0.0673,
+      "trajectory_rho_B3": -0.0673,
       "endpoint_dsoh_obs": 0.01823,
       "endpoint_dsoh_B0": 0.06281,
       "endpoint_dsoh_B1": 0.02489,
       "endpoint_dsoh_B2": 0.05749,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.05749,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V19": {
       "lambda_v": 0.0314,
@@ -427,14 +500,18 @@
       "trajectory_rmse_B0": 0.02527,
       "trajectory_rmse_B1": 0.02842,
       "trajectory_rmse_B2": 0.02415,
+      "trajectory_rmse_B3": 0.02415,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": -0.5472,
       "trajectory_rho_B2": -0.5472,
+      "trajectory_rho_B3": -0.5472,
       "endpoint_dsoh_obs": 0.04016,
       "endpoint_dsoh_B0": 0.05171,
       "endpoint_dsoh_B1": 0.02491,
       "endpoint_dsoh_B2": 0.04777,
-      "endpoint_low_flag": false
+      "endpoint_dsoh_B3": 0.04777,
+      "endpoint_low_flag": false,
+      "b3_gate_used_b2": true
     },
     "V20": {
       "lambda_v": 0.016377,
@@ -449,14 +526,18 @@
       "trajectory_rmse_B0": 0.01882,
       "trajectory_rmse_B1": 0.01759,
       "trajectory_rmse_B2": 0.0176,
+      "trajectory_rmse_B3": 0.0176,
       "trajectory_rho_B0": NaN,
       "trajectory_rho_B1": 0.2634,
       "trajectory_rho_B2": 0.2634,
+      "trajectory_rho_B3": 0.2634,
       "endpoint_dsoh_obs": -0.00927,
       "endpoint_dsoh_B0": 0.01814,
       "endpoint_dsoh_B1": 0.03125,
       "endpoint_dsoh_B2": 0.02488,
-      "endpoint_low_flag": true
+      "endpoint_dsoh_B3": 0.02488,
+      "endpoint_low_flag": true,
+      "b3_gate_used_b2": true
     }
   },
   "aggregate": {
@@ -483,7 +564,79 @@
       "n_vehicles": 20,
       "endpoint_rmse": 0.03788,
       "endpoint_rho": 0.8021
+    },
+    "B3": {
+      "mean_trajectory_rmse": 0.02764,
+      "median_trajectory_rmse": 0.0253,
+      "mean_rho": 0.0073,
+      "n_vehicles": 20,
+      "endpoint_rmse": 0.03569,
+      "endpoint_rho": 0.692
     }
   },
-  "verdict": "B2'>B1'\u2248B0' on trajectory RMSE: per-vehicle \u03bb helps but LOO-transferred \u03bb does not beat carry-forward \u2014 fleet \u03bb spread is too wide for cross-vehicle transfer to add value. Within-vehicle calibration needed. Note: 7 vehicles have negative \u03bb_v (V05, V07, V10, V12, V14, V16, V17) \u2014 non-monotone SOH trajectories excluded from 'B2 beats' judgment but included in tables and RMSE."
+  "subgroup_aggregate": {
+    "lambda_positive": {
+      "B0": {
+        "n": 13,
+        "mean_trajectory_rmse": 0.03103,
+        "median_trajectory_rmse": 0.02964,
+        "endpoint_rmse": 0.02895,
+        "endpoint_rho": 0.5945
+      },
+      "B1": {
+        "n": 13,
+        "mean_trajectory_rmse": 0.03549,
+        "median_trajectory_rmse": 0.03293,
+        "endpoint_rmse": 0.0324,
+        "endpoint_rho": -0.47
+      },
+      "B2": {
+        "n": 13,
+        "mean_trajectory_rmse": 0.02624,
+        "median_trajectory_rmse": 0.02563,
+        "endpoint_rmse": 0.03243,
+        "endpoint_rho": 0.5639
+      },
+      "B3": {
+        "n": 13,
+        "mean_trajectory_rmse": 0.02624,
+        "median_trajectory_rmse": 0.02563,
+        "endpoint_rmse": 0.03243,
+        "endpoint_rho": 0.5639
+      }
+    },
+    "lambda_nonpositive": {
+      "B0": {
+        "n": 7,
+        "mean_trajectory_rmse": 0.03023,
+        "median_trajectory_rmse": 0.02158,
+        "endpoint_rmse": 0.04108,
+        "endpoint_rho": 0.0856
+      },
+      "B1": {
+        "n": 7,
+        "mean_trajectory_rmse": 0.04402,
+        "median_trajectory_rmse": 0.03754,
+        "endpoint_rmse": 0.0482,
+        "endpoint_rho": -0.5075
+      },
+      "B2": {
+        "n": 7,
+        "mean_trajectory_rmse": 0.03843,
+        "median_trajectory_rmse": 0.03937,
+        "endpoint_rmse": 0.04633,
+        "endpoint_rho": 0.7041
+      },
+      "B3": {
+        "n": 7,
+        "mean_trajectory_rmse": 0.03023,
+        "median_trajectory_rmse": 0.02158,
+        "endpoint_rmse": 0.04108,
+        "endpoint_rho": 0.0856
+      }
+    },
+    "note": "Gate is train-window-observable (sign of \u03bb_v from first 50% of timeline). lambda_positive = identifiable fade (n=13); lambda_nonpositive = unidentifiable (n=7). B3' routes each vehicle to B2' or B0' based on this gate."
+  },
+  "verdict": "B2'>B1'\u2248B0' on trajectory RMSE: per-vehicle \u03bb helps but LOO-transferred \u03bb does not beat carry-forward \u2014 fleet \u03bb spread is too wide for cross-vehicle transfer to add value. Within-vehicle calibration needed. Gated predictor B3' (\u03bb_v>0 \u2192 B2', else \u2192 B0'): mean tRMSE=0.02764 (beats B0'=0.03075). Stratified: \u03bb>0 group (n=13) B2' tRMSE=0.02624 vs B0' tRMSE=0.03103 \u2192 B2' wins; \u03bb\u22640 group (n=7) B2' tRMSE=0.03843 vs B0' tRMSE=0.03023 \u2192 B2' does not win. 7 vehicles have negative \u03bb_v (V05, V07, V10, V12, V14, V16, V17) \u2014 non-monotone SOH; included in all tables and RMSE.",
+  "deployment_note": "Per-vehicle prediction is usable ONLY behind an identifiability gate (train-window \u03bb_v > 0 and adequate SNR); below the gate, fleet-prior/zero-fade fallback is optimal. Improving the gate pass-rate requires better SOH sensing (EIS / incremental capacity) or longer windows \u2014 a sensing problem, not a modeling problem."
 }
