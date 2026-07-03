@@ -4,7 +4,7 @@ scripts/dva_analysis.py  —  Module 3: Degradation-Mode Analysis via DVA
 
 Method: Differential Voltage Analysis (dV/dQ vs Q), NOT ICA.
 Rationale: NASA data is 1C; DVA peaks stay in the capacity domain so ohmic
-IR-drop does not shift them (Dubarry best-practices 2022).
+IR-drop does not shift them (Dubarry & Anseán 2022, Front. Energy Res.).
 
 Cells: NASA B0005, B0006, B0007, B0018 ONLY.
 Deng fleet data: mode decomposition ABORTED — charging-only, pack-level,
@@ -23,8 +23,8 @@ Honest scope:
 References:
   Birkl et al. (2017) Degradation diagnostics for lithium ion cells.
       J. Power Sources 341:373–386.
-  Dubarry & Anseán (2022) Best practices for incremental capacity analysis.
-      J. Power Sources Adv. 100049.
+  Dubarry M. & Anseán D. (2022) Best practices for incremental capacity analysis.
+      Frontiers in Energy Research 10:1023555. DOI 10.3389/fenrg.2022.1023555
   Saha & Goebel (2009) NASA/TM-2007-214294
 """
 from __future__ import annotations
@@ -314,15 +314,15 @@ def _diagnose_mode(peak_history: List[List[Dict]]) -> Dict:
     # Mode verdict: honest — not resolvable from 1C data.
     # Peak shifts are inconsistent across cells and threshold-sensitive.
     # Canonical LLI requires a LEFT shift; RIGHT shifts observed here are
-    # likely a 1C-rate blurring artifact (Dubarry 2022: ~5-8% mode error at 1C).
+    # likely a 1C-rate blurring artifact — mode quantification unreliable at 1C (Dubarry & Anseán 2022).
     # Clean mode resolution needs C/20 pseudo-OCV or half-cell OCP reference.
     dom    = "mode unresolved at 1C (honest)"
     detail = (
         "DVA peaks are blurred at 1C and shift inconsistently across cells — "
         "verdicts flip with threshold changes, indicating noise not signal. "
         "No confident LLI/LAM/CL mode assignment is made. "
-        "Dubarry & Anseán (2022) confirm ~5-8% mode error at high rate; "
-        "clean resolution requires C/20 pseudo-OCV or half-cell OCP data. "
+        "Mode quantification unreliable at high rate; low-rate (C/20-C/25) data required "
+        "(Dubarry & Anseán 2022, Front. Energy Res. 10:1023555). "
         "This is a data-rate limitation, not a method failure."
     )
 
@@ -547,7 +547,8 @@ def print_honest_validation(results: List[Dict]) -> None:
       DVA peaks are blurred at 1C and shift inconsistently; verdicts
       flip with threshold changes, indicating noise not signal.
       Clean mode resolution requires C/20 pseudo-OCV or half-cell OCP
-      data. Dubarry & Anseán (2022) confirm ~5–8% mode error at 1C.
+      data. Mode quantification unreliable at high rate; low-rate (C/20-C/25) data
+      required (Dubarry & Anseán 2022, Front. Energy Res. 10:1023555).
       This is a data-rate limitation, not a method failure.
     · Exact %LLI / %LAM — requires half-cell OCP reference curves
     · Confirmed electrode assignment of Peak-1/2/3 — positional only
@@ -570,7 +571,8 @@ def print_honest_validation(results: List[Dict]) -> None:
 
   METHOD REFERENCES:
     · Birkl et al. (2017) J. Power Sources 341:373–386
-    · Dubarry & Anseán (2022) J. Power Sources Adv. 100049
+    · Dubarry M. & Anseán D. (2022) Front. Energy Res. 10:1023555
+      DOI 10.3389/fenrg.2022.1023555
     · Saha & Goebel (2009) NASA/TM-2007-214294 (R0 = 130 mΩ BOL)
 """)
 
@@ -599,7 +601,7 @@ def save_json(results: List[Dict], out_path: Path) -> None:
             "from NASA 1C discharge data — DVA peaks are blurred at 1C and shift "
             "inconsistently, so no confident mode verdict is claimed. "
             "Clean mode resolution needs slow C/20 pseudo-OCV or half-cell OCP data "
-            "(Dubarry & Anseán 2022 confirm ~5-8% mode error at high rate). "
+            "(mode quantification unreliable at high rate; C/20-C/25 required, Dubarry & Anseán 2022). "
             "This is a data limitation, not a method failure."
         ),
         "cells": per_cell,

@@ -31,7 +31,7 @@ HONEST FINDINGS (see summary section):
 
 REFERENCES:
   Sulzer V, et al. "The challenge and opportunity of battery lifetime prediction
-    from field data." Joule 5(8):1934-1955 (2021). doi:10.1016/j.joule.2021.08.020
+    from field data." Joule 5(8):1934-1955 (2021). DOI 10.1016/j.joule.2021.06.005
   Klinsmann M, Rosato D, Ortiz M. "Electrochemical fracture mechanics of electrode
     particles in lithium-ion batteries." J. Electrochem. Soc. 163:A102 (2016).
     doi:10.1149/2.0281602jes
@@ -463,7 +463,7 @@ def main() -> None:
             "references": [
                 "Sulzer V, et al. 'The challenge and opportunity of battery lifetime "
                 "prediction from field data.' Joule 5(8):1934-1955 (2021). "
-                "doi:10.1016/j.joule.2021.08.020",
+                "DOI 10.1016/j.joule.2021.06.005",
                 "Klinsmann M, Rosato D, Ortiz M. 'Electrochemical fracture mechanics "
                 "of electrode particles in lithium-ion batteries.' "
                 "J. Electrochem. Soc. 163:A102 (2016). doi:10.1149/2.0281602jes",

@@ -124,7 +124,7 @@
       "per_Sulzer2021": "At partial DoD and low C-rate, D_final\u22480.002 (negligible). SEI calendar term \u03bb\u00b7\u221at explains 100% of modelled fade. Stress-fatigue model inapplicable without >5 yr observation window."
     },
     "references": [
-      "Sulzer V, et al. 'The challenge and opportunity of battery lifetime prediction from field data.' Joule 5(8):1934-1955 (2021). doi:10.1016/j.joule.2021.08.020",
+      "Sulzer V, et al. 'The challenge and opportunity of battery lifetime prediction from field data.' Joule 5(8):1934-1955 (2021). DOI 10.1016/j.joule.2021.06.005",
       "Klinsmann M, Rosato D, Ortiz M. 'Electrochemical fracture mechanics of electrode particles in lithium-ion batteries.' J. Electrochem. Soc. 163:A102 (2016). doi:10.1149/2.0281602jes",
       "Saha B, Goebel K. NASA Ames Prognostics Data Repository (2007). NASA/TM-2007-214294."
     ]

@@ -1,6 +1,6 @@
 {
   "module": "Module 3 \u2014 DVA Degradation-Mode Analysis",
-  "honest_conclusion": "Total capacity fade is measured confidently (B0005 28.7%, B0006 41.3%, B0007 24.1%, B0018 27.2%). Degradation-MODE decomposition (LLI/LAM/CL) is NOT cleanly resolvable from NASA 1C discharge data \u2014 DVA peaks are blurred at 1C and shift inconsistently, so no confident mode verdict is claimed. Clean mode resolution needs slow C/20 pseudo-OCV or half-cell OCP data (Dubarry & Anse\u00e1n 2022 confirm ~5-8% mode error at high rate). This is a data limitation, not a method failure.",
+  "honest_conclusion": "Total capacity fade is measured confidently (B0005 28.7%, B0006 41.3%, B0007 24.1%, B0018 27.2%). Degradation-MODE decomposition (LLI/LAM/CL) is NOT cleanly resolvable from NASA 1C discharge data \u2014 DVA peaks are blurred at 1C and shift inconsistently, so no confident mode verdict is claimed. Clean mode resolution needs slow C/20 pseudo-OCV or half-cell OCP data (mode quantification unreliable at high rate; low-rate (C/20-C/25) data required (Dubarry & Anse\u00e1n 2022, Front. Energy Res. 10:1023555)). This is a data limitation, not a method failure.",
   "cells": [
     {
       "cell_id": "B0005",
@@ -13,7 +13,7 @@
       "r0_flagged": 0,
       "diagnosis": {
         "dominant_mode": "mode unresolved at 1C (honest)",
-        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Mode quantification unreliable at high rate; low-rate (C/20-C/25) data required (Dubarry & Anse\u00e1n 2022, Front. Energy Res. 10:1023555). This is a data-rate limitation, not a method failure.",
         "evidence": [
           "Peak-1: Q-shift=50.4 mAh (RIGHT), height \u0394=4.1%",
           "Peak-2: Q-shift=236.4 mAh (RIGHT), height \u0394=-19.7%"
@@ -54,7 +54,7 @@
       "r0_flagged": 0,
       "diagnosis": {
         "dominant_mode": "mode unresolved at 1C (honest)",
-        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Mode quantification unreliable at high rate; low-rate (C/20-C/25) data required (Dubarry & Anse\u00e1n 2022, Front. Energy Res. 10:1023555). This is a data-rate limitation, not a method failure.",
         "evidence": [
           "Peak-1: Q-shift=143.6 mAh (RIGHT), height \u0394=-53.4%",
           "Peak-2: Q-shift=280.5 mAh (RIGHT), height \u0394=-39.3%"
@@ -95,7 +95,7 @@
       "r0_flagged": 0,
       "diagnosis": {
         "dominant_mode": "mode unresolved at 1C (honest)",
-        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Mode quantification unreliable at high rate; low-rate (C/20-C/25) data required (Dubarry & Anse\u00e1n 2022, Front. Energy Res. 10:1023555). This is a data-rate limitation, not a method failure.",
         "evidence": [
           "Peak-1: Q-shift=81.8 mAh (RIGHT), height \u0394=8.5%"
         ],
@@ -125,7 +125,7 @@
       "r0_flagged": 0,
       "diagnosis": {
         "dominant_mode": "mode unresolved at 1C (honest)",
-        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Dubarry & Anse\u00e1n (2022) confirm ~5-8% mode error at high rate; clean resolution requires C/20 pseudo-OCV or half-cell OCP data. This is a data-rate limitation, not a method failure.",
+        "detail": "DVA peaks are blurred at 1C and shift inconsistently across cells \u2014 verdicts flip with threshold changes, indicating noise not signal. No confident LLI/LAM/CL mode assignment is made. Mode quantification unreliable at high rate; low-rate (C/20-C/25) data required (Dubarry & Anse\u00e1n 2022, Front. Energy Res. 10:1023555). This is a data-rate limitation, not a method failure.",
         "evidence": [
           "Peak-1: Q-shift=11.6 mAh (RIGHT), height \u0394=-21.8%",
           "Peak-2: Q-shift=-36.6 mAh (LEFT), height \u0394=-34.0%",
