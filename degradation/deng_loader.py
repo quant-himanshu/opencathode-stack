@@ -1,6 +1,16 @@
 """
 deng_loader.py — Load and clean Deng BAIC EU500 fleet CSVs.
 
+PRIMARY SOURCE:
+  Deng Z., Xu L., Liu H., Hu X., Duan Z., Xu Y. (2023). Prognostics of battery
+  capacity based on charging data and data-driven methods for on-road vehicles.
+  Applied Energy 339:120954. https://doi.org/10.1016/j.apenergy.2023.120954
+
+  Chemistry: CATL NCM (NMC), nominal cell capacity 145 Ah, 90s pack.
+  Dataset entry: vehicles observed 29 months, already degraded ~6% at first reading.
+  Q_NOMINAL = 136.2 Ah is the max observed available_capacity across all 20 vehicles
+  (dataset entry state); the Deng 2023 paper nominal is 145 Ah.
+
 ASSUMPTIONS:
   - record_time is integer YYYYMMDDHHMMSS
   - charge_current (A) < 0 means charging, > 0 means discharging (verified from V01)
@@ -33,7 +43,8 @@ _REQUIRED = [
 ]
 
 _I_MAX_ABS   = 250.0   # A  — clip threshold for current outliers (V06/V17 fault)
-_Q_NOMINAL   = 136.2   # Ah — nameplate capacity from data (max observed available_capacity)
+_Q_NOMINAL   = 136.2   # Ah — max observed available_capacity at dataset entry (degraded start);
+                       # Deng 2023 paper nominal: 145 Ah (CATL NCM); ~6% already degraded at entry
 _Q_MIN_VALID = 10.0    # Ah — below this, likely sensor error (filter as missing)
 _V_CELL_MIN  = 2.5     # V  — sensor dropout guard
 

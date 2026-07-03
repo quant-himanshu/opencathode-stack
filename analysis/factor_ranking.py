@@ -37,9 +37,17 @@ PRE-REGISTERED EXPECTATION (locked before computation):
   expected outcome: "factors indistinguishable at n=13."
   Either outcome is the reportable finding — no post-hoc reframing.
 
+DATASET:
+  Deng Z., Xu L., Liu H., Hu X., Duan Z., Xu Y. (2023). Prognostics of battery
+  capacity based on charging data and data-driven methods for on-road vehicles.
+  Applied Energy 339:120954. https://doi.org/10.1016/j.apenergy.2023.120954
+
 FRAMING:
-  No published paper applies permutation importance to per-vehicle λ_v ranking
-  on real EV fleet data at this scale. Contribution attempt, not a reproduction.
+  To our knowledge, per-vehicle degradation factor attribution via λ_v and
+  permutation importance has not been published on this specific dataset.
+  Prior work on the Deng 2023 dataset (and direct follow-ups) targets
+  capacity-trajectory prediction, not factor attribution or fade-rate transfer.
+  Contribution attempt, not a reproduction.
 
 OUTPUT: data/factor_ranking_report.json
 """

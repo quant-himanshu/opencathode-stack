@@ -30,10 +30,17 @@ PRE-REGISTERED EXPECTATION:
   field fade is calendar-dominated.  If cycling term adds nothing that IS the
   reportable finding, not a model failure.
 
+PRIMARY DATASET:
+  Deng Z. et al. (2023) Applied Energy 339:120954. Chemistry: CATL NCM (NMC),
+  145 Ah nominal, 90s pack. Q_NOMINAL=136.2 Ah is max observed at dataset entry
+  (vehicles ~6% degraded at first reading). See deng_loader.py for details.
+
 HONEST CAVEATS:
-  1. Chemistry/pack mismatch: β,γ from NASA NMC 18650 lab cells; Deng fleet
-     is BAIC EU500 (LFP, 136.2 Ah pack).  Trend + rank-order tested, not
-     absolute accuracy.
+  1. Cell-to-pack scale mismatch: β,γ from NASA NMC 18650 lab cells (1C,
+     DoD≈100%); Deng fleet is BAIC EU500 NCM 145 Ah pack (field partial
+     cycles, 0.41C). SAME chemistry class (NMC) — transfer failure is
+     cell-vs-pack scale, protocol (lab 1C/100% DoD → field 0.41C/57% DoD),
+     and measurement noise, NOT chemistry mismatch.
   2. λ_sei is from Deng V01–V04 — partially fleet-sourced; disclosed above.
   3. T_mean_C from BMS per session; no assumed temperature was needed.
   4. Partial-cycle counting: ASTM E1049 rainflow on per-session SOC handles
@@ -309,7 +316,7 @@ def run_cell_to_field_bridge() -> None:
     else:
         verdict = (
             "Raw B2 beats B1 on Tier 3 — chemistry transfer partially "
-            "successful despite NMC→LFP and cell→pack mismatch."
+            "successful despite cell→pack (NMC 18650 lab → NCM 145 Ah field) scale mismatch."
         )
 
     # ── 9. Print per-vehicle table ────────────────────────────────────────────
@@ -370,8 +377,11 @@ def run_cell_to_field_bridge() -> None:
         "meta": {
             "script" : "degradation/cell_to_field_bridge.py",
             "caveats": [
-                "Chemistry/pack mismatch: β,γ from NASA NMC 18650 lab cells; "
-                "Deng fleet is BAIC EU500 (LFP, 136.2 Ah pack). Trend/rank tested, not absolute accuracy.",
+                "Cell-to-pack scale mismatch: β,γ from NASA NMC 18650 lab cells (1C, DoD≈100%); "
+                "Deng fleet is BAIC EU500 NCM 145 Ah pack (field, 0.41C, 57% DoD). "
+                "Same chemistry class (NMC) — transfer failure is scale+protocol+noise, not chemistry. "
+                "Trend/rank tested, not absolute accuracy. "
+                "Source: Deng Z. et al. (2023) Applied Energy 339:120954.",
                 "λ_sei from Deng V01-V04 — partially fleet-sourced; disclosed.",
                 "T_mean_C from BMS per session; no assumed temperature applied.",
                 "Partial-cycle counting: ASTM E1049 rainflow per session; sequence effects ignored.",

@@ -3,10 +3,12 @@
     "script": "analysis/factor_ranking.py",
     "target": "lambda_v (per-vehicle calendar fade rate from train-window OLS)",
     "target_source": "data/cell_to_field_temporal_report.json",
-    "t_years_note": "t_years excluded from ranking features: range 2.3080\u20132.3180 yr (near-zero variance); also mechanically coupled to target (\u03bb_v is \u221at-normalised). Reported in per-vehicle table for context only.",
-    "shap_note": "Kernel SHAP skipped \u2014 shap package not installed.",
+    "t_years_note": "t_years excluded from ranking features: range 2.3080–2.3180 yr (near-zero variance); also mechanically coupled to target (λ_v is √t-normalised). Reported in per-vehicle table for context only.",
+    "shap_note": "Kernel SHAP skipped — shap package not installed.",
     "ridge_alpha": 1.0,
-    "perm_repeats": 200
+    "perm_repeats": 200,
+    "dataset_citation": "Deng Z., Xu L., Liu H., Hu X., Duan Z., Xu Y. (2023). Prognostics of battery capacity based on charging data and data-driven methods for on-road vehicles. Applied Energy 339:120954. https://doi.org/10.1016/j.apenergy.2023.120954",
+    "contribution_framing": "To our knowledge, per-vehicle degradation factor attribution via lambda_v and permutation importance has not been published on this specific dataset. Prior work on the Deng 2023 dataset (and direct follow-ups) targets capacity-trajectory prediction, not factor attribution or fade-rate transfer."
   },
   "pre_registered_expectation": "Literature order (Edge et al. 2021 PCCP 23:8200): Temperature > DoD > C-rate. With n=13 same-city same-model vehicles (narrow feature ranges), expected outcome: factors indistinguishable at n=13. Either result is the reportable finding.",
   "literature_reference": "Edge J.S. et al. (2021) Lithium ion battery degradation: what you need to know. Physical Chemistry Chemical Physics 23(14):8200-8221. DOI 10.1039/D1CP00359C",
@@ -325,13 +327,13 @@
         "sig_bonf": false
       }
     ],
-    "note": "At n=13, unadjusted p<0.05 requires |\u03c1|\u22730.55. p-values are weak; report but do not over-read."
+    "note": "At n=13, unadjusted p<0.05 requires |ρ|≳0.55. p-values are weak; report but do not over-read."
   },
   "ridge_loo": {
     "alpha": 1.0,
     "loo_r2": -12.82878,
     "predictive_value": false,
-    "loo_note": "Negative LOO R\u00b2 \u2014 no cross-validated predictive value; importances are directional suggestions only",
+    "loo_note": "Negative LOO R² — no cross-validated predictive value; importances are directional suggestions only",
     "ridge_coef_std_space": [
       {
         "feature": "T_mean",
@@ -402,5 +404,5 @@
   ],
   "agreement_with_literature": true,
   "indistinguishable": true,
-  "verdict": "FACTORS INDISTINGUISHABLE at n=13: all |\u03c1| < 0.40 (max |\u03c1| = 0.268). No feature clears even the unadjusted \u03c1 significance threshold at n=13. Pre-registered expectation CONFIRMED: same-city, same-model fleet with narrow feature ranges does not resolve factor ranking. LOO R\u00b2 = -12.829 (negative \u2014 no cross-validated predictive value). Importances are directional suggestions only."
+  "verdict": "FACTORS INDISTINGUISHABLE at n=13: all |ρ| < 0.40 (max |ρ| = 0.268). No feature clears even the unadjusted ρ significance threshold at n=13. Pre-registered expectation CONFIRMED: same-city, same-model fleet with narrow feature ranges does not resolve factor ranking. LOO R² = -12.829 (negative — no cross-validated predictive value). Importances are directional suggestions only."
 }

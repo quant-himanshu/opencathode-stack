@@ -204,6 +204,7 @@ python main.py
 | Degradation modes | Dubarry M. & Anseán D. (2022) Front. Energy Res. 10:1023555. DOI 10.3389/fenrg.2022.1023555 |
 | EIS dataset | Schäffer et al. (2024) Zenodo 6405084 (RWTH Aachen) |
 | NASA cell dataset | Saha & Goebel (2009) NASA Ames Research Center |
+| Deng fleet dataset | Deng Z. et al. (2023) Applied Energy 339:120954. DOI 10.1016/j.apenergy.2023.120954 |
 
 ---
 

@@ -19,8 +19,15 @@ DESIGN CHOICE — why ΔSOH (not absolute SOH):
   Fitting ΔSOH anchors to the first observed state and models the RATE of
   further fade — which is what we can actually measure and compare across vehicles.
 
+DATASET:
+  Deng Z. et al. (2023) Prognostics of battery capacity based on charging data
+  and data-driven methods for on-road vehicles. Applied Energy 339:120954.
+  https://doi.org/10.1016/j.apenergy.2023.120954
+  Chemistry: CATL NCM (NMC), 145 Ah nominal, 90s pack, 20 BAIC EU500 vehicles.
+
 ASSUMPTIONS:
-  - Q_nominal = 136.2 Ah (max observed, used as 100% SOH reference)
+  - Q_nominal = 136.2 Ah (max observed available_capacity at dataset entry;
+    Deng 2023 paper nominal is 145 Ah — vehicles ~6% degraded at first reading)
   - Q_Ah per cycle is session-median available_capacity (BMS reported)
   - SOH smoothed with 50-cycle rolling median to reduce BMS quantisation noise
   - Training set: V01–V04; held-out: V05–V20 (no selection bias — first 4 by filename)
@@ -39,7 +46,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 
-Q_NOMINAL    = 136.2   # Ah — nameplate capacity (100% SOH)
+Q_NOMINAL    = 136.2   # Ah — max observed at dataset entry; Deng 2023 nominal = 145 Ah
 SOH_WIN      = 50      # rolling window for SOH smoothing
 MIN_Q_COUNT  = 100     # minimum valid Q readings to include vehicle in evaluation
 TRAIN_VEHS   = {"V01", "V02", "V03", "V04"}

@@ -2,12 +2,13 @@
   "meta": {
     "script": "degradation/cell_to_field_bridge.py",
     "caveats": [
-      "Chemistry/pack mismatch: \u03b2,\u03b3 from NASA NMC 18650 lab cells; Deng fleet is BAIC EU500 (LFP, 136.2 Ah pack). Trend/rank tested, not absolute accuracy.",
-      "\u03bb_sei from Deng V01-V04 \u2014 partially fleet-sourced; disclosed.",
+      "Cell-to-pack scale mismatch: β,γ from NASA NMC 18650 lab cells (1C, DoD≈100%); Deng fleet is BAIC EU500 NCM 145 Ah pack (field, 0.41C, 57% DoD). Same chemistry class (NMC) — transfer failure is scale+protocol+noise, not chemistry. Trend/rank tested, not absolute accuracy. Source: Deng Z. et al. (2023) Applied Energy 339:120954.",
+      "λ_sei from Deng V01-V04 — partially fleet-sourced; disclosed.",
       "T_mean_C from BMS per session; no assumed temperature applied.",
       "Partial-cycle counting: ASTM E1049 rainflow per session; sequence effects ignored.",
-      "\u03b1 vehicles (V05-V09) chosen by ID order, not by fit quality."
-    ]
+      "α vehicles (V05-V09) chosen by ID order, not by fit quality."
+    ],
+    "dataset_citation": "Deng Z., Xu L., Liu H., Hu X., Duan Z., Xu Y. (2023). Prognostics of battery capacity based on charging data and data-driven methods for on-road vehicles. Applied Energy 339:120954. https://doi.org/10.1016/j.apenergy.2023.120954"
   },
   "frozen_params": {
     "lambda_sei": 0.02639332,
@@ -18,7 +19,7 @@
     "lambda_source": "Deng M2 combined fit on V01-V04",
     "beta_gamma_source": "NASA LOO-CV mean: B0005/B0006/B0007/B0018"
   },
-  "pre_registered_expectation": "B2\u2248B1 expected: M2 stress_frac=0% on all Deng vehicles. If cycling term adds nothing on Tier 3, that IS the finding \u2014 field fade is calendar-dominated, consistent with M2.",
+  "pre_registered_expectation": "B2≈B1 expected: M2 stress_frac=0% on all Deng vehicles. If cycling term adds nothing on Tier 3, that IS the finding — field fade is calendar-dominated, consistent with M2.",
   "tier_separation": {
     "tier1_lambda_cal": [
       "V01",
@@ -49,7 +50,7 @@
   },
   "alpha": -0.382338,
   "alpha_degenerate": false,
-  "alpha_note": "multiplies cycling term (\u03b2\u00b7D^\u03b3) ONLY; \u03bb\u00b7\u221at not scaled",
+  "alpha_note": "multiplies cycling term (β·D^γ) ONLY; λ·√t not scaled",
   "alpha_fit_vehicles": [
     "V05",
     "V06",
@@ -85,7 +86,7 @@
   },
   "per_vehicle": {
     "V01": {
-      "tier": "T1-\u03bbcal",
+      "tier": "T1-λcal",
       "n_cycles": 1586,
       "t_years_final": 2.308,
       "D_cumul_final": 0.0021697,
@@ -135,14 +136,14 @@
         "err_abs": -0.01386,
         "err_pct": 25.22
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03971,
         "err_abs": -0.01525,
         "err_pct": 27.74
       }
     },
     "V02": {
-      "tier": "T1-\u03bbcal",
+      "tier": "T1-λcal",
       "n_cycles": 1609,
       "t_years_final": 2.311,
       "D_cumul_final": 0.0021523,
@@ -192,14 +193,14 @@
         "err_abs": 0.01628,
         "err_pct": 65.57
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03974,
         "err_abs": 0.0149,
         "err_pct": 60.0
       }
     },
     "V03": {
-      "tier": "T1-\u03bbcal",
+      "tier": "T1-λcal",
       "n_cycles": 1520,
       "t_years_final": 2.308,
       "D_cumul_final": 0.0022589,
@@ -249,14 +250,14 @@
         "err_abs": 0.04065,
         "err_pct": 8516.88
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03971,
         "err_abs": 0.03923,
         "err_pct": 8220.28
       }
     },
     "V04": {
-      "tier": "T1-\u03bbcal",
+      "tier": "T1-λcal",
       "n_cycles": 1560,
       "t_years_final": 2.311,
       "D_cumul_final": 0.0021606,
@@ -306,14 +307,14 @@
         "err_abs": -0.02369,
         "err_pct": 36.55
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03974,
         "err_abs": -0.02507,
         "err_pct": 38.69
       }
     },
     "V05": {
-      "tier": "T2-\u03b1cal",
+      "tier": "T2-αcal",
       "n_cycles": 1562,
       "t_years_final": 2.31,
       "D_cumul_final": 0.0021167,
@@ -363,14 +364,14 @@
         "err_abs": 0.01052,
         "err_pct": 34.42
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.00915,
         "err_pct": 29.93
       }
     },
     "V06": {
-      "tier": "T2-\u03b1cal",
+      "tier": "T2-αcal",
       "n_cycles": 1526,
       "t_years_final": 2.31,
       "D_cumul_final": 0.0022415,
@@ -420,14 +421,14 @@
         "err_abs": 0.02174,
         "err_pct": 112.03
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.02033,
         "err_pct": 104.76
       }
     },
     "V07": {
-      "tier": "T2-\u03b1cal",
+      "tier": "T2-αcal",
       "n_cycles": 1534,
       "t_years_final": 2.309,
       "D_cumul_final": 0.0020545,
@@ -477,14 +478,14 @@
         "err_abs": 0.07137,
         "err_pct": 235.64
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.07002,
         "err_pct": 231.18
       }
     },
     "V08": {
-      "tier": "T2-\u03b1cal",
+      "tier": "T2-αcal",
       "n_cycles": 1528,
       "t_years_final": 2.309,
       "D_cumul_final": 0.0022149,
@@ -534,14 +535,14 @@
         "err_abs": -0.01736,
         "err_pct": 29.69
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03972,
         "err_abs": -0.01876,
         "err_pct": 32.08
       }
     },
     "V09": {
-      "tier": "T2-\u03b1cal",
+      "tier": "T2-αcal",
       "n_cycles": 1472,
       "t_years_final": 2.316,
       "D_cumul_final": 0.0021561,
@@ -591,7 +592,7 @@
         "err_abs": -0.03426,
         "err_pct": 45.42
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03978,
         "err_abs": -0.03564,
         "err_pct": 47.25
@@ -648,7 +649,7 @@
         "err_abs": 0.02994,
         "err_pct": 270.06
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03979,
         "err_abs": 0.02871,
         "err_pct": 258.93
@@ -705,7 +706,7 @@
         "err_abs": 0.01041,
         "err_pct": 33.9
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.00902,
         "err_pct": 29.37
@@ -762,7 +763,7 @@
         "err_abs": 0.07943,
         "err_pct": 207.65
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.0398,
         "err_abs": 0.07805,
         "err_pct": 204.05
@@ -819,7 +820,7 @@
         "err_abs": -0.00562,
         "err_pct": 12.02
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03972,
         "err_abs": -0.00702,
         "err_pct": 15.02
@@ -876,7 +877,7 @@
         "err_abs": 0.03492,
         "err_pct": 562.93
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.03352,
         "err_pct": 540.31
@@ -933,7 +934,7 @@
         "err_abs": -0.05025,
         "err_pct": 55.06
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03979,
         "err_abs": -0.05147,
         "err_pct": 56.4
@@ -990,7 +991,7 @@
         "err_abs": 0.07634,
         "err_pct": 217.17
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03979,
         "err_abs": 0.07494,
         "err_pct": 213.21
@@ -1047,7 +1048,7 @@
         "err_abs": 0.05654,
         "err_pct": 366.68
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03974,
         "err_abs": 0.05515,
         "err_pct": 357.72
@@ -1104,7 +1105,7 @@
         "err_abs": 0.02288,
         "err_pct": 125.52
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03973,
         "err_abs": 0.0215,
         "err_pct": 117.98
@@ -1161,7 +1162,7 @@
         "err_abs": 0.00099,
         "err_pct": 2.47
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03977,
         "err_abs": -0.00039,
         "err_pct": 0.98
@@ -1218,7 +1219,7 @@
         "err_abs": 0.05038,
         "err_pct": 543.49
       },
-      "B2\u03b1": {
+      "B2α": {
         "pred_dsoh": 0.03971,
         "err_abs": 0.04898,
         "err_pct": 528.37
@@ -1244,12 +1245,12 @@
       "rho": -0.6857,
       "n_vehicles": 11
     },
-    "B2\u03b1": {
+    "B2α": {
       "rmse_soh": 0.04507,
       "mean_pct_err": 211.12,
       "rho": -0.083,
       "n_vehicles": 11
     }
   },
-  "verdict": "\u03b1-scaled bridge (B2\u03b1, \u03b1=-0.382) beats B1 on Tier 3; raw transfer (B2) does not. Pack-scale correction recovers modest cycling signal."
+  "verdict": "α-scaled bridge (B2α, α=-0.382) beats B1 on Tier 3; raw transfer (B2) does not. Pack-scale correction recovers modest cycling signal."
 }
