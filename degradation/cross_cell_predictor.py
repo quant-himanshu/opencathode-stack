@@ -56,7 +56,19 @@ from scipy.optimize import curve_fit
 ROOT     = Path(__file__).resolve().parent.parent
 NASA_DIR = ROOT / "data" / "nasa"
 OUT_JSON = ROOT / "data" / "cross_cell_report.json"
-OUT_JSON_SEV = ROOT / "data" / "cross_cell_severson_report.json"
+OUT_JSON_SEV  = ROOT / "data" / "cross_cell_severson_report.json"
+OUT_JSON_CL   = ROOT / "data" / "cross_cell_severson_cyclelife_report.json"
+SEVERSON_DIR  = ROOT / "data" / "severson"
+SEVERSON_BATCH_FILES = [
+    (1, "2017-05-12_batchdata_updated_struct_errorcorrect.mat"),
+    (2, "2017-06-30_batchdata_updated_struct_errorcorrect.mat"),
+    (3, "2018-04-12_batchdata_updated_struct_errorcorrect.mat"),
+]
+SEVERSON_EXCLUDE: Dict[int, set] = {
+    1: {"b1c8",  "b1c10", "b1c12", "b1c13", "b1c22"},
+    2: {"b2c7",  "b2c8",  "b2c9",  "b2c15", "b2c16"},
+    3: {"b3c2",  "b3c23", "b3c32", "b3c37", "b3c42", "b3c43"},
+}
 
 # ── model constants ───────────────────────────────────────────────────────────
 CELLS   = ["B0005", "B0006", "B0007", "B0018"]
@@ -1539,8 +1551,372 @@ def run_severson() -> None:
           f"online+db R²(n=30)={r2_D30:+.3f}  →  R²(n=50)={r2_D50:+.3f}")
 
 
+# ── Severson cycle-life predictor (Option A, separate from β-model) ───────────
+#
+# Predicts log10(cycle_life) — cycles to 80% nominal capacity — from a single
+# early-cycle ΔQ(V) feature.  This is "Ather's Problem 1": limited-data lifetime
+# prediction before significant degradation occurs.
+#
+# What this is NOT:
+#   · Does NOT give a cycle-by-cycle SOH trajectory.
+#   · Does NOT track within-life degradation rate (that is the β-model above).
+#
+# Feature: log( var( Qdlin[99] − Qdlin[9] ) )   [natural log, population var]
+#   Validated in validation/severson_reproduce.py:
+#   ρ=−0.89 (paper −0.93), mean % error 15.2% on B1+B2-odd / B2-even split.
+#
+# Primary evaluation: Leave-One-Batch-Out (LOBO) cross-validation, 3 folds.
+# Reference-only:     B1+B2-odd-indexed / B2-even-indexed split (labelled clearly).
+
+
+def _load_severson_cl_features() -> Tuple[List[Dict], List[Dict]]:
+    """
+    Load ΔQ(V) feature and cycle_life for all 124 Severson cells directly from
+    the raw HDF5 .mat files.  Does NOT use severson_loader's dqv_feature field,
+    which uses a different formula (early-cycle variance relative to cycle 2).
+
+    Returns
+    -------
+    (included, skipped)
+      included : list of dicts — cell_id, batch, cycle_life, cell_idx, feature
+      skipped  : list of dicts — cell_id, batch, cycle_life, cell_idx, reason
+    """
+    try:
+        import h5py
+    except ImportError:
+        raise ImportError("h5py required: pip install h5py")
+
+    included: List[Dict] = []
+    skipped:  List[Dict] = []
+
+    for batch_num, fname in SEVERSON_BATCH_FILES:
+        path = SEVERSON_DIR / fname
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Missing Severson file: {path}\nDownload from https://data.matr.io/1/"
+            )
+        prefix = f"b{batch_num}c"
+        excl   = SEVERSON_EXCLUDE[batch_num]
+
+        with h5py.File(path, "r") as f:
+            batch  = f["batch"]
+            n_raw  = batch["summary"].shape[0]
+
+            for i in range(n_raw):
+                cid = f"{prefix}{i}"
+                if cid in excl:
+                    continue
+
+                cl = int(f[batch["cycle_life"][i, 0]][()].flat[0])
+                cyc = f[batch["cycles"][i, 0]]
+                n_stored = cyc["Qdlin"].shape[0]
+
+                if n_stored < 100:
+                    skipped.append({
+                        "cell_id":    cid,
+                        "batch":      batch_num,
+                        "cycle_life": cl,
+                        "cell_idx":   i,
+                        "reason":     f"n_stored={n_stored} < 100 (cannot compute Qdlin[99])",
+                    })
+                    continue
+
+                q9_arr  = f[cyc["Qdlin"][9,  0]][()].flatten()
+                q99_arr = f[cyc["Qdlin"][99, 0]][()].flatten()
+
+                if len(q9_arr) != 1000 or len(q99_arr) != 1000:
+                    skipped.append({
+                        "cell_id":    cid,
+                        "batch":      batch_num,
+                        "cycle_life": cl,
+                        "cell_idx":   i,
+                        "reason":     f"Qdlin not 1000 pts (len9={len(q9_arr)}, len99={len(q99_arr)})",
+                    })
+                    continue
+
+                dq      = q99_arr.astype(np.float64) - q9_arr.astype(np.float64)
+                feature = float(np.log(np.var(dq) + 1e-20))
+
+                included.append({
+                    "cell_id":    cid,
+                    "batch":      batch_num,
+                    "cycle_life": cl,
+                    "cell_idx":   i,
+                    "feature":    feature,
+                })
+
+    return included, skipped
+
+
+def _ols_cl(F: np.ndarray, L: np.ndarray) -> Tuple[float, float, float]:
+    """Plain OLS: L = w0 + w1·F.  Returns (w0, w1, R²_training)."""
+    Fm, Lm = float(F.mean()), float(L.mean())
+    denom   = float(np.dot(F - Fm, F - Fm)) + 1e-15
+    w1      = float(np.dot(F - Fm, L - Lm)) / denom
+    w0      = Lm - w1 * Fm
+    Lp      = w0 + w1 * F
+    r2      = 1.0 - float(np.sum((L - Lp) ** 2)) / (float(np.sum((L - Lm) ** 2)) + 1e-15)
+    return w0, w1, float(r2)
+
+
+def _eval_cl(w0: float, w1: float,
+             F_te: np.ndarray, cl_te: np.ndarray,
+             cell_ids: List[str]) -> Dict:
+    """
+    Evaluate OLS predictions on a test set.
+
+    mean_pct_err = mean over test cells of
+                   |pred_cycles − true_cycles| / true_cycles × 100
+    (computed in CYCLE space, not log space)
+    """
+    pred_log    = w0 + w1 * F_te
+    pred_cycles = np.power(10.0, pred_log)
+    true_cycles = cl_te.astype(float)
+
+    abs_pct     = np.abs(pred_cycles - true_cycles) / (true_cycles + 1e-6) * 100.0
+    rmse        = float(np.sqrt(np.mean((pred_cycles - true_cycles) ** 2)))
+    mean_pct    = float(np.mean(abs_pct))
+
+    L_true = np.log10(true_cycles + 1e-6)
+    Lm     = float(L_true.mean())
+    r2_log = 1.0 - float(np.sum((L_true - pred_log) ** 2)) / (
+                 float(np.sum((L_true - Lm) ** 2)) + 1e-15)
+
+    per_cell = []
+    for cid, f_val, cl_true, cl_pred, pct_err in zip(
+            cell_ids, F_te, true_cycles, pred_cycles, abs_pct):
+        per_cell.append({
+            "cell_id":         cid,
+            "true_cycles":     int(cl_true),
+            "pred_log10":      round(float(np.log10(cl_pred + 1e-6)), 4),
+            "pred_cycles":     round(float(cl_pred), 1),
+            "abs_pct_err":     round(float(pct_err), 2),
+        })
+
+    return {
+        "n_test":       len(F_te),
+        "rmse_cycles":  round(rmse, 1),
+        "mean_pct_err": round(mean_pct, 2),
+        "r2_log":       round(r2_log, 4),
+        "per_cell":     per_cell,
+    }
+
+
+def _lobo_cv_cl(cells: List[Dict]) -> Dict:
+    """
+    3-fold Leave-One-Batch-Out cross-validation for cycle-life prediction.
+
+    Folds:
+      fold_test_B1 : train=B2+B3 (83), test=B1 (41)
+      fold_test_B2 : train=B1+B3 (81), test=B2 (43)
+      fold_test_B3 : train=B1+B2 (84), test=B3 (40)
+    """
+    def _split(test_batch: int):
+        tr = [c for c in cells if c["batch"] != test_batch]
+        te = [c for c in cells if c["batch"] == test_batch]
+        return tr, te
+
+    results = {}
+    for held_batch in (1, 2, 3):
+        tr, te = _split(held_batch)
+        F_tr = np.array([c["feature"] for c in tr])
+        L_tr = np.log10(np.array([c["cycle_life"] for c in tr], dtype=float))
+        F_te = np.array([c["feature"] for c in te])
+        cl_te = np.array([c["cycle_life"] for c in te], dtype=float)
+        ids_te = [c["cell_id"] for c in te]
+
+        w0, w1, r2_tr = _ols_cl(F_tr, L_tr)
+        fold_eval = _eval_cl(w0, w1, F_te, cl_te, ids_te)
+        fold_eval["n_train"]   = len(tr)
+        fold_eval["w0"]        = round(w0, 6)
+        fold_eval["w1"]        = round(w1, 6)
+        fold_eval["r2_train"]  = round(r2_tr, 4)
+        results[f"fold_test_B{held_batch}"] = fold_eval
+
+    return results
+
+
+def _paper_split_cl(cells: List[Dict]) -> Dict:
+    """
+    Reference split: train = B1 + B2-odd-indexed, test = B2-even-indexed.
+    'Odd-indexed' means cells whose cell_idx is odd (b2c1, b2c3, ...).
+    Clearly labelled as reference-only — not the primary LOBO metric.
+    """
+    b2_train = [c for c in cells if c["batch"] == 2 and c["cell_idx"] % 2 == 1]
+    b2_test  = [c for c in cells if c["batch"] == 2 and c["cell_idx"] % 2 == 0]
+    b1       = [c for c in cells if c["batch"] == 1]
+    tr       = b1 + b2_train
+
+    F_tr  = np.array([c["feature"] for c in tr])
+    L_tr  = np.log10(np.array([c["cycle_life"] for c in tr], dtype=float))
+    F_te  = np.array([c["feature"] for c in b2_test])
+    cl_te = np.array([c["cycle_life"] for c in b2_test], dtype=float)
+    ids_te = [c["cell_id"] for c in b2_test]
+
+    w0, w1, r2_tr = _ols_cl(F_tr, L_tr)
+    result = _eval_cl(w0, w1, F_te, cl_te, ids_te)
+    result["n_train"]  = len(tr)
+    result["w0"]       = round(w0, 6)
+    result["w1"]       = round(w1, 6)
+    result["r2_train"] = round(r2_tr, 4)
+    result["label"]    = ("B1+B2-odd-indexed / B2-even-indexed "
+                          "(reference only — NOT the primary LOBO metric)")
+    return result
+
+
+def run_severson_cycle_life() -> None:
+    """
+    Predict log10(cycle_life) from the validated ΔQ(V) variance feature.
+
+    This is a separate code path from run_severson() (β-model).
+    The β/√k model is wrong for LFP two-phase degradation; this function
+    replaces that evaluation with the correct target (cycle-life, not β).
+
+    Invoke via:  python degradation/cross_cell_predictor.py --cycle-life
+    """
+    print("OpenCATHODE — Severson Cycle-Life Predictor (Option A)")
+    print("Target : log10(cycle_life)  [cycles to 80% capacity]")
+    print("Feature: log( var( Qdlin[99] − Qdlin[9] ) )  [validated: ρ=−0.89]")
+    print("Eval   : Leave-One-Batch-Out (LOBO), 3 folds  [primary metric]")
+    print()
+
+    # ── Load features ────────────────────────────────────────────────────────
+    print("Loading features from Severson .mat files...")
+    try:
+        included, skipped = _load_severson_cl_features()
+    except FileNotFoundError as e:
+        print(f"[ERROR] {e}")
+        sys.exit(1)
+
+    by_batch = {1: [], 2: [], 3: []}
+    for c in included:
+        by_batch[c["batch"]].append(c)
+
+    print(f"  Included: {len(included)} cells  "
+          f"(B1={len(by_batch[1])}, B2={len(by_batch[2])}, B3={len(by_batch[3])})")
+    if skipped:
+        print(f"  Skipped:  {len(skipped)} cells — "
+              + ", ".join(f"{s['cell_id']} ({s['reason']})" for s in skipped))
+    print()
+
+    # ── Global Pearson ρ ─────────────────────────────────────────────────────
+    all_feats = np.array([c["feature"]    for c in included])
+    all_cl    = np.array([c["cycle_life"] for c in included], dtype=float)
+    rho       = float(np.corrcoef(all_feats, np.log10(all_cl))[0, 1])
+    print(f"Global Pearson ρ(feature, log10(cycle_life)): {rho:.4f}")
+    print()
+
+    # ── LOBO-CV (primary) ────────────────────────────────────────────────────
+    print("Running LOBO-CV...")
+    lobo = _lobo_cv_cl(included)
+
+    print(f"\n{'Fold':<20}  {'N_train':>7}  {'N_test':>6}  "
+          f"{'RMSE (cyc)':>11}  {'Mean%err':>9}  {'R²(log)':>8}")
+    print("─" * 70)
+    for fold_key, res in lobo.items():
+        batch_label = fold_key.replace("fold_test_", "test=Batch")
+        print(f"  {batch_label:<18}  {res['n_train']:>7}  {res['n_test']:>6}  "
+              f"{res['rmse_cycles']:>11.1f}  {res['mean_pct_err']:>8.1f}%  "
+              f"{res['r2_log']:>8.4f}")
+
+    lobo_pct = [res["mean_pct_err"] for res in lobo.values()]
+    lobo_rmse = [res["rmse_cycles"] for res in lobo.values()]
+    print("─" * 70)
+    print(f"  {'Macro mean':<18}  {'':>7}  {'':>6}  "
+          f"{float(np.mean(lobo_rmse)):>11.1f}  "
+          f"{float(np.mean(lobo_pct)):>8.1f}%")
+    print()
+
+    # ── Paper-style split (reference) ────────────────────────────────────────
+    ref = _paper_split_cl(included)
+    print(f"Reference split (B1+B2-odd / B2-even, n_train={ref['n_train']}, "
+          f"n_test={ref['n_test']}):")
+    print(f"  RMSE={ref['rmse_cycles']:.1f} cycles   "
+          f"Mean%err={ref['mean_pct_err']:.1f}%   R²={ref['r2_log']:.4f}")
+    print(f"  [reference only — not the primary metric; validated in severson_reproduce.py]")
+    print()
+
+    # ── Honest caveats ────────────────────────────────────────────────────────
+    caveats = [
+        ("scalar_only",
+         "Predicts cycle_life (cycles to 80% nominal capacity) — a single scalar per cell. "
+         "Does NOT give the cycle-by-cycle SOH trajectory."),
+        ("single_manufacturer",
+         "Trained on A123 APR18650M1A (1.1 Ah LFP/graphite) only. "
+         "Cross-manufacturer accuracy is untested."),
+        ("protocol_confounded",
+         "Severson varied fast-charge rates by design; the variance feature partly captures "
+         "protocol aggressiveness alongside cell health. OLS slope is calibrated to "
+         "Severson's specific protocol range."),
+        ("lobo_conservative",
+         "LOBO tests worst-case batch-level generalization (batches differ in protocol "
+         "distribution). Within-population accuracy would likely be better."),
+        ("lfp_specific",
+         "Feature exploits the LFP plateau's sensitivity to capacity fade. "
+         "Not directly applicable to NMC (different voltage profile, different mechanism)."),
+    ]
+
+    print("Honest caveats:")
+    for key, txt in caveats:
+        print(f"  [{key}] {txt}")
+    print()
+
+    # ── Assemble JSON ─────────────────────────────────────────────────────────
+    per_cell_lobo = []
+    for fold_key, res in lobo.items():
+        fold_num = int(fold_key[-1])
+        for pc in res["per_cell"]:
+            per_cell_lobo.append({**pc, "lobo_held_batch": fold_num})
+    per_cell_lobo.sort(key=lambda x: (x["lobo_held_batch"], x["cell_id"]))
+
+    report = {
+        "meta": {
+            "script":        "degradation/cross_cell_predictor.py --cycle-life",
+            "dataset":       "Severson et al. 2019, 124 LFP cells (A123 APR18650M1A)",
+            "target":        "log10(cycle_life)",
+            "feature":       "log( var( Qdlin[99] − Qdlin[9] ) )  [natural log, population var]",
+            "feature_note":  ("Qdlin[k] is the pre-computed 1000-point discharge capacity "
+                              "on the fixed Vdlin grid [3.5→2.0 V].  Indices 9 and 99 "
+                              "correspond to MATLAB cycles 10 and 100 (0-indexed)."),
+            "mean_pct_err_formula": (
+                "mean over test cells of "
+                "|pred_cycles − true_cycles| / true_cycles × 100 "
+                "(computed in CYCLE space, not log space)"),
+            "what_this_predicts": (
+                "Cycles to 80% nominal capacity (cycle_life scalar). "
+                "This is 'limited-data lifetime prediction from early cycles' "
+                "(Ather's Problem 1). It does NOT give the cycle-by-cycle SOH curve."),
+            "primary_eval":       "LOBO-CV (3 folds: train on 2 batches, test on 1)",
+            "reference_eval":     "B1+B2-odd-indexed / B2-even-indexed split",
+            "n_cells_included":   len(included),
+            "n_cells_skipped":    len(skipped),
+            "skipped_cells":      skipped,
+            "global_pearson_rho": round(rho, 4),
+            "ols_model":          "log10(cycle_life) = w0 + w1 * feature  (plain OLS)",
+        },
+        "lobo_cv": {
+            **{k: {kk: vv for kk, vv in v.items() if kk != "per_cell"}
+               for k, v in lobo.items()},
+            "macro_mean_pct_err":  round(float(np.mean(lobo_pct)), 2),
+            "macro_mean_rmse":     round(float(np.mean(lobo_rmse)), 1),
+        },
+        "paper_split_reference": {
+            kk: vv for kk, vv in ref.items() if kk != "per_cell"
+        },
+        "honest_caveats": {k: v for k, v in caveats},
+        "per_cell_lobo_predictions": per_cell_lobo,
+    }
+
+    OUT_JSON_CL.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(OUT_JSON_CL), "w") as fh:
+        json.dump(report, fh, indent=2)
+    print(f"[JSON] Saved → {OUT_JSON_CL}")
+
+
 if __name__ == "__main__":
-    if "--severson" in sys.argv:
+    if "--cycle-life" in sys.argv:
+        run_severson_cycle_life()
+    elif "--severson" in sys.argv:
         run_severson()
     else:
         main()
