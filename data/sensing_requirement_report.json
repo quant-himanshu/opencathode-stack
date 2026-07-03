@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "script": "analysis/sensing_requirement.py",
+    "dataset_citation": "Deng Z., Xu L., Liu H., Hu X., Duan Z., Xu Y. (2023). Prognostics of battery capacity based on charging data and data-driven methods for on-road vehicles. Applied Energy 339:120954. https://doi.org/10.1016/j.apenergy.2023.120954"
+  },
+  "pre_registered_verdict_thresholds": {
+    "lo": 3.0,
+    "hi": 5.0,
+    "applies_to": "f_sigma_effective (systematic noise scale), NOT f_sigma_iid",
+    "note": "Locked before computing any vehicle-level numbers"
+  },
+  "fleet_baseline": {
+    "sigma_cc_median": 0.01583,
+    "lambda_fleet_median": 0.03628,
+    "n_gated_in": 13,
+    "n_gated_out": 7,
+    "gate_pass_rate_pct": 65.0
+  },
+  "main_finding": "At n≈800 training cycles, i.i.d. SE(λ) ≈ 0.00080 << λ_fleet = 0.036. Coulomb-counting precision is already >40× beyond the i.i.d. threshold. Negative λ_v in gated-out vehicles is systematic trajectory bias (transient plateau, BMS recalibration) not measurement noise. EIS/IC upgrades are irrelevant. Window extension r=2 recovers 3/3 noise-masked vehicles. Genuine non-monotone (n=4) need >3 yr data.",
+  "vehicle_classes": {
+    "noise_masked": [
+      "V05",
+      "V10",
+      "V14"
+    ],
+    "genuine_nonmono": [
+      "V07",
+      "V12",
+      "V16",
+      "V17"
+    ]
+  },
+  "sensing_analysis_noise_masked": {
+    "V05": {
+      "sigma_resid": 0.0177,
+      "se_iid": 0.0008499185411688063,
+      "f_sigma_iid": 0.023426641156802822,
+      "sigma_effective": 1.1716856989971371,
+      "f_sigma_effective": 66.19693214673092,
+      "lambda_v_train": -0.019982,
+      "lambda_fleet": 0.03628,
+      "lambda_v_global": 0.020120162831869737,
+      "r_full_2x": 2.0,
+      "global_gates_in": 1,
+      "frontier_f_pts": [
+        1.0,
+        2.0,
+        3.0,
+        5.0,
+        10.0
+      ],
+      "frontier_r_pts": [
+        4382.033825638897,
+        1095.5084564097242,
+        486.8926472932107,
+        175.2813530255559,
+        43.82033825638897
+      ],
+      "frontier_note": "i.i.d. frontier over-predicts window needed because bias is transient; empirically r=2 suffices."
+    },
+    "V10": {
+      "sigma_resid": 0.01512,
+      "se_iid": 0.0008250871164546458,
+      "f_sigma_iid": 0.022742202768871164,
+      "sigma_effective": 0.730447958743674,
+      "f_sigma_effective": 48.31005018145992,
+      "lambda_v_train": -0.00358,
+      "lambda_fleet": 0.03628,
+      "lambda_v_global": 0.007293527608962549,
+      "r_full_2x": 2.0,
+      "global_gates_in": 1,
+      "frontier_f_pts": [
+        1.0,
+        2.0,
+        3.0,
+        5.0,
+        10.0
+      ],
+      "frontier_r_pts": [
+        2333.860948535176,
+        583.465237133794,
+        259.3178831705751,
+        93.35443794140704,
+        23.33860948535176
+      ],
+      "frontier_note": "i.i.d. frontier over-predicts window needed because bias is transient; empirically r=2 suffices."
+    },
+    "V14": {
+      "sigma_resid": 0.01123,
+      "se_iid": 0.0005484479930912134,
+      "f_sigma_iid": 0.015117089114972806,
+      "sigma_effective": 1.1487833448872071,
+      "f_sigma_effective": 102.29593454026777,
+      "lambda_v_train": -0.019824,
+      "lambda_fleet": 0.03628,
+      "lambda_v_global": 0.004079300508750568,
+      "r_full_2x": 2.0,
+      "global_gates_in": 1,
+      "frontier_f_pts": [
+        1.0,
+        2.0,
+        3.0,
+        5.0,
+        10.0
+      ],
+      "frontier_r_pts": [
+        10464.458223466747,
+        2616.1145558666867,
+        1162.7175803851944,
+        418.5783289386699,
+        104.64458223466748
+      ],
+      "frontier_note": "i.i.d. frontier over-predicts window needed because bias is transient; empirically r=2 suffices."
+    }
+  },
+  "genuine_nonmono_analysis": {
+    "V07": {
+      "lambda_v_train": -0.049065,
+      "lambda_v_global": -0.019933671954995014,
+      "net_dsoh_global": -0.03029,
+      "t_max_yr": 2.309,
+      "recoverable": 0
+    },
+    "V12": {
+      "lambda_v_train": -0.027893,
+      "lambda_v_global": -0.02512318657898829,
+      "net_dsoh_global": -0.03825,
+      "t_max_yr": 2.318,
+      "recoverable": 0
+    },
+    "V16": {
+      "lambda_v_train": -0.062883,
+      "lambda_v_global": -0.02308705903925329,
+      "net_dsoh_global": -0.03515,
+      "t_max_yr": 2.318,
+      "recoverable": 0
+    },
+    "V17": {
+      "lambda_v_train": -0.052128,
+      "lambda_v_global": -0.010145615136279639,
+      "net_dsoh_global": -0.01542,
+      "t_max_yr": 2.31,
+      "recoverable": 0
+    }
+  },
+  "technology_comparison": {
+    "Coulomb_counting": {
+      "sigma": 0.01583,
+      "se_at_n800": 0.0007364782525303897,
+      "helps_gate": 0
+    },
+    "EIS_derived": {
+      "sigma": 0.005,
+      "se_at_n800": 0.00023262105259961772,
+      "helps_gate": 0
+    },
+    "IC_analysis": {
+      "sigma": 0.003,
+      "se_at_n800": 0.00013957263155977062,
+      "helps_gate": 0
+    }
+  },
+  "technology_references": {
+    "EIS_derived": "Ecker M. et al. (2012) J. Power Sources 215:248-257.",
+    "IC_analysis": "Dubarry M. & Anseán D. (2022) Front. Energy Res. 10:1023555. DOI 10.3389/fenrg.2022.1023555"
+  },
+  "combined_frontier_f_points": [
+    1.0,
+    2.0,
+    3.0,
+    5.0,
+    10.0
+  ],
+  "empirical_shortcut": "r = 2× (use full 2.3 yr dataset instead of 50/50 train split) gates in all 3 noise-masked vehicles at current Coulomb-counting precision. i.i.d. frontier over-predicts r because the systematic bias is transient.",
+  "verdict": "WINDOW-LENGTH DOMINATED: median f_σ_eff = 66.2× (range 48–102×) >> 5.0× threshold. The gate failure is systematic trajectory bias (50–100× per-cycle noise), not measurement imprecision. Precision upgrades (EIS, IC) do not help at n≈800 cycles. Operative lever: window extension. Empirically: r = 2× (full 2.3 yr observation instead of 50/50 train split) recovers all 3 noise-masked vehicles (λ_v_global > 0 for V05, V10, V14). Genuine non-monotone vehicles (V07, V12, V16, V17) require >3 yr data — outside this dataset's scope.",
+  "verdict_key": "window_dominated",
+  "median_f_sigma_eff": 66.19693214673092,
+  "max_f_sigma_eff": 102.29593454026777
+}
