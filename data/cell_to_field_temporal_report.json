@@ -2,10 +2,10 @@
   "meta": {
     "script": "degradation/cell_to_field_temporal.py",
     "train_frac": 0.5,
-    "model": "\u0394SOH(t) = \u03bb_v \u00b7 \u221at  (cycling term dropped)",
-    "cycling_drop_reason": "D_cumul\u22480.002 across fleet; \u03b2\u00b7D^\u03b3<0.001 SOH (noise level)"
+    "model": "ΔSOH(t) = λ_v · √t  (cycling term dropped)",
+    "cycling_drop_reason": "D_cumul≈0.002 across fleet; β·D^γ<0.001 SOH (noise level)"
   },
-  "pre_registered_expectation": "Noise diagnostic: median |\u0394SOH|/\u03c3 = 1.70 (BORDERLINE). Expected B2'>B1'>B0' on trajectory RMSE by small margin. High-fade vehicles (V04,V08,V09,V15) should show clearest gains. If all baselines tie: limiting factor is SOH data quality, not modeling.",
+  "pre_registered_expectation": "Noise diagnostic: median |ΔSOH|/σ = 1.70 (BORDERLINE). Expected B2'>B1'>B0' on trajectory RMSE by small margin. High-fade vehicles (V04,V08,V09,V15) should show clearest gains. If all baselines tie: limiting factor is SOH data quality, not modeling.",
   "frozen_params": {
     "cycling_term": "dropped",
     "lambda_global": 0.018476,
@@ -13,10 +13,10 @@
     "lambda_M2_V01_V04": 0.02639332
   },
   "baselines": {
-    "B0_prime": "carry-forward: \u0394SOH = last observed value at train/test boundary",
-    "B1_prime": "LOO calendar: \u03bb_LOO = median(\u03bb_v) from all OTHER vehicles",
-    "B2_prime": "per-vehicle calendar: \u03bb_v fit on this vehicle's train window",
-    "B3_prime": "gated per-vehicle: if \u03bb_v>0 (train window) \u2192 B2', else \u2192 B0'. Gate is train-time-observable; deployable without test peeking."
+    "B0_prime": "carry-forward: ΔSOH = last observed value at train/test boundary",
+    "B1_prime": "LOO calendar: λ_LOO = median(λ_v) from all OTHER vehicles",
+    "B2_prime": "per-vehicle calendar: λ_v fit on this vehicle's train window",
+    "B3_prime": "gated per-vehicle: if λ_v>0 (train window) → B2', else → B0'. Gate is train-time-observable; deployable without test peeking."
   },
   "per_vehicle": {
     "V01": {
@@ -635,8 +635,8 @@
         "endpoint_rho": 0.0856
       }
     },
-    "note": "Gate is train-window-observable (sign of \u03bb_v from first 50% of timeline). lambda_positive = identifiable fade (n=13); lambda_nonpositive = unidentifiable (n=7). B3' routes each vehicle to B2' or B0' based on this gate."
+    "note": "Gate is train-window-observable (sign of λ_v from first 50% of timeline). lambda_positive = identifiable fade (n=13); lambda_nonpositive = unidentifiable (n=7). B3' routes each vehicle to B2' or B0' based on this gate."
   },
-  "verdict": "B2'>B1'\u2248B0' on trajectory RMSE: per-vehicle \u03bb helps but LOO-transferred \u03bb does not beat carry-forward \u2014 fleet \u03bb spread is too wide for cross-vehicle transfer to add value. Within-vehicle calibration needed. Gated predictor B3' (gate = sign of train-window \u03bb_v): fleet tRMSE 0.0276 vs B0' 0.0307 (~10% reduction). Within the identifiable subgroup (\u03bb_v>0, 13/20) per-vehicle \u03bb gives 15.4% RMSE reduction; within the unidentifiable subgroup (7/20) fallback to carry-forward is optimal. Gating improves RMSE but reduces endpoint rank correlation (EP-\u03c1: B2' +0.802 \u2192 B3' +0.692) because gated-out vehicles receive flat predictions. The gate trades discrimination for accuracy. Gate pass-rate 65%. Raising it is a sensing problem (BMS capacity resolution), not a modeling problem \u2014 per-vehicle prediction becomes viable exactly when the SOH signal becomes resolvable. 7 vehicles have negative \u03bb_v (V05, V07, V10, V12, V14, V16, V17) \u2014 non-monotone SOH; included in all tables and RMSE.",
-  "deployment_note": "Per-vehicle prediction is usable ONLY behind an identifiability gate (train-window \u03bb_v > 0 and adequate SNR); below the gate, fleet-prior/zero-fade fallback is optimal. Improving the gate pass-rate requires better SOH sensing (EIS / incremental capacity) or longer windows \u2014 a sensing problem, not a modeling problem."
+  "verdict": "B2'>B1'≈B0' on trajectory RMSE: per-vehicle λ helps but LOO-transferred λ does not beat carry-forward — fleet λ spread is too wide for cross-vehicle transfer to add value. Within-vehicle calibration needed. Gated predictor B3' (gate = sign of train-window λ_v): fleet tRMSE 0.0276 vs B0' 0.0307 (~10% reduction). Within the identifiable subgroup (λ_v>0, 13/20) per-vehicle λ gives 15.4% RMSE reduction; within the unidentifiable subgroup (7/20) fallback to carry-forward is optimal. Gating improves RMSE but reduces endpoint rank correlation (EP-ρ: B2' +0.802 → B3' +0.692) because gated-out vehicles receive flat predictions. The gate trades discrimination for accuracy. Gate pass-rate 65%. Raising it is a sensing problem (BMS capacity resolution), not a modeling problem — per-vehicle prediction becomes viable exactly when the SOH signal becomes resolvable. 7 vehicles have negative λ_v (V05, V07, V10, V12, V14, V16, V17) — non-monotone SOH; included in all tables and RMSE.",
+  "deployment_note": "Per-vehicle prediction is usable ONLY behind an identifiability gate (train-window λ_v > 0 and adequate SNR); below the gate, fleet-prior/zero-fade fallback is optimal. Improving the gate pass-rate requires longer observation windows. P6 analysis (sensing_requirement_report.json) showed the limiting error is SYSTEMATIC/CORRELATED bias (σ_eff 66–102× per-cycle noise), not random precision — precision upgrades (EIS/IC-class) do not help; window extension is the operative lever. An observation-duration problem, not a precision or modeling problem."
 }

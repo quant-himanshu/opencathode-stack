@@ -44,8 +44,11 @@ PRE-REGISTERED EXPECTATION (locked before code runs):
 DEPLOYMENT NOTE:
   Per-vehicle prediction is usable ONLY behind an identifiability gate (train-window
   λ_v > 0 and adequate SNR); below the gate, fleet-prior/zero-fade fallback is optimal.
-  Improving the gate pass-rate requires better SOH sensing (EIS / incremental capacity)
-  or longer windows — a sensing problem, not a modeling problem.
+  Improving the gate pass-rate requires longer observation windows. P6 analysis
+  (sensing_requirement_report.json) showed the limiting error is SYSTEMATIC/CORRELATED
+  bias (σ_eff 66–102× per-cycle noise), not random precision — precision upgrades
+  (EIS/IC-class) do not help; window extension is the operative lever. An
+  observation-duration problem, not a precision or modeling problem.
 
 OUTPUT: data/cell_to_field_temporal_report.json
 """
@@ -393,9 +396,10 @@ def run_temporal_split() -> None:
         f"(EP-ρ: B2' {ep_rho_b2:+.3f} → B3' {ep_rho_b3:+.3f}) because "
         f"gated-out vehicles receive flat predictions. "
         f"The gate trades discrimination for accuracy."
-        f" Gate pass-rate {gate_rate:.0f}%. Raising it is a sensing problem "
-        f"(BMS capacity resolution), not a modeling problem — per-vehicle "
-        f"prediction becomes viable exactly when the SOH signal becomes resolvable."
+        f" Gate pass-rate {gate_rate:.0f}%. Raising it requires longer observation "
+        f"windows — P6 (sensing_requirement_report.json) showed the limiting error "
+        f"is systematic bias (σ_eff 66–102× per-cycle noise), not precision; "
+        f"EIS/IC upgrades do not help. An observation-duration problem."
     )
     if neg_lam_vehs:
         verdict += (
@@ -493,8 +497,10 @@ def run_temporal_split() -> None:
     print("  Per-vehicle prediction is usable ONLY behind an identifiability gate")
     print("  (train-window λ_v > 0 and adequate SNR); below the gate, fleet-prior /")
     print("  zero-fade fallback is optimal. Improving the gate pass-rate requires")
-    print("  better SOH sensing (EIS / incremental capacity) or longer observation")
-    print("  windows — a sensing problem, not a modeling problem.")
+    print("  longer observation windows. P6 (sensing_requirement_report.json) showed")
+    print("  the limiting error is SYSTEMATIC bias (σ_eff 66-102× per-cycle noise),")
+    print("  not random precision — EIS/IC-class upgrades do not help; window")
+    print("  extension is the operative lever (observation-duration problem).")
 
     # ── 7. Write JSON ─────────────────────────────────────────────────────────
     report = {
@@ -532,8 +538,11 @@ def run_temporal_split() -> None:
             "Per-vehicle prediction is usable ONLY behind an identifiability gate "
             "(train-window λ_v > 0 and adequate SNR); below the gate, fleet-prior/"
             "zero-fade fallback is optimal. Improving the gate pass-rate requires "
-            "better SOH sensing (EIS / incremental capacity) or longer windows — "
-            "a sensing problem, not a modeling problem."
+            "longer observation windows. P6 analysis (sensing_requirement_report.json) "
+            "showed the limiting error is SYSTEMATIC/CORRELATED bias (σ_eff 66–102× "
+            "per-cycle noise), not random precision — precision upgrades (EIS/IC-class) "
+            "do not help; window extension is the operative lever. An "
+            "observation-duration problem, not a precision or modeling problem."
         ),
     }
 

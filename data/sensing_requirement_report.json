@@ -175,5 +175,6 @@
   "verdict": "WINDOW-LENGTH DOMINATED: median f_σ_eff = 66.2× (range 48–102×) >> 5.0× threshold. The gate failure is systematic trajectory bias (50–100× per-cycle noise), not measurement imprecision. Precision upgrades (EIS, IC) do not help at n≈800 cycles. Operative lever: window extension. Empirically: r = 2× (full 2.3 yr observation instead of 50/50 train split) recovers all 3 noise-masked vehicles (λ_v_global > 0 for V05, V10, V14). Genuine non-monotone vehicles (V07, V12, V16, V17) require >3 yr data — outside this dataset's scope.",
   "verdict_key": "window_dominated",
   "median_f_sigma_eff": 66.19693214673092,
-  "max_f_sigma_eff": 102.29593454026777
+  "max_f_sigma_eff": 102.29593454026777,
+  "empirical_shortcut_caveat": "POST-HOC DIAGNOSTIC (uses test-period data) — NOT a revised B3' metric; no leakage into predictor claims. The λ_v_global values for V05/V10/V14 are computed from the full 2.3 yr dataset (train + test combined). This is used only to diagnose whether the gate failure is noise-driven or structure-driven. The B3' RMSE results in cell_to_field_temporal_report.json remain based solely on the train-window gate (no look-ahead)."
 }
