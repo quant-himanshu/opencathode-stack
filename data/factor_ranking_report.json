@@ -1,0 +1,406 @@
+{
+  "meta": {
+    "script": "analysis/factor_ranking.py",
+    "target": "lambda_v (per-vehicle calendar fade rate from train-window OLS)",
+    "target_source": "data/cell_to_field_temporal_report.json",
+    "t_years_note": "t_years excluded from ranking features: range 2.3080\u20132.3180 yr (near-zero variance); also mechanically coupled to target (\u03bb_v is \u221at-normalised). Reported in per-vehicle table for context only.",
+    "shap_note": "Kernel SHAP skipped \u2014 shap package not installed.",
+    "ridge_alpha": 1.0,
+    "perm_repeats": 200
+  },
+  "pre_registered_expectation": "Literature order (Edge et al. 2021 PCCP 23:8200): Temperature > DoD > C-rate. With n=13 same-city same-model vehicles (narrow feature ranges), expected outcome: factors indistinguishable at n=13. Either result is the reportable finding.",
+  "literature_reference": "Edge J.S. et al. (2021) Lithium ion battery degradation: what you need to know. Physical Chemistry Chemical Physics 23(14):8200-8221. DOI 10.1039/D1CP00359C",
+  "literature_order": [
+    "temperature",
+    "DoD",
+    "C_rate"
+  ],
+  "gating": {
+    "gated_in": [
+      "V01",
+      "V02",
+      "V03",
+      "V04",
+      "V06",
+      "V08",
+      "V09",
+      "V11",
+      "V13",
+      "V15",
+      "V18",
+      "V19",
+      "V20"
+    ],
+    "gated_out": [
+      "V05",
+      "V07",
+      "V10",
+      "V12",
+      "V14",
+      "V16",
+      "V17"
+    ],
+    "gate_criterion": "lambda_v > 0 from train-window OLS (train-time-observable)"
+  },
+  "per_vehicle": {
+    "V01": {
+      "lambda_v": 0.057639,
+      "gated_in": true,
+      "snr": 3.29,
+      "t_years": 2.308,
+      "T_mean": 33.191,
+      "T_p95": 40.948,
+      "DoD_mean": 56.98,
+      "DoD_p95": 85.6,
+      "C_rate_mean": 0.41408,
+      "n_cycles": 1586
+    },
+    "V02": {
+      "lambda_v": 0.004216,
+      "gated_in": true,
+      "snr": 1.48,
+      "t_years": 2.311,
+      "T_mean": 32.986,
+      "T_p95": 40.996,
+      "DoD_mean": 56.266,
+      "DoD_p95": 85.84,
+      "C_rate_mean": 0.41546,
+      "n_cycles": 1609
+    },
+    "V03": {
+      "lambda_v": 0.020574,
+      "gated_in": true,
+      "snr": 0.03,
+      "t_years": 2.308,
+      "T_mean": 33.428,
+      "T_p95": 41.097,
+      "DoD_mean": 57.196,
+      "DoD_p95": 86.02,
+      "C_rate_mean": 0.41674,
+      "n_cycles": 1520
+    },
+    "V04": {
+      "lambda_v": 0.027598,
+      "gated_in": true,
+      "snr": 4.31,
+      "t_years": 2.311,
+      "T_mean": 32.956,
+      "T_p95": 40.729,
+      "DoD_mean": 57.573,
+      "DoD_p95": 86.0,
+      "C_rate_mean": 0.41306,
+      "n_cycles": 1560
+    },
+    "V05": {
+      "lambda_v": -0.019982,
+      "gated_in": false,
+      "snr": 1.73,
+      "t_years": 2.31,
+      "T_mean": 32.887,
+      "T_p95": 40.96,
+      "DoD_mean": 57.009,
+      "DoD_p95": 86.4,
+      "C_rate_mean": 0.41292,
+      "n_cycles": 1562
+    },
+    "V06": {
+      "lambda_v": 0.03628,
+      "gated_in": true,
+      "snr": 1.26,
+      "t_years": 2.31,
+      "T_mean": 33.336,
+      "T_p95": 41.058,
+      "DoD_mean": 57.575,
+      "DoD_p95": 86.8,
+      "C_rate_mean": 0.41168,
+      "n_cycles": 1526
+    },
+    "V07": {
+      "lambda_v": -0.049065,
+      "gated_in": false,
+      "snr": 1.6,
+      "t_years": 2.309,
+      "T_mean": 32.916,
+      "T_p95": 40.861,
+      "DoD_mean": 56.718,
+      "DoD_p95": 84.8,
+      "C_rate_mean": 0.41448,
+      "n_cycles": 1534
+    },
+    "V08": {
+      "lambda_v": 0.083915,
+      "gated_in": true,
+      "snr": 4.5,
+      "t_years": 2.309,
+      "T_mean": 32.948,
+      "T_p95": 41.115,
+      "DoD_mean": 56.782,
+      "DoD_p95": 85.86,
+      "C_rate_mean": 0.41664,
+      "n_cycles": 1528
+    },
+    "V09": {
+      "lambda_v": 0.062882,
+      "gated_in": true,
+      "snr": 3.68,
+      "t_years": 2.316,
+      "T_mean": 33.217,
+      "T_p95": 40.986,
+      "DoD_mean": 58.733,
+      "DoD_p95": 87.6,
+      "C_rate_mean": 0.41601,
+      "n_cycles": 1472
+    },
+    "V10": {
+      "lambda_v": -0.00358,
+      "gated_in": false,
+      "snr": 0.73,
+      "t_years": 2.312,
+      "T_mean": 32.442,
+      "T_p95": 40.323,
+      "DoD_mean": 57.465,
+      "DoD_p95": 86.28,
+      "C_rate_mean": 0.41211,
+      "n_cycles": 1347
+    },
+    "V11": {
+      "lambda_v": 0.007097,
+      "gated_in": true,
+      "snr": 1.67,
+      "t_years": 2.31,
+      "T_mean": 33.273,
+      "T_p95": 41.013,
+      "DoD_mean": 57.624,
+      "DoD_p95": 86.8,
+      "C_rate_mean": 0.41361,
+      "n_cycles": 1507
+    },
+    "V12": {
+      "lambda_v": -0.027893,
+      "gated_in": false,
+      "snr": 2.59,
+      "t_years": 2.318,
+      "T_mean": 33.016,
+      "T_p95": 41.145,
+      "DoD_mean": 57.222,
+      "DoD_p95": 86.4,
+      "C_rate_mean": 0.41498,
+      "n_cycles": 1538
+    },
+    "V13": {
+      "lambda_v": 0.041017,
+      "gated_in": true,
+      "snr": 2.61,
+      "t_years": 2.309,
+      "T_mean": 33.507,
+      "T_p95": 41.214,
+      "DoD_mean": 56.686,
+      "DoD_p95": 85.2,
+      "C_rate_mean": 0.41222,
+      "n_cycles": 1476
+    },
+    "V14": {
+      "lambda_v": -0.019824,
+      "gated_in": false,
+      "snr": 0.55,
+      "t_years": 2.31,
+      "T_mean": 33.199,
+      "T_p95": 40.977,
+      "DoD_mean": 57.849,
+      "DoD_p95": 87.2,
+      "C_rate_mean": 0.41775,
+      "n_cycles": 1505
+    },
+    "V15": {
+      "lambda_v": 0.039883,
+      "gated_in": true,
+      "snr": 5.16,
+      "t_years": 2.312,
+      "T_mean": 32.686,
+      "T_p95": 40.839,
+      "DoD_mean": 57.152,
+      "DoD_p95": 85.56,
+      "C_rate_mean": 0.40708,
+      "n_cycles": 1283
+    },
+    "V16": {
+      "lambda_v": -0.062883,
+      "gated_in": false,
+      "snr": 2.38,
+      "t_years": 2.318,
+      "T_mean": 32.963,
+      "T_p95": 40.81,
+      "DoD_mean": 56.948,
+      "DoD_p95": 85.2,
+      "C_rate_mean": 0.4165,
+      "n_cycles": 1565
+    },
+    "V17": {
+      "lambda_v": -0.052128,
+      "gated_in": false,
+      "snr": 1.11,
+      "t_years": 2.31,
+      "T_mean": 33.535,
+      "T_p95": 41.051,
+      "DoD_mean": 57.678,
+      "DoD_p95": 86.4,
+      "C_rate_mean": 0.41738,
+      "n_cycles": 1418
+    },
+    "V18": {
+      "lambda_v": 0.037833,
+      "gated_in": true,
+      "snr": 1.15,
+      "t_years": 2.31,
+      "T_mean": 32.855,
+      "T_p95": 40.709,
+      "DoD_mean": 57.013,
+      "DoD_p95": 86.0,
+      "C_rate_mean": 0.40887,
+      "n_cycles": 1586
+    },
+    "V19": {
+      "lambda_v": 0.0314,
+      "gated_in": true,
+      "snr": 3.39,
+      "t_years": 2.314,
+      "T_mean": 33.186,
+      "T_p95": 41.132,
+      "DoD_mean": 57.222,
+      "DoD_p95": 86.4,
+      "C_rate_mean": 0.4169,
+      "n_cycles": 1487
+    },
+    "V20": {
+      "lambda_v": 0.016377,
+      "gated_in": true,
+      "snr": 0.58,
+      "t_years": 2.308,
+      "T_mean": 33.074,
+      "T_p95": 40.912,
+      "DoD_mean": 57.218,
+      "DoD_p95": 86.8,
+      "C_rate_mean": 0.41939,
+      "n_cycles": 1526
+    }
+  },
+  "spearman": {
+    "n": 13,
+    "bonferroni_threshold": 0.00833,
+    "results": [
+      {
+        "feature": "DoD_p95",
+        "rho": -0.2683,
+        "p_value": 0.3754,
+        "sig_bonf": false
+      },
+      {
+        "feature": "n_cycles",
+        "rho": -0.2342,
+        "p_value": 0.4413,
+        "sig_bonf": false
+      },
+      {
+        "feature": "C_rate_mean",
+        "rho": -0.1978,
+        "p_value": 0.5171,
+        "sig_bonf": false
+      },
+      {
+        "feature": "DoD_mean",
+        "rho": -0.1429,
+        "p_value": 0.6415,
+        "sig_bonf": false
+      },
+      {
+        "feature": "T_p95",
+        "rho": 0.0989,
+        "p_value": 0.7479,
+        "sig_bonf": false
+      },
+      {
+        "feature": "T_mean",
+        "rho": -0.0934,
+        "p_value": 0.7615,
+        "sig_bonf": false
+      }
+    ],
+    "note": "At n=13, unadjusted p<0.05 requires |\u03c1|\u22730.55. p-values are weak; report but do not over-read."
+  },
+  "ridge_loo": {
+    "alpha": 1.0,
+    "loo_r2": -12.82878,
+    "predictive_value": false,
+    "loo_note": "Negative LOO R\u00b2 \u2014 no cross-validated predictive value; importances are directional suggestions only",
+    "ridge_coef_std_space": [
+      {
+        "feature": "T_mean",
+        "coef_std": -0.01362
+      },
+      {
+        "feature": "T_p95",
+        "coef_std": 0.01496
+      },
+      {
+        "feature": "DoD_mean",
+        "coef_std": 0.01829
+      },
+      {
+        "feature": "DoD_p95",
+        "coef_std": -0.0124
+      },
+      {
+        "feature": "C_rate_mean",
+        "coef_std": -0.00124
+      },
+      {
+        "feature": "n_cycles",
+        "coef_std": 0.00547
+      }
+    ],
+    "permutation_importance": [
+      {
+        "feature": "DoD_mean",
+        "mean_importance": 0.000718,
+        "std_importance": 0.000268
+      },
+      {
+        "feature": "T_p95",
+        "mean_importance": 0.000477,
+        "std_importance": 0.000188
+      },
+      {
+        "feature": "T_mean",
+        "mean_importance": 0.000394,
+        "std_importance": 0.000184
+      },
+      {
+        "feature": "DoD_p95",
+        "mean_importance": 0.000322,
+        "std_importance": 0.000155
+      },
+      {
+        "feature": "n_cycles",
+        "mean_importance": 6.2e-05,
+        "std_importance": 5.3e-05
+      },
+      {
+        "feature": "C_rate_mean",
+        "mean_importance": 4e-06,
+        "std_importance": 1.1e-05
+      }
+    ],
+    "perm_note": "In-sample permutation importance (200 repeats). Optimistic at n=13; treat as directional, not quantitative."
+  },
+  "observed_ranking_by_rho": [
+    "DoD_p95",
+    "n_cycles",
+    "C_rate_mean",
+    "DoD_mean",
+    "T_p95",
+    "T_mean"
+  ],
+  "agreement_with_literature": true,
+  "indistinguishable": true,
+  "verdict": "FACTORS INDISTINGUISHABLE at n=13: all |\u03c1| < 0.40 (max |\u03c1| = 0.268). No feature clears even the unadjusted \u03c1 significance threshold at n=13. Pre-registered expectation CONFIRMED: same-city, same-model fleet with narrow feature ranges does not resolve factor ranking. LOO R\u00b2 = -12.829 (negative \u2014 no cross-validated predictive value). Importances are directional suggestions only."
+}
