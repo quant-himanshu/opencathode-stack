@@ -15,7 +15,7 @@
       "beta_source": "cell_to_field_report.json frozen_params.beta_NASA (NASA LOO-CV mean: B0005/B0006/B0007/B0018)",
       "gamma_source": "fixed \u03b3=0.5 throughout Module 4",
       "lambda_source": "deng_degradation_report.json degradation_driver",
-      "scale_note": "eval_B_cross_cell.beta=2730.959 in nasa_degradation_report.json uses raw fatigue.py D scale (D\u22481e-3 at NASA EOL) and is NOT interchangeable with beta=0.021545 \u2014 produces \u0394SOH\u2248484 at max-stress corner. Physically impossible. Do not use for Sobol."
+      "scale_note": "SCALE ERROR (documented 2026-07-04): beta=0.021545 was fit on D_k=k scale (one unit of damage per full discharge cycle, cross_cell_predictor.py) and is NOT on Palmgren-Miner D scale. The Sobol sweep computes D_total = N_CYCLES \u00d7 (stress^m / A) \u2014 this IS Miner D. Applying beta_k=0.021545 to D_Miner introduces a ~262\u00d7 underestimate of cycling contribution (verified: beta_Miner fit on same NASA cells gives 3.9\u20137.9 per cell, mean 5.663). The correctly-scaled beta_Miner predicts \u0394SOH_cyc\u22480.08\u20130.25 at fleet-mean conditions \u2014 but this is itself inapplicable to Deng NCM fleet (chemistry mismatch: NASA=LCO, Deng=NCM). Consequently the absolute_contribution table below is retracted. The Sobol sensitivity RANKING (T>DoD>C-rate) is scale-invariant and unaffected. Also: eval_B_cross_cell.beta=2730.959 in nasa_degradation_report.json is on a different (incorrect/raw) D scale and must not be used here."
     }
   },
   "parameter_ranges": {
@@ -115,26 +115,15 @@
       "ST_conf": 0.037259
     }
   },
-  "absolute_contribution": {
-    "deng_fleet_mean": {
-      "T_C": 22.0,
-      "DoD_pct": 57.0,
-      "C_rate": 0.41,
-      "\u0394SOH_cyc": 0.000288,
-      "\u0394SOH_cal": 0.026393,
-      "\u0394SOH_total": 0.026682,
-      "cyc_pct_of_total": 1.08,
-      "cal_pct_of_total": 98.92
-    },
-    "max_stress_corner": {
-      "T_C": 45.0,
-      "DoD_pct": 100.0,
-      "C_rate": 3.0,
-      "\u0394SOH_cyc": 0.011697,
-      "\u0394SOH_cal": 0.026393,
-      "\u0394SOH_total": 0.03809,
-      "cyc_pct_of_total": 30.71,
-      "cal_pct_of_total": 69.29
+  "absolute_contribution_RETRACTED": {
+    "retraction_date": "2026-07-04",
+    "reason": "beta_NASA=0.021545 used in this table is on D_k=k scale (not Palmgren-Miner D scale). Applied here with D_total on Miner scale, it underestimates cycling by ~262x. The correctly-scaled beta_Miner (mean 5.663, fit on same NASA LCO cells) cannot be used either: it predicts \u0394SOH_cyc=0.08\u20130.25 on Deng fleet conditions, exceeding observed total fleet fade of 2\u20139%, confirming LCO beta does not transfer to NCM Deng fleet (chemistry mismatch). No valid absolute cycling/calendar split can be computed without an NCM-specific damage coefficient calibrated on Deng fleet cycling data, which this project does not have. The Sobol sensitivity RANKING (T>DoD>C-rate, ST: 0.749>0.372>0.166) is scale-invariant and remains valid.",
+    "retracted_values_for_audit": {
+      "deng_fleet_mean_cyc_pct_of_total": 1.08,
+      "deng_fleet_mean_cal_pct_of_total": 98.92,
+      "max_stress_corner_cyc_pct_of_total": 30.71,
+      "max_stress_corner_cal_pct_of_total": 69.29,
+      "error": "beta on wrong D scale (D_k=k applied to D_Miner); additionally LCO-to-NCM chemistry transfer invalid"
     }
   },
   "observed_order_by_ST": [
@@ -152,5 +141,5 @@
     "Calendar term \u0394SOH_cal = \u03bb\u00b7\u221at = 0.02639 is constant across all sweep points. It shifts the mean output but does not contribute to output variance. Sobol indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum \u2248 1 for the three factors (constant term adds no variance).",
     "N_cycles=800 is held constant across all C_rate values in this sweep. Physically, higher C_rate typically enables more charge sessions per unit time, which would compound the cycling effect. This sweep isolates per-cycle stress sensitivity only and likely UNDERSTATES C_rate's true real-world impact on annual \u0394SOH."
   ],
-  "verdict": "T > DoD > C-rate confirmed by ST (0.749 > 0.372 > 0.166). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model. This Sobol ranking describes sensitivity WITHIN the cycling sub-model only. It does NOT contradict the M2 finding that field degradation is calendar-dominated (deng_degradation_report.json: stress_frac=0%) \u2014 rather, it shows that even the (small) cycling contribution is primarily driven by temperature. In the fleet's actual operating regime, changing T/DoD/C-rate would shift total \u0394SOH by at most ~1 percentage point (cycling is 1.1% of total \u0394SOH at fleet mean, 30.7% at max-stress corner \u2014 see absolute_contribution table), because calendar aging (98.9\u201369.3% of fade) is unaffected by these factors in the current model."
+  "verdict": "T > DoD > C-rate confirmed by ST (0.749 > 0.372 > 0.166). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model. This Sobol ranking describes sensitivity WITHIN the cycling sub-model only. It does NOT contradict the M2 finding that field degradation is calendar-dominated (deng_degradation_report.json: stress_frac=0%) \u2014 the M2 finding is grounded in M2's own NCM fit (gamma_c=3.630 on Deng data), not in any NASA-derived beta. The absolute cycling/calendar split as a percentage CANNOT be computed honestly from this analysis: beta_NASA=0.021545 is on D_k=k scale (not D_Miner scale used here), producing ~262\u00d7 scale error; the correctly-scaled beta_Miner from NASA LCO cells fails to transfer to Deng NCM fleet due to chemistry mismatch. See absolute_contribution_RETRACTED for details. The sensitivity RANKING (T>DoD>C-rate) is valid and unaffected by the scale error."
 }

@@ -40,7 +40,7 @@ Lab physics works (NASA lab R²=0.9725 [[nasa_degradation_report.json](data/nasa
 | Quartz WLTP (36-cell NMC811 pack) | DFN-SPM + EKF | RMSE | 38.4 mV | |
 | RWTH Aachen EIS (70 real spectra) | 2RC+CPE fit | R² | **0.9999** | offline curve fit on real spectra |
 | NASA B0018 (122 held-out discharge cycles) | DualEKF | R² | **0.784** | empirical OCV; see limitation |
-| NASA B0018 | DualEKF | MAE | **102 mV** | Sanyo NMC ≠ NMC811 OCP — chemistry mismatch |
+| NASA B0018 | DualEKF | MAE | **102 mV** | Sanyo LCO ≠ NMC811 OCP — chemistry mismatch |
 | BMW i3 RDC (63 held-out trips) | DualEKF | MAE (scale-cal) | **35.6 mV** | real CAN data |
 | BMW i3 RDC | DualEKF | SOC RMSE | 20.8 % | |
 | Deng BAIC EU500 (2000 sessions, 20 vehicles) | DualEKF | MAE (scale-cal) | **15.5 mV** | real fleet charging data |
@@ -56,7 +56,7 @@ Lab physics works (NASA lab R²=0.9725 [[nasa_degradation_report.json](data/nasa
 
 **Note on Module 2 (Stress-Fatigue — NASA PCoE lab validation):** The same Miner damage model validated on controlled NASA lab cycling (B0005/B0006/B0007/B0018: 1C, DoD≈100%, 132–168 cycles, direct capacity measurement, SNR≈50–99). Within-cell fit R²=0.9725 (mean over 4 cells, MAE=1.3% SOH) confirms the model correctly captures degradation trajectory shape in the appropriate regime. Cross-cell generalisation is limited (R²=−0.68) by manufacturing batch variability: B0006 degrades 45% faster than B0005 at nearly identical cumulative damage D values, requiring per-cell β calibration. Key comparison: stress-fatigue R²=0.97 on controlled lab data (where it is the dominant mechanism) vs. R²=−1.8 on 2-year field data (where SEI/calendar aging dominates). This regime distinction is the central finding, consistent with Sulzer et al. (2021 Joule, DOI 10.1016/j.joule.2021.06.005).
 
-**Note on NASA B0018:** The DualEKF uses an OCV function fitted empirically from 10 calibration discharge cycles (IR-drop compensation, not GITT). This introduces ~27 mV OCV approximation error. The Sanyo NMC chemistry (B0018) differs from the NMC811 DFN cartridge — so the DFN layer is not used directly here. MAE ~102 mV reflects both the OCV approximation error and the chemistry gap.
+**Note on NASA B0018:** The DualEKF uses an OCV function fitted empirically from 10 calibration discharge cycles (IR-drop compensation, not GITT). This introduces ~27 mV OCV approximation error. The Sanyo LCO chemistry (B0018) differs from the NMC811 DFN cartridge — so the DFN layer is not used directly here. MAE ~102 mV reflects both the OCV approximation error and the chemistry gap.
 
 ---
 

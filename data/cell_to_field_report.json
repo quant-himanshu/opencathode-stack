@@ -2,7 +2,7 @@
   "meta": {
     "script": "degradation/cell_to_field_bridge.py",
     "caveats": [
-      "Cell-to-pack scale mismatch: β,γ from NASA NMC 18650 lab cells (1C, DoD≈100%); Deng fleet is BAIC EU500 NCM 145 Ah pack (field, 0.41C, 57% DoD). Same chemistry class (NMC) — transfer failure is scale+protocol+noise, not chemistry. Trend/rank tested, not absolute accuracy. Source: Deng Z. et al. (2023) Applied Energy 339:120954.",
+      "Cell-to-pack scale mismatch: β,γ from NASA LCO 18650 lab cells (Sanyo UR18650E, 1C, DoD≈100%); Deng fleet is BAIC EU500 NCM 145 Ah pack (field, 0.41C, 57% DoD). DIFFERENT chemistry (LCO vs NCM) — transfer failure is scale+protocol+noise+chemistry. The 'same chemistry class (NMC)' claim in earlier versions was incorrect. Trend/rank tested, not absolute accuracy. Source: Deng Z. et al. (2023) Applied Energy 339:120954.",
       "λ_sei from Deng V01-V04 — partially fleet-sourced; disclosed.",
       "T_mean_C from BMS per session; no assumed temperature applied.",
       "Partial-cycle counting: ASTM E1049 rainflow per session; sequence effects ignored.",
@@ -17,7 +17,8 @@
     "SN_A": 1000000.0,
     "SN_M": 2.5,
     "lambda_source": "Deng M2 combined fit on V01-V04",
-    "beta_gamma_source": "NASA LOO-CV mean: B0005/B0006/B0007/B0018"
+    "beta_gamma_source": "NASA LOO-CV mean: B0005/B0006/B0007/B0018",
+    "beta_scale_note": "SCALE ERROR (documented 2026-07-04): beta_NASA=0.021545 was fit on D_k=k scale (D per cycle = 1 per cycle, cross_cell_predictor.py) and is used here with D_cumul from accumulate_damage() which is on Palmgren-Miner D scale. This introduces a ~262× underestimate of the cycling term in B1/B2/B2α predictions. The empirical conclusion (B0 beats B1/B2 on Tier 3) is unaffected — the correct beta_Miner≈5.663 would make B1/B2 even more wrong in absolute terms."
   },
   "pre_registered_expectation": "B2≈B1 expected: M2 stress_frac=0% on all Deng vehicles. If cycling term adds nothing on Tier 3, that IS the finding — field fade is calendar-dominated, consistent with M2.",
   "tier_separation": {
@@ -1251,6 +1252,12 @@
       "rho": -0.083,
       "n_vehicles": 11
     }
+  },
+  "correction_note": {
+    "date": "2026-07-04",
+    "chemistry_correction": "NASA cells B0005/B0006/B0007/B0018 are LCO (Sanyo UR18650E), not NMC. Previous caveat incorrectly stated 'same chemistry class (NMC)'. LCO and NCM have different Wöhler fatigue resistance — cross-chemistry beta transfer is invalid (see verification: beta_Miner_LCO=5.663 predicts 25% SOH cycling fade on Deng fleet vs 2–9% observed total, confirming chemistry mismatch).",
+    "beta_scale_correction": "beta_NASA=0.021545 is on D_k=k scale; used here with D_cumul on D_Miner scale. Correctly-scaled beta_Miner=5.663 (LCO). B0 beats B1/B2/B2α conclusion holds regardless — correct beta would produce even larger prediction error for B1/B2.",
+    "cycling_negligibility": "The 'cycling negligible' finding for Deng fleet is supported empirically by: (1) M2 joint fit (gamma_c=3.630 on NCM data → stress_frac=0%); (2) temporal model B2' calendar-only matching B3' trajectory RMSE on held-out Tier 3 vehicles — both grounded in real Deng NCM measurements. (3) an unverified but physically plausible assumption — NOT established by data in this project — that NCM chemistry fatigues less readily than LCO under partial-DoD field conditions. This is NOT the basis for the cycling-negligible conclusion; it is offered only as a plausibility note. The actual evidence for cycling-negligibility rests on (1) and (2) above: M2's own NCM-fitted joint model (gamma_c=3.630 on Deng data) and the temporal model's calendar-only RMSE match on held-out Tier 3 data — both grounded in real Deng NCM measurements, not NASA LCO transfer or chemistry assumptions."
   },
   "verdict": "α-scaled bridge (B2α, α=-0.382) beats B1 on Tier 3; raw transfer (B2) does not. Pack-scale correction recovers modest cycling signal."
 }

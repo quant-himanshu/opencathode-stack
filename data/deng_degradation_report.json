@@ -347,13 +347,19 @@
     "sei_fraction_pct": 100.0,
     "stress_fraction_pct": 0.0,
     "lambda_interp": "0.026393 SOH/\u221ayr \u2192 4.0% fade at 2.3 yr",
-    "stress_interp": "D_final\u22480.002 \u2192 \u03b2\u00b7D^\u03b3\u22483.5e-09, negligible vs SEI"
+    "stress_interp": "D_final\u22480.002 \u2192 \u03b2_c\u00b7D^\u03b3_c\u22483.5e-09, negligible vs SEI (using M2-fitted beta_c=22.094, gamma_c=3.630 on Deng NCM data \u2014 NOT NASA-derived beta_NASA=0.021545; these are independent findings)"
   },
   "data_quality": {
     "mean_signal_snr": 1.2,
     "vehicles_snr_below_1": 8,
     "vehicles_negative_fade": 5,
     "note": "SNR < 1 for most vehicles: 2-year fade signal (~2.5% SOH) is comparable to per-session BMS capacity noise (~2.8% SOH). R\u00b2 is not interpretable; MAE_\u0394SOH is the primary metric."
+  },
+  "correction_note": {
+    "date": "2026-07-04",
+    "subject": "cycling-negligibility justification — chain-of-evidence clarification",
+    "body": "The stress_frac=0% and stress_interp=3.5e-09 findings are grounded in M2's own joint fit on Deng NCM data (beta_c=22.094, gamma_c=3.630). They do NOT rely on any transfer of NASA-derived beta_NASA=0.021545, which is on D_k=k scale (not D_Miner scale) and is from LCO chemistry cells. Independent corroboration: cell_to_field_temporal_report.json shows a calendar-only model (B2': lambda_v·sqrt(t)) matches test-window trajectory RMSE as well as any model including a cycling term, confirming the empirical conclusion holds on out-of-sample Tier 3 vehicles.",
+    "gamma_flag": "gamma_c=3.630 (M2 combined fit) is a free-fit exponent, unlike the gamma=0.5 fixed convention used elsewhere in the project. Given the cycling term's near-zero contribution, this parameter is weakly identified by the data and should not be over-interpreted — flagged for future review. It does not affect the stress_frac=0% conclusion since the cycling contribution is negligible regardless of gamma_c's exact value in this fitted range."
   },
   "assumptions": [
     "\u0394SOH fitted (not absolute SOH) \u2014 pre-dataset history unknown",
