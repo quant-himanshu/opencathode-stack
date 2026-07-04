@@ -55,6 +55,11 @@ REFERENCE DURATION (fixed across all sweep points):
   N_cycles = 800  (approx. annual sessions for Deng fleet)
   t_years  = 1.0
 
+REPRODUCIBILITY:
+  seed=42 for reproducibility — passed to both morris_sample.sample() and
+  sobol_sampler.sample(). Required for paper/commercial submission so
+  reviewers re-running the script get bit-identical Sobol/Morris results.
+
 METHOD:
   Step A — Morris elementary effects screening (~80 evaluations, cheap).
             Identifies negligible factors before Sobol budget allocation.
@@ -236,7 +241,7 @@ def _absolute_contribution() -> dict:
 # ── Step A: Morris screening ───────────────────────────────────────────────────
 
 def _run_morris(n_trajectories: int = 20, num_levels: int = 4) -> dict:
-    X = morris_sample.sample(PROBLEM, N=n_trajectories, num_levels=num_levels)
+    X = morris_sample.sample(PROBLEM, N=n_trajectories, num_levels=num_levels, seed=42)
     Y = _model_batch(X)
     Si = morris_analyze.analyze(
         PROBLEM, X, Y,
@@ -260,12 +265,13 @@ def _run_morris(n_trajectories: int = 20, num_levels: int = 4) -> dict:
 # ── Step B: Sobol analysis ─────────────────────────────────────────────────────
 
 def _run_sobol(N: int = 1024) -> dict:
-    X = sobol_sampler.sample(PROBLEM, N=N, calc_second_order=False)
+    X = sobol_sampler.sample(PROBLEM, N=N, calc_second_order=False, seed=42)
     Y = _model_batch(X)
     Si = sobol_analyze.analyze(
         PROBLEM, Y,
         calc_second_order=False,
         print_to_console=False,
+        seed=42,
     )
     n_evals = X.shape[0]
     return {

@@ -76,16 +76,16 @@
     "n_trajectories": 20,
     "num_levels": 4,
     "T_C": {
-      "mu_star": 0.005304,
-      "sigma": 0.006016
+      "mu_star": 0.005055,
+      "sigma": 0.005598
     },
     "DoD_pct": {
-      "mu_star": 0.003654,
-      "sigma": 0.00412
+      "mu_star": 0.004194,
+      "sigma": 0.004063
     },
     "C_rate": {
-      "mu_star": 0.001213,
-      "sigma": 0.001588
+      "mu_star": 0.001368,
+      "sigma": 0.001795
     }
   },
   "morris_order_by_mu_star": [
@@ -97,22 +97,22 @@
     "n_evaluations": 5120,
     "N_base_samples": 1024,
     "T_C": {
-      "S1": 0.527193,
-      "ST": 0.73859,
-      "S1_conf": 0.070143,
-      "ST_conf": 0.106312
+      "S1": 0.497101,
+      "ST": 0.748642,
+      "S1_conf": 0.087646,
+      "ST_conf": 0.102443
     },
     "DoD_pct": {
-      "S1": 0.146791,
-      "ST": 0.371007,
-      "S1_conf": 0.046556,
-      "ST_conf": 0.072169
+      "S1": 0.170502,
+      "ST": 0.371615,
+      "S1_conf": 0.057151,
+      "ST_conf": 0.070647
     },
     "C_rate": {
-      "S1": 0.08005,
-      "ST": 0.181695,
-      "S1_conf": 0.041295,
-      "ST_conf": 0.045862
+      "S1": 0.064332,
+      "ST": 0.165519,
+      "S1_conf": 0.030403,
+      "ST_conf": 0.037259
     }
   },
   "absolute_contribution": {
@@ -152,5 +152,5 @@
     "Calendar term \u0394SOH_cal = \u03bb\u00b7\u221at = 0.02639 is constant across all sweep points. It shifts the mean output but does not contribute to output variance. Sobol indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum \u2248 1 for the three factors (constant term adds no variance).",
     "N_cycles=800 is held constant across all C_rate values in this sweep. Physically, higher C_rate typically enables more charge sessions per unit time, which would compound the cycling effect. This sweep isolates per-cycle stress sensitivity only and likely UNDERSTATES C_rate's true real-world impact on annual \u0394SOH."
   ],
-  "verdict": "T > DoD > C-rate confirmed by ST (0.739 > 0.371 > 0.182). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model. This Sobol ranking describes sensitivity WITHIN the cycling sub-model only. It does NOT contradict the M2 finding that field degradation is calendar-dominated (deng_degradation_report.json: stress_frac=0%) \u2014 rather, it shows that even the (small) cycling contribution is primarily driven by temperature. In the fleet's actual operating regime, changing T/DoD/C-rate would shift total \u0394SOH by at most ~1 percentage point (cycling is 1.1% of total \u0394SOH at fleet mean, 30.7% at max-stress corner \u2014 see absolute_contribution table), because calendar aging (98.9\u201369.3% of fade) is unaffected by these factors in the current model."
+  "verdict": "T > DoD > C-rate confirmed by ST (0.749 > 0.372 > 0.166). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model. This Sobol ranking describes sensitivity WITHIN the cycling sub-model only. It does NOT contradict the M2 finding that field degradation is calendar-dominated (deng_degradation_report.json: stress_frac=0%) \u2014 rather, it shows that even the (small) cycling contribution is primarily driven by temperature. In the fleet's actual operating regime, changing T/DoD/C-rate would shift total \u0394SOH by at most ~1 percentage point (cycling is 1.1% of total \u0394SOH at fleet mean, 30.7% at max-stress corner \u2014 see absolute_contribution table), because calendar aging (98.9\u201369.3% of fade) is unaffected by these factors in the current model."
 }
