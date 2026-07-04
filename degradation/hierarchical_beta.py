@@ -91,7 +91,7 @@ SIGMA_OBS_PRIOR     = 0.050    # HalfNormal scale; CORRECTED — empirical 0.030
                                 # original 0.010 was too tight (dry-run finding)
 
 # ── MCMC settings ─────────────────────────────────────────────────────────────
-N_CHAINS  = 2
+N_CHAINS  = 4
 N_TUNE    = 2000
 N_DRAWS   = 2000
 TARGET_AC = 0.9    # NUTS target acceptance
@@ -590,6 +590,14 @@ def main():
           f"({'OK' if conv['rhat_max'] < 1.01 else 'FAIL — re-run with more tuning'})")
     print(f"  ESS bulk min = {conv['ess_bulk_min']:.0f}  "
           f"({'OK' if conv['ess_bulk_min'] > 400 else 'FAIL — chains not mixing'})")
+    print(f"\n  {'Parameter':<20}  {'R-hat':>7}  {'ESS bulk':>10}")
+    print("  " + "-" * 42)
+    for pname, pvals in conv["per_param"].items():
+        rh = pvals["r_hat"]
+        ess = pvals["ess_bulk"]
+        rh_str  = f"{rh:.4f}" if not (rh != rh) else "NaN"  # NaN check
+        ess_str = f"{ess:.0f}" if not (ess != ess) else "NaN"
+        print(f"  {pname:<20}  {rh_str:>7}  {ess_str:>10}")
 
     # Step 4: validation checks
     check_a = _check_A_shrinkage(idata, cell_data)
@@ -598,12 +606,18 @@ def main():
     # Step 5: print summary
     post = idata.posterior
     print("\n--- Posterior summary ---")
-    print(f"  mu_beta:    {float(post['mu_beta'].values.mean()):.6f} ± "
-          f"{float(post['mu_beta'].values.std()):.6f}")
-    print(f"  sigma_beta: {float(post['sigma_beta'].values.mean()):.6f} ± "
-          f"{float(post['sigma_beta'].values.std()):.6f}")
-    print(f"  sigma_obs:  {float(post['sigma_obs'].values.mean()):.6f} ± "
-          f"{float(post['sigma_obs'].values.std()):.6f}")
+    mu_draws = post["mu_beta"].values.flatten()
+    sb_draws = post["sigma_beta"].values.flatten()
+    so_draws = post["sigma_obs"].values.flatten()
+    mu_lo, mu_hi = _az_hdi(mu_draws)
+    sb_lo, sb_hi = _az_hdi(sb_draws)
+    so_lo, so_hi = _az_hdi(so_draws)
+    print(f"  mu_beta:    {float(mu_draws.mean()):.6f} ± {float(mu_draws.std()):.6f}  "
+          f"HDI 94% [{mu_lo:.6f}, {mu_hi:.6f}]")
+    print(f"  sigma_beta: {float(sb_draws.mean()):.6f} ± {float(sb_draws.std()):.6f}  "
+          f"HDI 94% [{sb_lo:.6f}, {sb_hi:.6f}]")
+    print(f"  sigma_obs:  {float(so_draws.mean()):.6f} ± {float(so_draws.std()):.6f}  "
+          f"HDI 94% [{so_lo:.6f}, {so_hi:.6f}]")
     for i, cid in enumerate(CELLS):
         draws = post["beta"].values[:, :, i].flatten()
         lo, hi = _az_hdi(draws)

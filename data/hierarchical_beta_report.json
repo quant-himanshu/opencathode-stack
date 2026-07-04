@@ -16,7 +16,7 @@
     "sigma_obs": "HalfNormal(0.05) [CORRECTED from 0.010 \u2014 dry-run revealed empirical residuals 0.030-0.049; original HalfNormal(0.010) placed data in far prior tail]"
   },
   "mcmc_settings": {
-    "n_chains": 2,
+    "n_chains": 4,
     "n_tune": 2000,
     "n_draws": 2000,
     "target_accept": 0.9,
@@ -83,166 +83,166 @@
   },
   "convergence": {
     "rhat_max": 1.0,
-    "ess_bulk_min": 3085.0,
+    "ess_bulk_min": 6046.0,
     "converged": true,
     "per_param": {
       "mu_beta": {
-        "mean": 0.0216,
-        "sd": 0.0036,
+        "mean": 0.02162,
+        "sd": 0.00369,
         "r_hat": 1.0,
-        "ess_bulk": 3529.0
+        "ess_bulk": 7657.0
       },
       "sigma_beta": {
-        "mean": 0.0071,
-        "sd": 0.0032,
+        "mean": 0.00712,
+        "sd": 0.0031,
         "r_hat": 1.0,
-        "ess_bulk": 3085.0
+        "ess_bulk": 6046.0
       },
       "beta[0]": {
-        "mean": 0.019317,
-        "sd": 0.00034,
+        "mean": 0.019315,
+        "sd": 0.000344,
         "r_hat": 1.0,
-        "ess_bulk": 7119.0
+        "ess_bulk": 13206.0
       },
       "beta[1]": {
-        "mean": 0.028831,
-        "sd": 0.000341,
+        "mean": 0.02883,
+        "sd": 0.000343,
         "r_hat": 1.0,
-        "ess_bulk": 6941.0
+        "ess_bulk": 11838.0
       },
       "beta[2]": {
-        "mean": 0.016416,
-        "sd": 0.000349,
+        "mean": 0.016415,
+        "sd": 0.000347,
         "r_hat": 1.0,
-        "ess_bulk": 6209.0
+        "ess_bulk": 10716.0
       },
       "beta[3]": {
-        "mean": 0.02163,
+        "mean": 0.021623,
         "sd": 0.000433,
         "r_hat": 1.0,
-        "ess_bulk": 5578.0
+        "ess_bulk": 10888.0
       },
       "sigma_obs": {
         "mean": 0.04111,
-        "sd": 0.00115,
+        "sd": 0.00116,
         "r_hat": 1.0,
-        "ess_bulk": 6594.0
+        "ess_bulk": 13222.0
       }
     }
   },
   "hyperparameters": {
     "mu_beta": {
-      "mean": 0.021609018533519264,
-      "sd": 0.0036144563411503357,
+      "mean": 0.021619743412477993,
+      "sd": 0.0036923882911353433,
       "hdi_94": [
-        0.015046894560197798,
-        0.02909235421704636
+        0.014422347293551529,
+        0.028866451398957865
       ]
     },
     "sigma_beta": {
-      "mean": 0.007105475896547974,
-      "sd": 0.003165526994136838,
+      "mean": 0.007116392665353711,
+      "sd": 0.0031012155975099847,
       "hdi_94": [
-        0.002766109288617522,
-        0.012889009076221177
+        0.0027916366481024546,
+        0.012947266146455317
       ]
     },
     "sigma_obs": {
-      "mean": 0.04111225200290334,
-      "sd": 0.0011528463816319163,
+      "mean": 0.04111499071382839,
+      "sd": 0.0011573440337512967,
       "hdi_94": [
-        0.038772209994083054,
-        0.04321742580002348
+        0.03883891718565921,
+        0.0432174569508337
       ]
     }
   },
   "per_cell_posterior": {
     "B0005": {
-      "mean": 0.019317144451470418,
-      "sd": 0.00033951990313989494,
-      "hdi_94_lo": 0.018698449213669376,
-      "hdi_94_hi": 0.01998028111397971
+      "mean": 0.01931469573154872,
+      "sd": 0.0003436291083406353,
+      "hdi_94_lo": 0.01868921163789992,
+      "hdi_94_hi": 0.019976806229939168
     },
     "B0006": {
-      "mean": 0.028830974777596927,
-      "sd": 0.00034066489124122233,
-      "hdi_94_lo": 0.028199977732010294,
-      "hdi_94_hi": 0.029487071598394612
+      "mean": 0.028830297170642852,
+      "sd": 0.0003434052700840904,
+      "hdi_94_lo": 0.02818144743292552,
+      "hdi_94_hi": 0.029481753857966374
     },
     "B0007": {
-      "mean": 0.01641624141512786,
-      "sd": 0.0003486059085828998,
-      "hdi_94_lo": 0.015775582786577952,
-      "hdi_94_hi": 0.017068635917687258
+      "mean": 0.016415482975190927,
+      "sd": 0.00034743958599202845,
+      "hdi_94_lo": 0.01575097821372711,
+      "hdi_94_hi": 0.017053854271694795
     },
     "B0018": {
-      "mean": 0.021633271403258283,
-      "sd": 0.0004329924514215992,
-      "hdi_94_lo": 0.02077645527874952,
-      "hdi_94_hi": 0.022410333690208704
+      "mean": 0.021622734955045023,
+      "sd": 0.00043297220865907233,
+      "hdi_94_lo": 0.020788074651250245,
+      "hdi_94_hi": 0.022410966792797433
     }
   },
   "check_A_shrinkage": {
     "B0005": {
       "beta_ols": 0.01930440698971391,
-      "beta_post_mean": 0.019317144451470418,
-      "beta_post_sd": 0.00033951990313989494,
-      "mu_pop_post": 0.021609018533519264,
-      "abs_shift": 1.2737461756506807e-05,
-      "pct_of_beta": 0.06598214471593523,
-      "shrinkage_pct": 0.5526945220223461,
+      "beta_post_mean": 0.01931469573154872,
+      "beta_post_sd": 0.0003436291083406353,
+      "mu_pop_post": 0.021619743412477993,
+      "abs_shift": 1.0288741834809517e-05,
+      "pct_of_beta": 0.05329737318681273,
+      "shrinkage_pct": 0.4443735145204803,
       "shrinkage_pct_note": "valid"
     },
     "B0006": {
       "beta_ols": 0.028854429304954524,
-      "beta_post_mean": 0.028830974777596927,
-      "beta_post_sd": 0.00034066489124122233,
-      "mu_pop_post": 0.021609018533519264,
-      "abs_shift": 2.3454527357597704e-05,
-      "pct_of_beta": 0.08128570871983794,
-      "shrinkage_pct": 0.3237156332124913,
+      "beta_post_mean": 0.028830297170642852,
+      "beta_post_sd": 0.0003434052700840904,
+      "mu_pop_post": 0.021619743412477993,
+      "abs_shift": 2.413213431167252e-05,
+      "pct_of_beta": 0.0836340724560025,
+      "shrinkage_pct": 0.33356160406034935,
       "shrinkage_pct_note": "valid"
     },
     "B0007": {
       "beta_ols": 0.016394047999732063,
-      "beta_post_mean": 0.01641624141512786,
-      "beta_post_sd": 0.0003486059085828998,
-      "mu_pop_post": 0.021609018533519264,
-      "abs_shift": 2.2193415395797833e-05,
-      "pct_of_beta": 0.13537483479467183,
-      "shrinkage_pct": 0.4255712520714972,
+      "beta_post_mean": 0.016415482975190927,
+      "beta_post_sd": 0.00034743958599202845,
+      "mu_pop_post": 0.021619743412477993,
+      "abs_shift": 2.143497545886372e-05,
+      "pct_of_beta": 0.13074852201977655,
+      "shrinkage_pct": 0.41018417197799034,
       "shrinkage_pct_note": "valid"
     },
     "B0018": {
       "beta_ols": 0.021619872593334328,
-      "beta_post_mean": 0.021633271403258283,
-      "beta_post_sd": 0.0004329924514215992,
-      "mu_pop_post": 0.021609018533519264,
-      "abs_shift": 1.3398809923955562e-05,
-      "pct_of_beta": 0.061974509174887366,
+      "beta_post_mean": 0.021622734955045023,
+      "beta_post_sd": 0.00043297220865907233,
+      "mu_pop_post": 0.021619743412477993,
+      "abs_shift": 2.862361710695427e-06,
+      "pct_of_beta": 0.013239493888496807,
       "shrinkage_pct": null,
       "shrinkage_pct_note": "degenerate (|beta_ols - mu_pop| < 3\u00d7MC noise; abs_shift is the correct diagnostic)"
     },
-    "max_valid_shrinkage_pct": 0.5526945220223461,
+    "max_valid_shrinkage_pct": 0.4443735145204803,
     "pre_registered_lt15_pass": true,
     "note": "Shrinkage % only computed where |beta_ols - mu_pop| > 3\u00d7posterior_SD. For cells where beta_ols \u2248 mu_pop, abs_shift and pct_of_beta are reported instead."
   },
   "check_B_posterior_predictive": {
     "n_cycles": 168,
-    "new_beta_post_mean": 0.021473964665859362,
-    "new_beta_post_sd": 0.008576656393891248,
-    "eol_dsoh_q5": 0.09783070034193972,
-    "eol_dsoh_q25": 0.21884132356428704,
-    "eol_dsoh_q50": 0.27911417181076426,
-    "eol_dsoh_q75": 0.33883005301563557,
-    "eol_dsoh_q95": 0.45671063569730846,
-    "eol_dsoh_interp": "5th-95th PI at k=168: [0.0978, 0.4567] \u0394SOH (= [0.543, 0.902] SOH)",
+    "new_beta_post_mean": 0.02152161590819276,
+    "new_beta_post_sd": 0.008565095271701767,
+    "eol_dsoh_q5": 0.10080633761524974,
+    "eol_dsoh_q25": 0.21885688114507013,
+    "eol_dsoh_q50": 0.279402744706265,
+    "eol_dsoh_q75": 0.33997121336296177,
+    "eol_dsoh_q95": 0.45632372887414274,
+    "eol_dsoh_interp": "5th-95th PI at k=168: [0.1008, 0.4563] \u0394SOH (= [0.544, 0.899] SOH)",
     "note": "Posterior predictive for a new LCO cell, same protocol. Width reflects both between-cell sigma_beta and within-cell sigma_obs uncertainty. Applicable ONLY within LCO chemistry, 1C DoD\u2248100% protocol \u2014 NOT transferable to NCM or other chemistries."
   },
   "pre_registered_expectations_vs_actual": {
     "mu_beta_near_ols_mean": {
       "expected": "\u22480.022",
-      "actual": "0.021609"
+      "actual": "0.021620"
     },
     "sigma_beta_wide": {
       "expected": "wide HDI (n=4 hyperprior)",
@@ -250,7 +250,7 @@
     },
     "shrinkage_lt15pct": {
       "expected": "<15% (pre-registered); analytical estimate was <1%",
-      "actual": "max valid = 0.553% (where |beta_ols - mu_pop| > 3\u00d7MC noise)",
+      "actual": "max valid = 0.444% (where |beta_ols - mu_pop| > 3\u00d7MC noise)",
       "pass": true,
       "note": "Shrinkage % only computed where |beta_ols - mu_pop| > 3\u00d7posterior_SD. For cells where beta_ols \u2248 mu_pop, abs_shift and pct_of_beta are reported instead."
     },
@@ -261,7 +261,7 @@
     },
     "ess_gt400": {
       "expected": "ESS bulk > 400 for all parameters",
-      "actual": "min ESS bulk = 3085",
+      "actual": "min ESS bulk = 6046",
       "pass": true
     }
   }
