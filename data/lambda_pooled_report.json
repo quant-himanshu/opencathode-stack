@@ -59,15 +59,22 @@
   "baselines": {
     "B_sei": {
       "lambda": 0.02639332,
-      "source": "V01-V04 aggregate OLS, M2 (cell_to_field_report.json)"
+      "source": "V01-V04 aggregate OLS, M2 (cell_to_field_report.json)",
+      "tier3_contamination": false,
+      "valid_held_out_baseline": true
     },
     "B_fleet": {
       "lambda": 0.018476,
-      "source": "all-20 median, no floor (cell_to_field_temporal_report.json)"
+      "source": "all-20 median, no floor (cell_to_field_temporal_report.json)",
+      "tier3_contamination": true,
+      "valid_held_out_baseline": false,
+      "leakage_note": "LEAKAGE-CONTAMINATED — NOT a valid held-out baseline. lambda_global=0.018476 is the median of per-vehicle lambda_v across ALL 20 vehicles including V10-V20 (Tier 3). Evaluating this lambda on the same Tier 3 vehicles it was computed from is partly tautological. Its lower RMSE (0.03465) is not interpretable as model quality."
     },
     "B_pool": {
       "lambda": 0.024895,
-      "source": "V01-V09 pooled mean, no floor (this module)"
+      "source": "V01-V09 pooled mean, no floor (this module)",
+      "tier3_contamination": false,
+      "valid_held_out_baseline": true
     }
   },
   "tier3_evaluation": {
@@ -165,11 +172,12 @@
     },
     "fleet_mean_rmse": {
       "n_evaluable_vehicles": 11,
-      "B_sei": 0.03682,
-      "B_fleet": 0.03465,
-      "B_pool": 0.03623
+      "B_sei":   { "rmse": 0.03682, "valid_comparison": true },
+      "B_fleet": { "rmse": 0.03465, "valid_comparison": false, "leakage_flag": "LEAKAGE-CONTAMINATED \u2014 NOT a valid held-out baseline. See baselines.B_fleet.leakage_note." },
+      "B_pool":  { "rmse": 0.03623, "valid_comparison": true }
     }
   },
-  "representativeness_note": "Tier 2 (V05-V09) is not representative of the full fleet. V08 (\u03bb=0.084) and V09 (\u03bb=0.063) are extreme high-fade outliers; V05 and V07 are negative-\u03bb. The V01-V09 pool mean (0.025) sits well above the all-20 fleet median (0.018) as a result. The all-20 fleet median is the better fleet-prior if Tier 3 coverage is available.",
-  "verdict": "NULL_RESULT: B_pool and B_sei are within 0.001 RMSE \u2014 indistinguishable given fleet noise floor (pre-registered expectation confirmed)."
+  "representativeness_note": "Tier 2 (V05-V09) is not representative of the full fleet. V08 (lambda=0.084) and V09 (lambda=0.063) are extreme high-fade outliers; V05 and V07 are negative-lambda. The V01-V09 pool mean (0.025) sits well above the all-20 fleet median (0.018) as a result.",
+  "future_work_note": "A genuinely valid fleet-wide prior would require either (a) leave-one-vehicle-out cross-validation across all 20 vehicles, or (b) an external/held-out fleet. Neither is computed here.",
+  "verdict": "NULL_RESULT (valid comparison only: B_pool vs B_sei). B_fleet's RMSE advantage (0.03465 vs 0.03623-0.03682) is not interpretable as model quality \u2014 its lambda was computed partly from the same Tier 3 vehicles it is evaluated on (data leakage). The only valid comparison in this experiment is B_pool vs B_sei, both computed entirely from Tier 1+2 (V01-V09) with zero Tier 3 contamination. That comparison is the null result: delta_lambda=0.0015 gives delta_RMSE=0.00059, within the fleet noise floor of 0.02-0.04 SOH units. Pre-registered expectation confirmed."
 }
