@@ -1,0 +1,175 @@
+{
+  "meta": {
+    "script": "degradation/lambda_pooled_estimate.py",
+    "method": "pooled_lambda_estimate_with_per_vehicle_spread",
+    "method_note": "Simple pooling heuristic. Not formal hierarchical Bayesian shrinkage \u2014 no informative prior or posterior uncertainty is computed. Per-vehicle \u03bb_v loaded from cell_to_field_temporal_report.json (train-window OLS, no new fit). No flooring of negatives: flooring would bias the mean upward and be inconsistent with how the fleet-median baseline (0.018476) was computed (raw np.median, no floor).",
+    "tier_split": {
+      "tier1_2": [
+        "V01",
+        "V02",
+        "V03",
+        "V04",
+        "V05",
+        "V06",
+        "V07",
+        "V08",
+        "V09"
+      ],
+      "tier3": [
+        "V10",
+        "V11",
+        "V12",
+        "V13",
+        "V14",
+        "V15",
+        "V16",
+        "V17",
+        "V18",
+        "V19",
+        "V20"
+      ]
+    },
+    "source_lambda_v": "cell_to_field_temporal_report.json \u2014 train-window OLS fits (50% of each vehicle timeline)"
+  },
+  "pre_registration": {
+    "expected_pool_mean": 0.024895,
+    "expected_pool_median": 0.027598,
+    "qualitative_expectation": "\u03bb_pool (mean=0.024895) is slightly lower than frozen scalar 0.02639332 (\u0394\u03bb\u22480.0015) and substantially higher than all-20 fleet median 0.018476 because Tier 2 over-samples high-fade vehicles (V08=0.084, V09=0.063). Expected Tier 3 RMSE outcome: null result (\u0394\u03bb\u22480.0015 \u2192 \u0394SOH\u22480.001-0.002, within fleet noise floor of 0.02-0.04)."
+  },
+  "tier1_2_fit": {
+    "per_vehicle_lambda_v": {
+      "V01": 0.057639,
+      "V02": 0.004216,
+      "V03": 0.020574,
+      "V04": 0.027598,
+      "V05": -0.019982,
+      "V06": 0.03628,
+      "V07": -0.049065,
+      "V08": 0.083915,
+      "V09": 0.062882
+    },
+    "pooled_mean_raw": 0.024895,
+    "pooled_median_raw": 0.027598,
+    "pooled_sd": 0.041931,
+    "n_vehicles": 9,
+    "n_negative": 2,
+    "lambda_used_for_tier3": 0.024895,
+    "lambda_used_note": "arithmetic mean of raw V01-V09 \u03bb_v (no floor)"
+  },
+  "baselines": {
+    "B_sei": {
+      "lambda": 0.02639332,
+      "source": "V01-V04 aggregate OLS, M2 (cell_to_field_report.json)"
+    },
+    "B_fleet": {
+      "lambda": 0.018476,
+      "source": "all-20 median, no floor (cell_to_field_temporal_report.json)"
+    },
+    "B_pool": {
+      "lambda": 0.024895,
+      "source": "V01-V09 pooled mean, no floor (this module)"
+    }
+  },
+  "tier3_evaluation": {
+    "split": "test window: t > 0.50 * t_max per vehicle (same split as cell_to_field_temporal.py)",
+    "metric": "trajectory RMSE on test-window \u0394SOH timeseries",
+    "per_vehicle": {
+      "V10": {
+        "t_cut_years": 1.156,
+        "t_max_years": 2.312,
+        "n_test_cycles": 766,
+        "trajectory_rmse_B_sei": 0.03095,
+        "trajectory_rmse_B_fleet": 0.02348,
+        "trajectory_rmse_B_pool": 0.0294
+      },
+      "V11": {
+        "t_cut_years": 1.155,
+        "t_max_years": 2.31,
+        "n_test_cycles": 805,
+        "trajectory_rmse_B_sei": 0.01671,
+        "trajectory_rmse_B_fleet": 0.01692,
+        "trajectory_rmse_B_pool": 0.01625
+      },
+      "V12": {
+        "t_cut_years": 1.159,
+        "t_max_years": 2.318,
+        "n_test_cycles": 822,
+        "trajectory_rmse_B_sei": 0.04408,
+        "trajectory_rmse_B_fleet": 0.03529,
+        "trajectory_rmse_B_pool": 0.04236
+      },
+      "V13": {
+        "t_cut_years": 1.154,
+        "t_max_years": 2.309,
+        "n_test_cycles": 782,
+        "trajectory_rmse_B_sei": 0.03966,
+        "trajectory_rmse_B_fleet": 0.0488,
+        "trajectory_rmse_B_pool": 0.04134
+      },
+      "V14": {
+        "t_cut_years": 1.155,
+        "t_max_years": 2.31,
+        "n_test_cycles": 779,
+        "trajectory_rmse_B_sei": 0.03948,
+        "trajectory_rmse_B_fleet": 0.03056,
+        "trajectory_rmse_B_pool": 0.03773
+      },
+      "V15": {
+        "t_cut_years": 1.156,
+        "t_max_years": 2.312,
+        "n_test_cycles": 532,
+        "trajectory_rmse_B_sei": 0.02934,
+        "trajectory_rmse_B_fleet": 0.03591,
+        "trajectory_rmse_B_pool": 0.03042
+      },
+      "V16": {
+        "t_cut_years": 1.159,
+        "t_max_years": 2.318,
+        "n_test_cycles": 820,
+        "trajectory_rmse_B_sei": 0.07533,
+        "trajectory_rmse_B_fleet": 0.06533,
+        "trajectory_rmse_B_pool": 0.07343
+      },
+      "V17": {
+        "t_cut_years": 1.155,
+        "t_max_years": 2.31,
+        "n_test_cycles": 692,
+        "trajectory_rmse_B_sei": 0.06329,
+        "trajectory_rmse_B_fleet": 0.05349,
+        "trajectory_rmse_B_pool": 0.06142
+      },
+      "V18": {
+        "t_cut_years": 1.155,
+        "t_max_years": 2.31,
+        "n_test_cycles": 794,
+        "trajectory_rmse_B_sei": 0.02204,
+        "trajectory_rmse_B_fleet": 0.02695,
+        "trajectory_rmse_B_pool": 0.02269
+      },
+      "V19": {
+        "t_cut_years": 1.157,
+        "t_max_years": 2.314,
+        "n_test_cycles": 796,
+        "trajectory_rmse_B_sei": 0.0239,
+        "trajectory_rmse_B_fleet": 0.02701,
+        "trajectory_rmse_B_pool": 0.02418
+      },
+      "V20": {
+        "t_cut_years": 1.154,
+        "t_max_years": 2.308,
+        "n_test_cycles": 766,
+        "trajectory_rmse_B_sei": 0.02025,
+        "trajectory_rmse_B_fleet": 0.01738,
+        "trajectory_rmse_B_pool": 0.01931
+      }
+    },
+    "fleet_mean_rmse": {
+      "n_evaluable_vehicles": 11,
+      "B_sei": 0.03682,
+      "B_fleet": 0.03465,
+      "B_pool": 0.03623
+    }
+  },
+  "representativeness_note": "Tier 2 (V05-V09) is not representative of the full fleet. V08 (\u03bb=0.084) and V09 (\u03bb=0.063) are extreme high-fade outliers; V05 and V07 are negative-\u03bb. The V01-V09 pool mean (0.025) sits well above the all-20 fleet median (0.018) as a result. The all-20 fleet median is the better fleet-prior if Tier 3 coverage is available.",
+  "verdict": "NULL_RESULT: B_pool and B_sei are within 0.001 RMSE \u2014 indistinguishable given fleet noise floor (pre-registered expectation confirmed)."
+}
