@@ -1,0 +1,595 @@
+{
+  "meta": {
+    "script": "degradation/bayes_gp_predictor.py",
+    "model": "Physics-informed GP: m(k)=beta*sqrt(k) + Matern52",
+    "scale": "D_k=k (gamma=0.5, consistent with all prior modules)",
+    "chemistry": "NASA LCO 18650 (Sanyo UR18650E) \u2014 LCO only",
+    "validation": "Leave-one-cell-out (n=4 cells)",
+    "n_values": [
+      20,
+      50,
+      80
+    ],
+    "citations": {
+      "gp_text": "Rasmussen & Williams (2006) \u00a74.2, MIT Press ISBN 0-262-18253-X",
+      "mean_fn_prec": "Richardson, Osborne & Howey (2017) J. Power Sources 357:209-219",
+      "related_work": "Nascimento et al. (2023) Sci. Rep. 13:13856 (RNN-based, not GP)",
+      "pymc": "PyMC Dev Team (2023) PeerJ Comput. Sci. 9:e1516"
+    }
+  },
+  "fold_priors": {
+    "B0005": {
+      "beta_mu": 0.022289,
+      "beta_sd": 0.007225,
+      "ls_scale": 76
+    },
+    "B0006": {
+      "beta_mu": 0.019106,
+      "beta_sd": 0.003024,
+      "ls_scale": 65
+    },
+    "B0007": {
+      "beta_mu": 0.023259,
+      "beta_sd": 0.005752,
+      "ls_scale": 72
+    },
+    "B0018": {
+      "beta_mu": 0.021517,
+      "beta_sd": 0.007527,
+      "ls_scale": 87
+    }
+  },
+  "pre_registered_expectations": {
+    "rmse_N20_typical_folds": "0.030-0.060 SOH (B0005, B0007, B0018 only)",
+    "rmse_N50_typical_folds": "0.015-0.035 SOH",
+    "rmse_N80_typical_folds": "0.005-0.020 SOH",
+    "coverage_nominal": "0.90",
+    "coverage_expected_range": "0.70-1.00 across typical folds",
+    "b0006_stress_test": "Pre-registered as likely to exceed RMSE range at N=20 due to 3.22-sigma prior-vs-likelihood tension. Reported separately.",
+    "b0018_n80_note": "N=80 = 60.6% of B0018's 132-cycle trajectory vs 47.6% for B0005/B0006/B0007 (168 cycles). Absolute cycle counts are consistent across folds; fraction-of-trajectory framing is not."
+  },
+  "loo_results": {
+    "B0005": {
+      "held_out": "B0005",
+      "training_cells": [
+        "B0006",
+        "B0007",
+        "B0018"
+      ],
+      "used_full_nuts": true,
+      "used_full_nuts_baseline": true,
+      "beta_prior_used": {
+        "mu": 0.022289,
+        "sd": 0.007225,
+        "sigma_distance_from_true": -0.4131487889273354
+      },
+      "ls_prior_scale": 76,
+      "convergence": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1726.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.0305,
+            "sd": 0.003,
+            "r_hat": 1.0,
+            "ess_bulk": 2081.0
+          },
+          "ls": {
+            "mean": 7.94,
+            "sd": 1.02,
+            "r_hat": 1.0,
+            "ess_bulk": 1726.0
+          },
+          "sigma_obs": {
+            "mean": 0.00729,
+            "sd": 0.00039,
+            "r_hat": 1.0,
+            "ess_bulk": 1763.0
+          }
+        }
+      },
+      "convergence_baseline": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1513.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.1088,
+            "sd": 0.0086,
+            "r_hat": 1.0,
+            "ess_bulk": 2168.0
+          },
+          "ls": {
+            "mean": 23.8,
+            "sd": 3.2,
+            "r_hat": 1.0,
+            "ess_bulk": 1563.0
+          },
+          "sigma_obs": {
+            "mean": 0.00845,
+            "sd": 0.00043,
+            "r_hat": 1.0,
+            "ess_bulk": 1513.0
+          }
+        }
+      },
+      "physics": {
+        "20": {
+          "metrics": {
+            "rmse": 0.09132132977993065,
+            "coverage_90": 0.6081081081081081,
+            "pi_width_median": 0.18650192078005945,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.13303305740162727,
+            "coverage_90": 0.211864406779661,
+            "pi_width_median": 0.1449736094766335,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.10392296124688283,
+            "coverage_90": 0.19318181818181818,
+            "pi_width_median": 0.12784098779456537,
+            "n_pred_cycles": 88
+          }
+        }
+      },
+      "baseline": {
+        "20": {
+          "metrics": {
+            "rmse": 0.19943364166117908,
+            "coverage_90": 0.4594594594594595,
+            "pi_width_median": 0.35396112908317223,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.22001721063639734,
+            "coverage_90": 0.11864406779661017,
+            "pi_width_median": 0.35313227781929074,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.21108560656658903,
+            "coverage_90": 0.3522727272727273,
+            "pi_width_median": 0.3507053071089975,
+            "n_pred_cycles": 88
+          }
+        }
+      }
+    },
+    "B0006": {
+      "held_out": "B0006",
+      "training_cells": [
+        "B0005",
+        "B0007",
+        "B0018"
+      ],
+      "used_full_nuts": true,
+      "used_full_nuts_baseline": true,
+      "beta_prior_used": {
+        "mu": 0.019106,
+        "sd": 0.003024,
+        "sigma_distance_from_true": 3.223544973544973
+      },
+      "ls_prior_scale": 65,
+      "convergence": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1985.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.0328,
+            "sd": 0.0036,
+            "r_hat": 1.0,
+            "ess_bulk": 2113.0
+          },
+          "ls": {
+            "mean": 11.74,
+            "sd": 1.47,
+            "r_hat": 1.0,
+            "ess_bulk": 1985.0
+          },
+          "sigma_obs": {
+            "mean": 0.00656,
+            "sd": 0.000304,
+            "r_hat": 1.0,
+            "ess_bulk": 2067.0
+          }
+        }
+      },
+      "convergence_baseline": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1804.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.0952,
+            "sd": 0.0081,
+            "r_hat": 1.0,
+            "ess_bulk": 2135.0
+          },
+          "ls": {
+            "mean": 27.7,
+            "sd": 4.1,
+            "r_hat": 1.0,
+            "ess_bulk": 1880.0
+          },
+          "sigma_obs": {
+            "mean": 0.0072,
+            "sd": 0.00036,
+            "r_hat": 1.0,
+            "ess_bulk": 1804.0
+          }
+        }
+      },
+      "physics": {
+        "20": {
+          "metrics": {
+            "rmse": 0.12143961197885621,
+            "coverage_90": 0.23648648648648649,
+            "pi_width_median": 0.14175676573740653,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.13301489433559902,
+            "coverage_90": 0.00847457627118644,
+            "pi_width_median": 0.1370465059175042,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.08991626224526514,
+            "coverage_90": 0.18181818181818182,
+            "pi_width_median": 0.13239578248220546,
+            "n_pred_cycles": 88
+          }
+        }
+      },
+      "baseline": {
+        "20": {
+          "metrics": {
+            "rmse": 0.29095282988265636,
+            "coverage_90": 0.033783783783783786,
+            "pi_width_median": 0.31141344535903215,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.31312660176089335,
+            "coverage_90": 0.0,
+            "pi_width_median": 0.30634930544070527,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.2774373588527562,
+            "coverage_90": 0.07954545454545454,
+            "pi_width_median": 0.30627301988520844,
+            "n_pred_cycles": 88
+          }
+        }
+      }
+    },
+    "B0007": {
+      "held_out": "B0007",
+      "training_cells": [
+        "B0005",
+        "B0006",
+        "B0018"
+      ],
+      "used_full_nuts": true,
+      "used_full_nuts_baseline": true,
+      "beta_prior_used": {
+        "mu": 0.023259,
+        "sd": 0.005752,
+        "sigma_distance_from_true": -1.1934979137691237
+      },
+      "ls_prior_scale": 72,
+      "convergence": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1590.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.0339,
+            "sd": 0.0032,
+            "r_hat": 1.0,
+            "ess_bulk": 1964.0
+          },
+          "ls": {
+            "mean": 8.43,
+            "sd": 1.09,
+            "r_hat": 1.0,
+            "ess_bulk": 1590.0
+          },
+          "sigma_obs": {
+            "mean": 0.00745,
+            "sd": 0.00041,
+            "r_hat": 1.0,
+            "ess_bulk": 1798.0
+          }
+        }
+      },
+      "convergence_baseline": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1698.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.111,
+            "sd": 0.0085,
+            "r_hat": 1.0,
+            "ess_bulk": 2248.0
+          },
+          "ls": {
+            "mean": 23.7,
+            "sd": 3.2,
+            "r_hat": 1.0,
+            "ess_bulk": 1809.0
+          },
+          "sigma_obs": {
+            "mean": 0.00861,
+            "sd": 0.00045,
+            "r_hat": 1.0,
+            "ess_bulk": 1698.0
+          }
+        }
+      },
+      "physics": {
+        "20": {
+          "metrics": {
+            "rmse": 0.03649885456298719,
+            "coverage_90": 1.0,
+            "pi_width_median": 0.18522373675085677,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.07680058351943349,
+            "coverage_90": 0.5932203389830508,
+            "pi_width_median": 0.15675552763434386,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.06112028578165471,
+            "coverage_90": 0.7045454545454546,
+            "pi_width_median": 0.14080249018816499,
+            "n_pred_cycles": 88
+          }
+        }
+      },
+      "baseline": {
+        "20": {
+          "metrics": {
+            "rmse": 0.1674461558755649,
+            "coverage_90": 0.6013513513513513,
+            "pi_width_median": 0.3628356332437318,
+            "n_pred_cycles": 148
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.18215326876152782,
+            "coverage_90": 0.4830508474576271,
+            "pi_width_median": 0.3592144766096972,
+            "n_pred_cycles": 118
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.1741100435589348,
+            "coverage_90": 0.5227272727272727,
+            "pi_width_median": 0.35897485576532984,
+            "n_pred_cycles": 88
+          }
+        }
+      }
+    },
+    "B0018": {
+      "held_out": "B0018",
+      "training_cells": [
+        "B0005",
+        "B0006",
+        "B0007"
+      ],
+      "used_full_nuts": true,
+      "used_full_nuts_baseline": true,
+      "beta_prior_used": {
+        "mu": 0.021517,
+        "sd": 0.007527,
+        "sigma_distance_from_true": 0.01368407067888919
+      },
+      "ls_prior_scale": 87,
+      "convergence": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1538.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.0346,
+            "sd": 0.0034,
+            "r_hat": 1.0,
+            "ess_bulk": 1892.0
+          },
+          "ls": {
+            "mean": 9.3,
+            "sd": 0.94,
+            "r_hat": 1.0,
+            "ess_bulk": 1538.0
+          },
+          "sigma_obs": {
+            "mean": 0.0062,
+            "sd": 0.0003,
+            "r_hat": 1.0,
+            "ess_bulk": 1799.0
+          }
+        }
+      },
+      "convergence_baseline": {
+        "rhat_max": 1.0,
+        "ess_bulk_min": 1559.0,
+        "converged": true,
+        "per_param": {
+          "amplitude": {
+            "mean": 0.1092,
+            "sd": 0.0084,
+            "r_hat": 1.0,
+            "ess_bulk": 1817.0
+          },
+          "ls": {
+            "mean": 22.4,
+            "sd": 3.0,
+            "r_hat": 1.0,
+            "ess_bulk": 1576.0
+          },
+          "sigma_obs": {
+            "mean": 0.00696,
+            "sd": 0.00038,
+            "r_hat": 1.0,
+            "ess_bulk": 1559.0
+          }
+        }
+      },
+      "physics": {
+        "20": {
+          "metrics": {
+            "rmse": 0.05063325845470796,
+            "coverage_90": 1.0,
+            "pi_width_median": 0.19015101074918161,
+            "n_pred_cycles": 112
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.05681885807031606,
+            "coverage_90": 0.9878048780487805,
+            "pi_width_median": 0.1578160287793928,
+            "n_pred_cycles": 82
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.035321772083191476,
+            "coverage_90": 1.0,
+            "pi_width_median": 0.14064544533196383,
+            "n_pred_cycles": 52
+          }
+        }
+      },
+      "baseline": {
+        "20": {
+          "metrics": {
+            "rmse": 0.1833086654468067,
+            "coverage_90": 0.4642857142857143,
+            "pi_width_median": 0.3529408084853417,
+            "n_pred_cycles": 112
+          }
+        },
+        "50": {
+          "metrics": {
+            "rmse": 0.19146238135598895,
+            "coverage_90": 0.35365853658536583,
+            "pi_width_median": 0.3499510398165385,
+            "n_pred_cycles": 82
+          }
+        },
+        "80": {
+          "metrics": {
+            "rmse": 0.14667438760013207,
+            "coverage_90": 0.6730769230769231,
+            "pi_width_median": 0.3180353804202791,
+            "n_pred_cycles": 52
+          }
+        }
+      }
+    }
+  },
+  "summary_typical_folds": {
+    "20": {
+      "rmse_mean": 0.05948448093254193,
+      "rmse_std": 0.02323982288719344,
+      "rmse_range": [
+        0.03649885456298719,
+        0.09132132977993065
+      ],
+      "coverage_90_mean": 0.8693693693693693,
+      "baseline_rmse_mean": 0.18339615432785025,
+      "rmse_ratio_phys_vs_base": 0.32434966344061833,
+      "cells_included": [
+        "B0005",
+        "B0007",
+        "B0018"
+      ]
+    },
+    "50": {
+      "rmse_mean": 0.08888416633045894,
+      "rmse_std": 0.03226619257666236,
+      "rmse_range": [
+        0.05681885807031606,
+        0.13303305740162727
+      ],
+      "coverage_90_mean": 0.5976298746038308,
+      "baseline_rmse_mean": 0.1978776202513047,
+      "rmse_ratio_phys_vs_base": 0.44918756460470866,
+      "cells_included": [
+        "B0005",
+        "B0007",
+        "B0018"
+      ]
+    },
+    "80": {
+      "rmse_mean": 0.06678833970390967,
+      "rmse_std": 0.028291646766225698,
+      "rmse_range": [
+        0.035321772083191476,
+        0.10392296124688283
+      ],
+      "coverage_90_mean": 0.6325757575757576,
+      "baseline_rmse_mean": 0.17729001257521862,
+      "rmse_ratio_phys_vs_base": 0.37671800421117047,
+      "cells_included": [
+        "B0005",
+        "B0007",
+        "B0018"
+      ]
+    }
+  },
+  "summary_b0006_stress_test": {
+    "20": {
+      "rmse": 0.12143961197885621,
+      "coverage_90": 0.23648648648648649,
+      "baseline_rmse": 0.29095282988265636,
+      "pre_registered_note": "B0006 true beta (0.0289) sits 3.22 \u03c3 above LOO prior mean (0.0191). RMSE above the 0.030-0.060 pre-registered range is an expected, informative failure mode, not a model defect."
+    },
+    "50": {
+      "rmse": 0.13301489433559902,
+      "coverage_90": 0.00847457627118644,
+      "baseline_rmse": 0.31312660176089335,
+      "pre_registered_note": "B0006 true beta (0.0289) sits 3.22 \u03c3 above LOO prior mean (0.0191). RMSE above the 0.030-0.060 pre-registered range is an expected, informative failure mode, not a model defect."
+    },
+    "80": {
+      "rmse": 0.08991626224526514,
+      "coverage_90": 0.18181818181818182,
+      "baseline_rmse": 0.2774373588527562,
+      "pre_registered_note": "B0006 true beta (0.0289) sits 3.22 \u03c3 above LOO prior mean (0.0191). RMSE above the 0.030-0.060 pre-registered range is an expected, informative failure mode, not a model defect."
+    }
+  }
+}
