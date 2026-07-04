@@ -1,0 +1,268 @@
+{
+  "meta": {
+    "script": "degradation/hierarchical_beta.py",
+    "model": "partial-pooling hierarchical Normal: beta_i ~ N(mu_beta, sigma_beta)",
+    "scale": "D_k=k (unit-cycle damage, gamma=0.5 fixed)",
+    "chemistry": "NASA LCO 18650 (Sanyo UR18650E) \u2014 SAME chemistry only",
+    "scope_note": "WITHIN-CHEMISTRY uncertainty only (LCO, 1C, DoD\u2248100%). Cross-chemistry transfer (LCO\u2192NCM) was empirically shown to fail by 200-300x in this project's own verification work (commit eb7779b). Do NOT apply this posterior to NCM or other chemistries.",
+    "citations": {
+      "partial_pooling": "Gelman & Hill (2007). CUP. ISBN 978-0-521-68689-1.",
+      "pymc": "PyMC Dev Team (2023). PeerJ Comput. Sci. 9:e1516."
+    }
+  },
+  "priors": {
+    "mu_beta": "Normal(0.022, 0.015)",
+    "sigma_beta": "HalfNormal(0.01)",
+    "sigma_obs": "HalfNormal(0.05) [CORRECTED from 0.010 \u2014 dry-run revealed empirical residuals 0.030-0.049; original HalfNormal(0.010) placed data in far prior tail]"
+  },
+  "mcmc_settings": {
+    "n_chains": 2,
+    "n_tune": 2000,
+    "n_draws": 2000,
+    "target_accept": 0.9,
+    "sampler": "NUTS"
+  },
+  "dry_run_check": {
+    "ols_vs_ref": {
+      "B0005": {
+        "beta_ols": 0.01930440698971391,
+        "beta_ref": 0.019304406989713908,
+        "err_pct": 1.7972305255489498e-14,
+        "sigma_obs_empirical": 0.048798888925726175,
+        "se_beta": 0.0004095688687397115
+      },
+      "B0006": {
+        "beta_ols": 0.028854429304954524,
+        "beta_ref": 0.02885442930495452,
+        "err_pct": 1.202396663363487e-14,
+        "sigma_obs_empirical": 0.038705899770866276,
+        "se_beta": 0.00032485845337247
+      },
+      "B0007": {
+        "beta_ols": 0.016394047999732063,
+        "beta_ref": 0.01639404799973206,
+        "err_pct": 2.1162844905724972e-14,
+        "sigma_obs_empirical": 0.036946728171895274,
+        "se_beta": 0.0003100937335689881
+      },
+      "B0018": {
+        "beta_ols": 0.021619872593334328,
+        "beta_ref": 0.02161987259333432,
+        "err_pct": 3.209498055065438e-14,
+        "sigma_obs_empirical": 0.028667574201874442,
+        "se_beta": 0.0003059800822498904
+      }
+    },
+    "prior_flags": [],
+    "shrinkage_estimates": {
+      "B0005": {
+        "se_beta": 0.0004095688687397115,
+        "w_prior": 0.005886594458122482,
+        "shrinkage_pct": 0.5886594458120007
+      },
+      "B0006": {
+        "se_beta": 0.00032485845337246996,
+        "w_prior": 0.003711485584922472,
+        "shrinkage_pct": 0.37114855849220013
+      },
+      "B0007": {
+        "se_beta": 0.0003100937335689881,
+        "w_prior": 0.003382895841888857,
+        "shrinkage_pct": 0.3382895841887908
+      },
+      "B0018": {
+        "se_beta": 0.0003059800822498904,
+        "w_prior": 0.003294031007973975,
+        "shrinkage_pct": 0.32940310079630786
+      }
+    },
+    "pop_mean": 0.02154318922193371,
+    "pop_sd": 0.005322465378014807,
+    "max_shrinkage_pct": 0.5886594458120007,
+    "pre_registered_shrinkage_lt15_pass": true
+  },
+  "convergence": {
+    "rhat_max": 1.0,
+    "ess_bulk_min": 3085.0,
+    "converged": true,
+    "per_param": {
+      "mu_beta": {
+        "mean": 0.0216,
+        "sd": 0.0036,
+        "r_hat": 1.0,
+        "ess_bulk": 3529.0
+      },
+      "sigma_beta": {
+        "mean": 0.0071,
+        "sd": 0.0032,
+        "r_hat": 1.0,
+        "ess_bulk": 3085.0
+      },
+      "beta[0]": {
+        "mean": 0.019317,
+        "sd": 0.00034,
+        "r_hat": 1.0,
+        "ess_bulk": 7119.0
+      },
+      "beta[1]": {
+        "mean": 0.028831,
+        "sd": 0.000341,
+        "r_hat": 1.0,
+        "ess_bulk": 6941.0
+      },
+      "beta[2]": {
+        "mean": 0.016416,
+        "sd": 0.000349,
+        "r_hat": 1.0,
+        "ess_bulk": 6209.0
+      },
+      "beta[3]": {
+        "mean": 0.02163,
+        "sd": 0.000433,
+        "r_hat": 1.0,
+        "ess_bulk": 5578.0
+      },
+      "sigma_obs": {
+        "mean": 0.04111,
+        "sd": 0.00115,
+        "r_hat": 1.0,
+        "ess_bulk": 6594.0
+      }
+    }
+  },
+  "hyperparameters": {
+    "mu_beta": {
+      "mean": 0.021609018533519264,
+      "sd": 0.0036144563411503357,
+      "hdi_94": [
+        0.015046894560197798,
+        0.02909235421704636
+      ]
+    },
+    "sigma_beta": {
+      "mean": 0.007105475896547974,
+      "sd": 0.003165526994136838,
+      "hdi_94": [
+        0.002766109288617522,
+        0.012889009076221177
+      ]
+    },
+    "sigma_obs": {
+      "mean": 0.04111225200290334,
+      "sd": 0.0011528463816319163,
+      "hdi_94": [
+        0.038772209994083054,
+        0.04321742580002348
+      ]
+    }
+  },
+  "per_cell_posterior": {
+    "B0005": {
+      "mean": 0.019317144451470418,
+      "sd": 0.00033951990313989494,
+      "hdi_94_lo": 0.018698449213669376,
+      "hdi_94_hi": 0.01998028111397971
+    },
+    "B0006": {
+      "mean": 0.028830974777596927,
+      "sd": 0.00034066489124122233,
+      "hdi_94_lo": 0.028199977732010294,
+      "hdi_94_hi": 0.029487071598394612
+    },
+    "B0007": {
+      "mean": 0.01641624141512786,
+      "sd": 0.0003486059085828998,
+      "hdi_94_lo": 0.015775582786577952,
+      "hdi_94_hi": 0.017068635917687258
+    },
+    "B0018": {
+      "mean": 0.021633271403258283,
+      "sd": 0.0004329924514215992,
+      "hdi_94_lo": 0.02077645527874952,
+      "hdi_94_hi": 0.022410333690208704
+    }
+  },
+  "check_A_shrinkage": {
+    "B0005": {
+      "beta_ols": 0.01930440698971391,
+      "beta_post_mean": 0.019317144451470418,
+      "beta_post_sd": 0.00033951990313989494,
+      "mu_pop_post": 0.021609018533519264,
+      "abs_shift": 1.2737461756506807e-05,
+      "pct_of_beta": 0.06598214471593523,
+      "shrinkage_pct": 0.5526945220223461,
+      "shrinkage_pct_note": "valid"
+    },
+    "B0006": {
+      "beta_ols": 0.028854429304954524,
+      "beta_post_mean": 0.028830974777596927,
+      "beta_post_sd": 0.00034066489124122233,
+      "mu_pop_post": 0.021609018533519264,
+      "abs_shift": 2.3454527357597704e-05,
+      "pct_of_beta": 0.08128570871983794,
+      "shrinkage_pct": 0.3237156332124913,
+      "shrinkage_pct_note": "valid"
+    },
+    "B0007": {
+      "beta_ols": 0.016394047999732063,
+      "beta_post_mean": 0.01641624141512786,
+      "beta_post_sd": 0.0003486059085828998,
+      "mu_pop_post": 0.021609018533519264,
+      "abs_shift": 2.2193415395797833e-05,
+      "pct_of_beta": 0.13537483479467183,
+      "shrinkage_pct": 0.4255712520714972,
+      "shrinkage_pct_note": "valid"
+    },
+    "B0018": {
+      "beta_ols": 0.021619872593334328,
+      "beta_post_mean": 0.021633271403258283,
+      "beta_post_sd": 0.0004329924514215992,
+      "mu_pop_post": 0.021609018533519264,
+      "abs_shift": 1.3398809923955562e-05,
+      "pct_of_beta": 0.061974509174887366,
+      "shrinkage_pct": null,
+      "shrinkage_pct_note": "degenerate (|beta_ols - mu_pop| < 3\u00d7MC noise; abs_shift is the correct diagnostic)"
+    },
+    "max_valid_shrinkage_pct": 0.5526945220223461,
+    "pre_registered_lt15_pass": true,
+    "note": "Shrinkage % only computed where |beta_ols - mu_pop| > 3\u00d7posterior_SD. For cells where beta_ols \u2248 mu_pop, abs_shift and pct_of_beta are reported instead."
+  },
+  "check_B_posterior_predictive": {
+    "n_cycles": 168,
+    "new_beta_post_mean": 0.021473964665859362,
+    "new_beta_post_sd": 0.008576656393891248,
+    "eol_dsoh_q5": 0.09783070034193972,
+    "eol_dsoh_q25": 0.21884132356428704,
+    "eol_dsoh_q50": 0.27911417181076426,
+    "eol_dsoh_q75": 0.33883005301563557,
+    "eol_dsoh_q95": 0.45671063569730846,
+    "eol_dsoh_interp": "5th-95th PI at k=168: [0.0978, 0.4567] \u0394SOH (= [0.543, 0.902] SOH)",
+    "note": "Posterior predictive for a new LCO cell, same protocol. Width reflects both between-cell sigma_beta and within-cell sigma_obs uncertainty. Applicable ONLY within LCO chemistry, 1C DoD\u2248100% protocol \u2014 NOT transferable to NCM or other chemistries."
+  },
+  "pre_registered_expectations_vs_actual": {
+    "mu_beta_near_ols_mean": {
+      "expected": "\u22480.022",
+      "actual": "0.021609"
+    },
+    "sigma_beta_wide": {
+      "expected": "wide HDI (n=4 hyperprior)",
+      "actual": "HDI 94%: [0.0028, 0.0129]"
+    },
+    "shrinkage_lt15pct": {
+      "expected": "<15% (pre-registered); analytical estimate was <1%",
+      "actual": "max valid = 0.553% (where |beta_ols - mu_pop| > 3\u00d7MC noise)",
+      "pass": true,
+      "note": "Shrinkage % only computed where |beta_ols - mu_pop| > 3\u00d7posterior_SD. For cells where beta_ols \u2248 mu_pop, abs_shift and pct_of_beta are reported instead."
+    },
+    "rhat_lt1p01": {
+      "expected": "R-hat < 1.01 for all parameters",
+      "actual": "max R-hat = 1.0000",
+      "pass": true
+    },
+    "ess_gt400": {
+      "expected": "ESS bulk > 400 for all parameters",
+      "actual": "min ESS bulk = 3085",
+      "pass": true
+    }
+  }
+}
