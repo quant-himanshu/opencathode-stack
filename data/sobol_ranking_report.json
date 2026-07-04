@@ -76,43 +76,65 @@
     "n_trajectories": 20,
     "num_levels": 4,
     "T_C": {
-      "mu_star": 0.002721,
-      "sigma": 0.002691
+      "mu_star": 0.005304,
+      "sigma": 0.006016
     },
     "DoD_pct": {
-      "mu_star": 0.002923,
-      "sigma": 0.003838
+      "mu_star": 0.003654,
+      "sigma": 0.00412
     },
     "C_rate": {
-      "mu_star": 0.00183,
-      "sigma": 0.003835
+      "mu_star": 0.001213,
+      "sigma": 0.001588
     }
   },
   "morris_order_by_mu_star": [
-    "DoD_pct",
     "T_C",
+    "DoD_pct",
     "C_rate"
   ],
   "sobol_indices": {
     "n_evaluations": 5120,
     "N_base_samples": 1024,
     "T_C": {
-      "S1": 0.490305,
-      "ST": 0.740166,
-      "S1_conf": 0.092366,
-      "ST_conf": 0.105165
+      "S1": 0.527193,
+      "ST": 0.73859,
+      "S1_conf": 0.070143,
+      "ST_conf": 0.106312
     },
     "DoD_pct": {
-      "S1": 0.161661,
-      "ST": 0.367388,
-      "S1_conf": 0.04146,
-      "ST_conf": 0.073305
+      "S1": 0.146791,
+      "ST": 0.371007,
+      "S1_conf": 0.046556,
+      "ST_conf": 0.072169
     },
     "C_rate": {
-      "S1": 0.074184,
-      "ST": 0.179255,
-      "S1_conf": 0.033509,
-      "ST_conf": 0.043665
+      "S1": 0.08005,
+      "ST": 0.181695,
+      "S1_conf": 0.041295,
+      "ST_conf": 0.045862
+    }
+  },
+  "absolute_contribution": {
+    "deng_fleet_mean": {
+      "T_C": 22.0,
+      "DoD_pct": 57.0,
+      "C_rate": 0.41,
+      "\u0394SOH_cyc": 0.000288,
+      "\u0394SOH_cal": 0.026393,
+      "\u0394SOH_total": 0.026682,
+      "cyc_pct_of_total": 1.08,
+      "cal_pct_of_total": 98.92
+    },
+    "max_stress_corner": {
+      "T_C": 45.0,
+      "DoD_pct": 100.0,
+      "C_rate": 3.0,
+      "\u0394SOH_cyc": 0.011697,
+      "\u0394SOH_cal": 0.026393,
+      "\u0394SOH_total": 0.03809,
+      "cyc_pct_of_total": 30.71,
+      "cal_pct_of_total": 69.29
     }
   },
   "observed_order_by_ST": [
@@ -127,7 +149,8 @@
     "Does NOT resolve P5's original ask (rank factors from real Deng fleet data). Substituted because fleet is statistically underpowered at n=13: all |\u03c1|<0.40, LOO R\u00b2=\u221212.83 (see factor_ranking_report.json). The present result shows what the PHYSICS MODEL believes, not what the data confirms.",
     "Analytical single-amplitude model: one full cycle per session at amplitude=DoD_pct, mean temperature T_C, rate C_rate. No rainflow on SOC time-series. Valid for virtual DoE sweep; may differ from real fleet's mixed-amplitude distributions.",
     "\u03b2=0.021545, \u03b3=0.5 sourced from cell_to_field_bridge.py (Module 3/4 D scale). eval_B_cross_cell.beta=2730.959 in nasa_degradation_report.json uses the raw fatigue.py D scale and is NOT interchangeable \u2014 produces \u0394SOH\u2248484 at max stress.",
-    "Calendar term \u0394SOH_cal = \u03bb\u00b7\u221at = 0.02639 is constant across all sweep points. It shifts the mean output but does not contribute to output variance. Sobol indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum \u2248 1 for the three factors (constant term adds no variance)."
+    "Calendar term \u0394SOH_cal = \u03bb\u00b7\u221at = 0.02639 is constant across all sweep points. It shifts the mean output but does not contribute to output variance. Sobol indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum \u2248 1 for the three factors (constant term adds no variance).",
+    "N_cycles=800 is held constant across all C_rate values in this sweep. Physically, higher C_rate typically enables more charge sessions per unit time, which would compound the cycling effect. This sweep isolates per-cycle stress sensitivity only and likely UNDERSTATES C_rate's true real-world impact on annual \u0394SOH."
   ],
-  "verdict": "T > DoD > C-rate confirmed by ST (0.740 > 0.367 > 0.179). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model."
+  "verdict": "T > DoD > C-rate confirmed by ST (0.739 > 0.371 > 0.182). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model. This Sobol ranking describes sensitivity WITHIN the cycling sub-model only. It does NOT contradict the M2 finding that field degradation is calendar-dominated (deng_degradation_report.json: stress_frac=0%) \u2014 rather, it shows that even the (small) cycling contribution is primarily driven by temperature. In the fleet's actual operating regime, changing T/DoD/C-rate would shift total \u0394SOH by at most ~1 percentage point (cycling is 1.1% of total \u0394SOH at fleet mean, 30.7% at max-stress corner \u2014 see absolute_contribution table), because calendar aging (98.9\u201369.3% of fade) is unaffected by these factors in the current model."
 }

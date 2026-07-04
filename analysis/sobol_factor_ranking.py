@@ -131,6 +131,12 @@ CAVEATS = [
     "It shifts the mean output but does not contribute to output variance. Sobol "
     "indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum ≈ 1 "
     "for the three factors (constant term adds no variance).",
+
+    "N_cycles=800 is held constant across all C_rate values in this sweep. "
+    "Physically, higher C_rate typically enables more charge sessions per unit time, "
+    "which would compound the cycling effect. This sweep isolates per-cycle stress "
+    "sensitivity only and likely UNDERSTATES C_rate's true real-world impact on "
+    "annual ΔSOH.",
 ]
 
 
@@ -194,6 +200,37 @@ def _run_corner_check() -> dict:
             "in_range_0_1": in_range,
         }
     return {"all_pass": ok, "corners": results}
+
+
+# ── Absolute contribution table ───────────────────────────────────────────────
+
+def _absolute_contribution() -> dict:
+    """
+    Compute cycling vs calendar share of total ΔSOH at two reference points.
+    These numbers give the reader context for interpreting Sobol indices:
+    the indices rank sensitivity within the cycling sub-model only.
+    """
+    points = {
+        "deng_fleet_mean": (22.0, 57.0, 0.41),
+        "max_stress_corner": (45.0, 100.0, 3.0),
+    }
+    result = {}
+    for label, (T, DoD, C) in points.items():
+        stress  = float(compute_stress(dod_pct=DoD, c_rate=C, T_mean_C=T))
+        d_pc    = (stress ** SN_M) / SN_A
+        D_tot   = N_CYCLES * d_pc
+        cyc     = BETA_NASA * (D_tot ** GAMMA_NASA)
+        cal     = LAMBDA_SEI * np.sqrt(T_YEARS)
+        total   = cyc + cal
+        result[label] = {
+            "T_C": T, "DoD_pct": DoD, "C_rate": C,
+            "ΔSOH_cyc":   round(cyc,   6),
+            "ΔSOH_cal":   round(cal,   6),
+            "ΔSOH_total": round(total, 6),
+            "cyc_pct_of_total": round(100.0 * cyc / total, 2),
+            "cal_pct_of_total": round(100.0 * cal / total, 2),
+        }
+    return result
 
 
 # ── Step A: Morris screening ───────────────────────────────────────────────────
@@ -271,6 +308,21 @@ def main() -> None:
         print(f"  {label}: ΔSOH_cyc={r['ΔSOH_cyc']:.6f}  "
               f"ΔSOH_cal={r['ΔSOH_cal']:.6f}  total={r['ΔSOH_total']:.6f}  ✓")
 
+    # Absolute contribution table
+    print("\n[0b] Absolute contribution — cycling vs calendar share of ΔSOH")
+    abs_contrib = _absolute_contribution()
+    print(f"  {'Point':<30} {'ΔSOH_cyc':>10} {'ΔSOH_cal':>10} "
+          f"{'total':>8} {'cyc%':>6} {'cal%':>6}")
+    print(f"  {'-'*74}")
+    for label, r in abs_contrib.items():
+        print(f"  {label:<30} {r['ΔSOH_cyc']:>10.6f} {r['ΔSOH_cal']:>10.6f} "
+              f"{r['ΔSOH_total']:>8.6f} {r['cyc_pct_of_total']:>5.1f}% {r['cal_pct_of_total']:>5.1f}%")
+    print()
+    print("  INTERPRETATION: Sobol indices rank sensitivity of the CYCLING term only.")
+    print("  Calendar aging (λ·√t) is 69–99% of total ΔSOH in realistic-to-worst-case")
+    print("  conditions and does NOT respond to T/DoD/C-rate in this model. Changing")
+    print("  T/DoD/C-rate shifts total ΔSOH by at most ~1 percentage point.")
+
     # Step A — Morris
     print("\n[A] Morris elementary effects screening ...")
     morris_res = _run_morris(n_trajectories=20, num_levels=4)
@@ -309,12 +361,25 @@ def main() -> None:
     st_top = sobol_res[top]["ST"]
     st_2nd = sobol_res[second]["ST"]
     st_3rd = sobol_res[third]["ST"]
+    fm  = abs_contrib["deng_fleet_mean"]
+    mx  = abs_contrib["max_stress_corner"]
     if agreement:
         verdict = (
             f"T > DoD > C-rate confirmed by ST ({st_top:.3f} > {st_2nd:.3f} > {st_3rd:.3f}). "
             f"Consistent with Edge et al. (2021). "
             f"NOTE: T sensitivity is through Arrhenius cycling stress only — "
-            f"calendar λ is T-invariant in this model."
+            f"calendar λ is T-invariant in this model. "
+            f"This Sobol ranking describes sensitivity WITHIN the cycling sub-model "
+            f"only. It does NOT contradict the M2 finding that field degradation is "
+            f"calendar-dominated (deng_degradation_report.json: stress_frac=0%) — "
+            f"rather, it shows that even the (small) cycling contribution is primarily "
+            f"driven by temperature. In the fleet's actual operating regime, changing "
+            f"T/DoD/C-rate would shift total ΔSOH by at most ~1 percentage point "
+            f"(cycling is {fm['cyc_pct_of_total']:.1f}% of total ΔSOH at fleet mean, "
+            f"{mx['cyc_pct_of_total']:.1f}% at max-stress corner — see "
+            f"absolute_contribution table), because calendar aging "
+            f"({fm['cal_pct_of_total']:.1f}–{mx['cal_pct_of_total']:.1f}% of fade) "
+            f"is unaffected by these factors in the current model."
         )
     else:
         verdict = (
@@ -323,7 +388,11 @@ def main() -> None:
             f"does NOT match Edge et al. (2021) expectation T > DoD > C-rate. "
             f"This flags a potential mis-calibration of the Arrhenius or Basquin "
             f"term in stress_model.py relative to literature. "
-            f"Report as-is; do not adjust model to force agreement."
+            f"Report as-is; do not adjust model to force agreement. "
+            f"Note: cycling is {fm['cyc_pct_of_total']:.1f}% of total ΔSOH at fleet "
+            f"mean and {mx['cyc_pct_of_total']:.1f}% at max-stress corner — Sobol "
+            f"indices reflect sensitivity within this sub-model only; the M2 "
+            f"calendar-dominance finding is unaffected."
         )
     print(f"\n    Verdict: {verdict}")
 
@@ -373,6 +442,7 @@ def main() -> None:
             if k in ("n_evaluations", "N_base_samples",
                      "T_C", "DoD_pct", "C_rate")
         },
+        "absolute_contribution": abs_contrib,
         "observed_order_by_ST": observed_order_st,
         "agreement_with_literature": agreement,
         "caveats": CAVEATS,
