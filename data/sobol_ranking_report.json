@@ -1,0 +1,133 @@
+{
+  "meta": {
+    "script": "analysis/sobol_factor_ranking.py",
+    "salib_version": "1.5.2",
+    "n_morris_samples": 80,
+    "n_sobol_samples": 5120,
+    "reference_n_cycles": 800,
+    "reference_t_years": 1.0,
+    "frozen_params": {
+      "beta_NASA": 0.021545,
+      "gamma_NASA": 0.5,
+      "lambda_sei": 0.02639332,
+      "sn_A": 1000000.0,
+      "sn_m": 2.5,
+      "beta_source": "cell_to_field_report.json frozen_params.beta_NASA (NASA LOO-CV mean: B0005/B0006/B0007/B0018)",
+      "gamma_source": "fixed \u03b3=0.5 throughout Module 4",
+      "lambda_source": "deng_degradation_report.json degradation_driver",
+      "scale_note": "eval_B_cross_cell.beta=2730.959 in nasa_degradation_report.json uses raw fatigue.py D scale (D\u22481e-3 at NASA EOL) and is NOT interchangeable with beta=0.021545 \u2014 produces \u0394SOH\u2248484 at max-stress corner. Physically impossible. Do not use for Sobol."
+    }
+  },
+  "parameter_ranges": {
+    "T_C": [
+      0.0,
+      45.0
+    ],
+    "DoD_pct": [
+      10.0,
+      100.0
+    ],
+    "C_rate": [
+      0.1,
+      3.0
+    ]
+  },
+  "pre_registered_expectation": "T > DoD > C-rate  (Edge J.S. et al. 2021, Phys. Chem. Chem. Phys. 23(14):8200, DOI 10.1039/D1CP00359C)",
+  "corner_sanity_check": {
+    "all_pass": true,
+    "corners": {
+      "max_stress (T=45, DoD=100%, C=3.0)": {
+        "T_C": 45.0,
+        "DoD_pct": 100.0,
+        "C_rate": 3.0,
+        "stress": 10.630021,
+        "D_total": 0.29473,
+        "\u0394SOH_cyc": 0.011697,
+        "\u0394SOH_cal": 0.026393,
+        "\u0394SOH_total": 0.03809,
+        "in_range_0_1": true
+      },
+      "min_stress (T=0,  DoD=10%,  C=0.1)": {
+        "T_C": 0.0,
+        "DoD_pct": 10.0,
+        "C_rate": 0.1,
+        "stress": 0.010568,
+        "D_total": 9.1853e-09,
+        "\u0394SOH_cyc": 2e-06,
+        "\u0394SOH_cal": 0.026393,
+        "\u0394SOH_total": 0.026395,
+        "in_range_0_1": true
+      },
+      "deng_mean  (T=22, DoD=57%,  C=0.41)": {
+        "T_C": 22.0,
+        "DoD_pct": 57.0,
+        "C_rate": 0.41,
+        "stress": 0.549728,
+        "D_total": 0.00017925,
+        "\u0394SOH_cyc": 0.000288,
+        "\u0394SOH_cal": 0.026393,
+        "\u0394SOH_total": 0.026682,
+        "in_range_0_1": true
+      }
+    }
+  },
+  "morris_screening": {
+    "n_evaluations": 80,
+    "n_trajectories": 20,
+    "num_levels": 4,
+    "T_C": {
+      "mu_star": 0.002721,
+      "sigma": 0.002691
+    },
+    "DoD_pct": {
+      "mu_star": 0.002923,
+      "sigma": 0.003838
+    },
+    "C_rate": {
+      "mu_star": 0.00183,
+      "sigma": 0.003835
+    }
+  },
+  "morris_order_by_mu_star": [
+    "DoD_pct",
+    "T_C",
+    "C_rate"
+  ],
+  "sobol_indices": {
+    "n_evaluations": 5120,
+    "N_base_samples": 1024,
+    "T_C": {
+      "S1": 0.490305,
+      "ST": 0.740166,
+      "S1_conf": 0.092366,
+      "ST_conf": 0.105165
+    },
+    "DoD_pct": {
+      "S1": 0.161661,
+      "ST": 0.367388,
+      "S1_conf": 0.04146,
+      "ST_conf": 0.073305
+    },
+    "C_rate": {
+      "S1": 0.074184,
+      "ST": 0.179255,
+      "S1_conf": 0.033509,
+      "ST_conf": 0.043665
+    }
+  },
+  "observed_order_by_ST": [
+    "T_C",
+    "DoD_pct",
+    "C_rate"
+  ],
+  "agreement_with_literature": true,
+  "caveats": [
+    "PHYSICS-MODEL sensitivity only \u2014 reflects the current model structure (stress_model.py Arrhenius + Basquin + SEI \u221at), NOT empirical fleet data. Results are only as defensible as the model's functional form.",
+    "\u03bb_sei (calendar term) is temperature-invariant in this model: \u03bb\u00b7\u221at does not depend on T, DoD, or C_rate. Temperature enters ONLY via Arrhenius in the cycling stress. Real SEI kinetics are T-dependent (Arrhenius, Ea\u22480.5 eV); this analysis UNDERSTATES T sensitivity in calendar-dominated, long-duration regimes.",
+    "Does NOT resolve P5's original ask (rank factors from real Deng fleet data). Substituted because fleet is statistically underpowered at n=13: all |\u03c1|<0.40, LOO R\u00b2=\u221212.83 (see factor_ranking_report.json). The present result shows what the PHYSICS MODEL believes, not what the data confirms.",
+    "Analytical single-amplitude model: one full cycle per session at amplitude=DoD_pct, mean temperature T_C, rate C_rate. No rainflow on SOC time-series. Valid for virtual DoE sweep; may differ from real fleet's mixed-amplitude distributions.",
+    "\u03b2=0.021545, \u03b3=0.5 sourced from cell_to_field_bridge.py (Module 3/4 D scale). eval_B_cross_cell.beta=2730.959 in nasa_degradation_report.json uses the raw fatigue.py D scale and is NOT interchangeable \u2014 produces \u0394SOH\u2248484 at max stress.",
+    "Calendar term \u0394SOH_cal = \u03bb\u00b7\u221at = 0.02639 is constant across all sweep points. It shifts the mean output but does not contribute to output variance. Sobol indices therefore reflect sensitivity of the CYCLING term only. S1+ST sum \u2248 1 for the three factors (constant term adds no variance)."
+  ],
+  "verdict": "T > DoD > C-rate confirmed by ST (0.740 > 0.367 > 0.179). Consistent with Edge et al. (2021). NOTE: T sensitivity is through Arrhenius cycling stress only \u2014 calendar \u03bb is T-invariant in this model."
+}
