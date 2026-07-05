@@ -1,0 +1,191 @@
+{
+  "module": "Module 3 \u2014 LLI/LAM/CL IC Decomposition",
+  "dataset": "NASA PCoE B0005/B0006/B0007/B0018 (Saha & Goebel 2009)",
+  "was_real_data": true,
+  "primary_finding": {
+    "statement": "Dominant IC peak shrinks faster than proportional capacity loss: slope of A(n)/A\u2080 vs SOH(n) \u2248 1.9 across all cells (1.0 = proportional). This is a genuine LAM-adjacent signal: for each 1% of total SOH lost, the phase-transition peak loses ~1.9% of its initial height.",
+    "slope_m_all_cells": {
+      "B0005": 1.8932,
+      "B0006": 1.5782,
+      "B0007": 1.9032,
+      "B0018": 1.8543
+    }
+  },
+  "circularity_finding": {
+    "statement": "A(n)/A\u2080 tracks SOH(n) with r \u2248 0.99 (R\u00b2 \u2248 0.97\u20130.99) for all cells. This means the raw peak-area fraction \u0394A_rel is algebraically equivalent to \u0394SOH: \u0394A_rel \u2261 \u0394SOH up to a linear rescaling. Any regression of \u0394SOH on \u0394A_rel achieves R\u00b2 \u2248 0.99 by circularity, NOT by discovering a physical LLI/LAM decomposition.",
+    "implication": "A reported 'LAM % of total fade' derived from this regression would be a statistical artifact. The slope deviation from 1.0 (the ~1.9\u00d7 factor) is the only information in A(n) that is NOT already present in SOH(n)."
+  },
+  "per_cell_status": {
+    "B0005": "quantitative \u2014 K=5 stable, slope ratio computed",
+    "B0006": "qualitative only \u2014 K unstable (3\u21925\u21924); slope ratio unreliable",
+    "B0007": "single-factor \u2014 K=5 stable but LLI and LAM structurally collinear (r=\u22120.927); cause is co-monotonicity NOT identity swap (verified cycle-by-cycle: no jumps > 50 mV in 168 cycles)",
+    "B0018": "quantitative \u2014 K=5 stable, slope ratio computed"
+  },
+  "per_cell": {
+    "B0005": {
+      "status": "quantitative",
+      "n_discharge_cycles": 168,
+      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=3 med=8 max=10 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_range_min_max": [
+        3,
+        10
+      ],
+      "LLI_peak_drift": {
+        "mu0_V": 3.48,
+        "mu_final_V": 3.41333,
+        "total_drift_mV": -66.66667,
+        "drift_rate_mV_per_cyc": -0.39683,
+        "interpretation": "stoichiometric window narrowing consistent with LLI (SEI-driven)"
+      },
+      "LAM_slope_ratio": {
+        "slope_m": 1.8932,
+        "intercept_b": -0.8364,
+        "r2_A_vs_SOH": 0.9917,
+        "excess_LAM_rate_pct": 89.3,
+        "circularity_flag": true,
+        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
+        "caveat": "quantitative; circularity means raw A% \u2261 SOH%; slope deviation is the genuine signal"
+      },
+      "CL_resistance": {
+        "EIS_coverage_pct": 88.7,
+        "Re_initial_mOhm": 43.55879,
+        "Re_final_mOhm": 58.80524,
+        "delta_Re_mOhm_robust": 14.36801,
+        "Rct_initial_mOhm": 67.79435,
+        "Rct_final_mOhm": 87.47903,
+        "delta_Rct_mOhm_robust": 18.97488,
+        "B0018_Rct_note": null,
+        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
+      }
+    },
+    "B0006": {
+      "status": "qualitative_only_K_unstable",
+      "n_discharge_cycles": 168,
+      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=2 med=6 max=11 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_range_min_max": [
+        2,
+        11
+      ],
+      "LLI_peak_drift": {
+        "mu0_V": 3.47,
+        "mu_final_V": 3.29833,
+        "total_drift_mV": -171.66667,
+        "drift_rate_mV_per_cyc": -1.02183,
+        "interpretation": "stoichiometric window narrowing consistent with LLI (SEI-driven)"
+      },
+      "LAM_slope_ratio": {
+        "slope_m": 1.5782,
+        "intercept_b": -0.5863,
+        "r2_A_vs_SOH": 0.9636,
+        "excess_LAM_rate_pct": 57.8,
+        "circularity_flag": true,
+        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
+        "caveat": "slope ratio unreliable \u2014 K unstable (3\u21925\u21924)"
+      },
+      "CL_resistance": {
+        "EIS_coverage_pct": 88.7,
+        "Re_initial_mOhm": 59.13131,
+        "Re_final_mOhm": 76.9801,
+        "delta_Re_mOhm_robust": 15.90659,
+        "Rct_initial_mOhm": 77.95571,
+        "Rct_final_mOhm": 105.81282,
+        "delta_Rct_mOhm_robust": 25.67617,
+        "B0018_Rct_note": null,
+        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
+      }
+    },
+    "B0007": {
+      "status": "single_factor_co_monotone",
+      "n_discharge_cycles": 168,
+      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=2 med=7 max=10 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_range_min_max": [
+        2,
+        10
+      ],
+      "LLI_peak_drift": {
+        "mu0_V": 3.485,
+        "mu_final_V": 3.43333,
+        "total_drift_mV": -51.66667,
+        "drift_rate_mV_per_cyc": -0.30754,
+        "interpretation": "stoichiometric window narrowing consistent with LLI (SEI-driven)"
+      },
+      "LAM_slope_ratio": {
+        "slope_m": 1.9032,
+        "intercept_b": -0.8256,
+        "r2_A_vs_SOH": 0.9894,
+        "excess_LAM_rate_pct": 90.3,
+        "circularity_flag": true,
+        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
+        "caveat": "slope computable but LLI/LAM not separable \u2014 structural co-monotonicity (r=\u22120.927)"
+      },
+      "CL_resistance": {
+        "EIS_coverage_pct": 88.7,
+        "Re_initial_mOhm": 35.91968,
+        "Re_final_mOhm": 63.84567,
+        "delta_Re_mOhm_robust": 25.95891,
+        "Rct_initial_mOhm": 60.07313,
+        "Rct_final_mOhm": 91.56757,
+        "delta_Rct_mOhm_robust": 28.7852,
+        "B0018_Rct_note": null,
+        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
+      }
+    },
+    "B0018": {
+      "status": "quantitative",
+      "n_discharge_cycles": 132,
+      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=4 med=8 max=12 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_range_min_max": [
+        4,
+        12
+      ],
+      "LLI_peak_drift": {
+        "mu0_V": 3.475,
+        "mu_final_V": 3.40167,
+        "total_drift_mV": -73.33333,
+        "drift_rate_mV_per_cyc": -0.55556,
+        "interpretation": "stoichiometric window narrowing consistent with LLI (SEI-driven)"
+      },
+      "LAM_slope_ratio": {
+        "slope_m": 1.8543,
+        "intercept_b": -0.7971,
+        "r2_A_vs_SOH": 0.9756,
+        "excess_LAM_rate_pct": 85.4,
+        "circularity_flag": true,
+        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
+        "caveat": "quantitative; circularity means raw A% \u2261 SOH%; slope deviation is the genuine signal"
+      },
+      "CL_resistance": {
+        "EIS_coverage_pct": 100.0,
+        "Re_initial_mOhm": 59.11226,
+        "Re_final_mOhm": 65.69574,
+        "delta_Re_mOhm_robust": 3.65836,
+        "Rct_initial_mOhm": 83.8113,
+        "Rct_final_mOhm": 90.12496,
+        "delta_Rct_mOhm_robust": -0.24555,
+        "B0018_Rct_note": "B0018 first 3 EIS cycles show Rct=95\u2013102 m\u03a9 (anomalous high; likely temperature/conditioning artifact). Steady-state Rct\u224884\u201392 m\u03a9. Robust delta (first-10%% vs last-10%% of matched cycles) used throughout.",
+        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "note_first_19": "full 132/132 discharge coverage"
+      }
+    }
+  },
+  "figures": [
+    "/Users/himanshusharma/Desktop/opencathode-stack/data/figures/module3/fig1_ic_evolution.png",
+    "/Users/himanshusharma/Desktop/opencathode-stack/data/figures/module3/fig2_peak_drift.png",
+    "/Users/himanshusharma/Desktop/opencathode-stack/data/figures/module3/fig3_slope_ratio.png",
+    "/Users/himanshusharma/Desktop/opencathode-stack/data/figures/module3/fig4_resistance.png"
+  ],
+  "references": [
+    "Dubarry M, Anse\u00e1n D. 'Best practices for incremental capacity analysis.' Front. Energy Res. 10:1023555 (2022). doi:10.3389/fenrg.2022.1023555",
+    "Sulzer V, et al. 'The challenge and opportunity of battery lifetime prediction from field data.' Joule 5(8):1934-1955 (2021). doi:10.1016/j.joule.2021.06.005",
+    "Saha B, Goebel K. NASA Ames Prognostics Data Repository (2007)."
+  ],
+  "honest_limitations": [
+    "No half-cell reference data: true LLI/LAM separation (Dubarry & Anse\u00e1n 2022) requires fitting U_pos(x)\u2212U_neg(y); without it all mode attributions are phenomenological.",
+    "NASA B0005\u2013B0018 are LCO/NMC 18650 cells with broad IC peaks (FWHM \u2248 80\u2013150 mV). Peak shift signals of 30\u201385 mV are physically real but close to IC noise floor.",
+    "Regression-based LLI/LAM quantification is circular (see circularity_finding above). Slope ratio is the correct quantitative metric.",
+    "B0006 K-instability means its slope ratio and peak drift cannot be reliably attributed to a single physical peak across the cell's lifetime."
+  ]
+}
