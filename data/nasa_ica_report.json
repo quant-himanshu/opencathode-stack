@@ -1,9 +1,9 @@
 {
-  "module": "Module 3 \u2014 LLI/LAM/CL IC Decomposition",
+  "module": "Module 3 — LLI/LAM/CL IC Decomposition",
   "dataset": "NASA PCoE B0005/B0006/B0007/B0018 (Saha & Goebel 2009)",
   "was_real_data": true,
   "primary_finding": {
-    "statement": "Dominant IC peak shrinks faster than proportional capacity loss: slope of A(n)/A\u2080 vs SOH(n) \u2248 1.9 across all cells (1.0 = proportional). This is a genuine LAM-adjacent signal: for each 1% of total SOH lost, the phase-transition peak loses ~1.9% of its initial height.",
+    "statement": "Dominant IC peak shrinks faster than proportional capacity loss: slope of A(n)/A₀ vs SOH(n) ≈ 1.9 across all cells (1.0 = proportional). This is a genuine LAM-adjacent signal: for each 1% of total SOH lost, the phase-transition peak loses ~1.9% of its initial height.",
     "slope_m_all_cells": {
       "B0005": 1.8932,
       "B0006": 1.5782,
@@ -12,21 +12,21 @@
     }
   },
   "circularity_finding": {
-    "statement": "A(n)/A\u2080 tracks SOH(n) with r \u2248 0.99 (R\u00b2 \u2248 0.97\u20130.99) for all cells. This means the raw peak-area fraction \u0394A_rel is algebraically equivalent to \u0394SOH: \u0394A_rel \u2261 \u0394SOH up to a linear rescaling. Any regression of \u0394SOH on \u0394A_rel achieves R\u00b2 \u2248 0.99 by circularity, NOT by discovering a physical LLI/LAM decomposition.",
-    "implication": "A reported 'LAM % of total fade' derived from this regression would be a statistical artifact. The slope deviation from 1.0 (the ~1.9\u00d7 factor) is the only information in A(n) that is NOT already present in SOH(n)."
+    "statement": "A(n)/A₀ tracks SOH(n) with r ≈ 0.99 (R² ≈ 0.97–0.99) for all cells. This means the raw peak-area fraction ΔA_rel is algebraically equivalent to ΔSOH: ΔA_rel ≡ ΔSOH up to a linear rescaling. Any regression of ΔSOH on ΔA_rel achieves R² ≈ 0.99 by circularity, NOT by discovering a physical LLI/LAM decomposition.",
+    "implication": "A reported 'LAM % of total fade' derived from this regression would be a statistical artifact. The slope deviation from 1.0 (the ~1.9× factor) is the only information in A(n) that is NOT already present in SOH(n)."
   },
-  "peak_stability_note": "Two distinct claims about K (peak count) must not be conflated: (1) TOTAL K COUNT varies 3-12 across cells at prom=0.015; extra peaks are noise structures >150 mV from the dominant peak (median separation >380 mV). (2) DOMINANT PEAK TRACKING: 168/168 cycles tracked for B0005/B0007 with 0 jumps >50 mV; 132/132 for B0018 with 0 jumps >50 mV and 2 oscillations of \u00b130 mV (investigated, confirmed noise within adjacent-peak cluster, not tracker jumps to a different peak). The headline slope_m and \u0394\u03bc numbers depend on dominant-peak tracking quality, not total K count.",
+  "peak_stability_note": "Two distinct claims about K (peak count) must not be conflated: (1) TOTAL K COUNT varies 3-12 across cells at prom=0.015; extra peaks are noise structures >150 mV from the dominant peak (median separation >380 mV). (2) DOMINANT PEAK TRACKING: 168/168 cycles tracked for B0005/B0007 with 0 jumps >50 mV; 132/132 for B0018 with 0 jumps >50 mV and 2 oscillations of ±30 mV (investigated, confirmed noise within adjacent-peak cluster, not tracker jumps to a different peak). The headline slope_m and Δμ numbers depend on dominant-peak tracking quality, not total K count.",
   "per_cell_status": {
-    "B0005": "quantitative \u2014 dominant peak stable (0 jumps >50 mV in 168 cycles; K=3-10 total, extra peaks are noise >150 mV from dominant)",
-    "B0006": "qualitative only \u2014 K unstable (2-11) coupled with 2\u00d7 larger drift; peak identity ambiguous across lifetime",
-    "B0007": "single-factor \u2014 dominant peak stable (0 jumps >50 mV in 168 cycles; K=2-10 total); LLI and LAM structurally collinear (r=\u22120.927), cause is co-monotonicity NOT identity swap (verified cycle-by-cycle)",
-    "B0018": "quantitative \u2014 dominant peak stable (0 jumps >50 mV in 132 cycles; 2 oscillations \u00b130 mV at cycles 73-74 and 126-127 investigated, confirmed as noise within 30 mV of peak, not tracking errors; K=4-12 total)"
+    "B0005": "quantitative — dominant peak stable (0 jumps >50 mV in 168 cycles; K=3-10 total, extra peaks are noise >150 mV from dominant)",
+    "B0006": "qualitative only — K unstable (2-11) coupled with 2× larger drift; peak identity ambiguous across lifetime",
+    "B0007": "single-factor — dominant peak stable (0 jumps >50 mV in 168 cycles; K=2-10 total); LLI and LAM structurally collinear (r=−0.927), cause is co-monotonicity NOT identity swap (verified cycle-by-cycle)",
+    "B0018": "quantitative — dominant peak stable (0 jumps >50 mV in 132 cycles; 2 oscillations ±30 mV at cycles 73-74 and 126-127 investigated, confirmed as noise within 30 mV of peak, not tracking errors; K=4-12 total)"
   },
   "per_cell": {
     "B0005": {
       "status": "quantitative",
       "n_discharge_cycles": 168,
-      "K_peak_count_note": "Total K varies 3-10 (prom=0.015). Extra peaks beyond the dominant are noise structures in the 2.7-3.4 V region (prominence \u22640.5), median >380 mV from dominant peak at ~3.49 V (prominence ~5.0). Dominant peak tracked 168/168 cycles, 0 jumps >25 mV. K drops to 3-5 in late life (cycles 111+) as low-voltage IC structures collapse \u2014 IC simplification, not tracking failure.",
+      "K_peak_count_note": "Total K varies 3-10 (prom=0.015). Extra peaks beyond the dominant are noise structures in the 2.7-3.4 V region (prominence ≤0.5), median >380 mV from dominant peak at ~3.49 V (prominence ~5.0). Dominant peak tracked 168/168 cycles, 0 jumps >25 mV. K drops to 3-5 in late life (cycles 111+) as low-voltage IC structures collapse — IC simplification, not tracking failure.",
       "K_range_min_max": [
         3,
         10
@@ -44,8 +44,8 @@
         "r2_A_vs_SOH": 0.9917,
         "excess_LAM_rate_pct": 89.3,
         "circularity_flag": true,
-        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
-        "caveat": "quantitative; circularity means raw A% \u2261 SOH%; slope deviation is the genuine signal"
+        "interpretation": "peak shrinks FASTER than capacity → genuine LAM-adjacent signal",
+        "caveat": "quantitative; circularity means raw A% ≡ SOH%; slope deviation is the genuine signal"
       },
       "CL_resistance": {
         "EIS_coverage_pct": 88.7,
@@ -56,7 +56,7 @@
         "Rct_final_mOhm": 87.47903,
         "delta_Rct_mOhm_robust": 18.97488,
         "B0018_Rct_note": null,
-        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "source": "EIS Re/Rct stored directly in NASA .mat — no dV/I approximation",
         "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
       }
     },
@@ -81,8 +81,8 @@
         "r2_A_vs_SOH": 0.9636,
         "excess_LAM_rate_pct": 57.8,
         "circularity_flag": true,
-        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
-        "caveat": "slope ratio unreliable \u2014 K unstable (3\u21925\u21924)"
+        "interpretation": "peak shrinks FASTER than capacity → genuine LAM-adjacent signal",
+        "caveat": "slope ratio unreliable — K unstable (3→5→4)"
       },
       "CL_resistance": {
         "EIS_coverage_pct": 88.7,
@@ -93,14 +93,14 @@
         "Rct_final_mOhm": 105.81282,
         "delta_Rct_mOhm_robust": 25.67617,
         "B0018_Rct_note": null,
-        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "source": "EIS Re/Rct stored directly in NASA .mat — no dV/I approximation",
         "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
       }
     },
     "B0007": {
       "status": "single_factor_co_monotone",
       "n_discharge_cycles": 168,
-      "K_peak_count_note": "Total K varies 2-10 (prom=0.015). Extra peaks are noise structures >150 mV from dominant, with 6.5% of cycles (11/168) at high-K \u2014 extra peaks 89% of the time >150 mV from dominant (median separation 444 mV). Dominant peak tracked 168/168 cycles, 0 jumps >50 mV, 0 jumps >25 mV. Collinearity (r=\u22120.927) is structural co-monotonicity, not an artifact of K instability.",
+      "K_peak_count_note": "Total K varies 2-10 (prom=0.015). Extra peaks are noise structures >150 mV from dominant, with 6.5% of cycles (11/168) at high-K — extra peaks 89% of the time >150 mV from dominant (median separation 444 mV). Dominant peak tracked 168/168 cycles, 0 jumps >50 mV, 0 jumps >25 mV. Collinearity (r=−0.927) is structural co-monotonicity, not an artifact of K instability.",
       "K_range_min_max": [
         2,
         10
@@ -118,8 +118,8 @@
         "r2_A_vs_SOH": 0.9894,
         "excess_LAM_rate_pct": 90.3,
         "circularity_flag": true,
-        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
-        "caveat": "slope computable but LLI/LAM not separable \u2014 structural co-monotonicity (r=\u22120.927)"
+        "interpretation": "peak shrinks FASTER than capacity → genuine LAM-adjacent signal",
+        "caveat": "slope computable but LLI/LAM not separable — structural co-monotonicity (r=−0.927)"
       },
       "CL_resistance": {
         "EIS_coverage_pct": 88.7,
@@ -130,14 +130,14 @@
         "Rct_final_mOhm": 91.56757,
         "delta_Rct_mOhm_robust": 28.7852,
         "B0018_Rct_note": null,
-        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "source": "EIS Re/Rct stored directly in NASA .mat — no dV/I approximation",
         "note_first_19": "first 19 discharges lack preceding EIS (EIS starts at cycle index 40)"
       }
     },
     "B0018": {
       "status": "quantitative",
       "n_discharge_cycles": 132,
-      "K_peak_count_note": "Total K varies 4-12 (prom=0.015). Extra peaks at high-K cycles (4/132, 3%) are noise structures >150 mV from dominant (median separation 389 mV); dominant peak at those cycles matches surrounding-cycle trajectory within \u226414 mV. Dominant peak tracked 132/132 cycles, 0 jumps >50 mV. Two oscillations of \u00b130 mV at cycle windows 72-77 and 123-129 were investigated: tracker bounces among closely-spaced peaks all within \u00b130 mV of the true 3.41-3.47 V dominant peak \u2014 noise in peak position estimate, not a jump to a different peak. Status confirmed: quantitative.",
+      "K_peak_count_note": "Total K varies 4-12 (prom=0.015). Extra peaks at high-K cycles (4/132, 3%) are noise structures >150 mV from dominant (median separation 389 mV); dominant peak at those cycles matches surrounding-cycle trajectory within ≤14 mV. Dominant peak tracked 132/132 cycles, 0 jumps >50 mV. Two oscillations of ±30 mV at cycle windows 72-77 and 123-129 were investigated: tracker bounces among closely-spaced peaks all within ±30 mV of the true 3.41-3.47 V dominant peak — noise in peak position estimate, not a jump to a different peak. Status confirmed: quantitative.",
       "K_range_min_max": [
         4,
         12
@@ -155,8 +155,8 @@
         "r2_A_vs_SOH": 0.9756,
         "excess_LAM_rate_pct": 85.4,
         "circularity_flag": true,
-        "interpretation": "peak shrinks FASTER than capacity \u2192 genuine LAM-adjacent signal",
-        "caveat": "quantitative; circularity means raw A% \u2261 SOH%; slope deviation is the genuine signal"
+        "interpretation": "peak shrinks FASTER than capacity → genuine LAM-adjacent signal",
+        "caveat": "quantitative; circularity means raw A% ≡ SOH%; slope deviation is the genuine signal"
       },
       "CL_resistance": {
         "EIS_coverage_pct": 100.0,
@@ -166,8 +166,8 @@
         "Rct_initial_mOhm": 83.8113,
         "Rct_final_mOhm": 90.12496,
         "delta_Rct_mOhm_robust": -0.24555,
-        "B0018_Rct_note": "B0018 first 3 EIS cycles show Rct=95\u2013102 m\u03a9 (anomalous high; likely temperature/conditioning artifact). Steady-state Rct\u224884\u201392 m\u03a9. Robust delta (first-10%% vs last-10%% of matched cycles) used throughout.",
-        "source": "EIS Re/Rct stored directly in NASA .mat \u2014 no dV/I approximation",
+        "B0018_Rct_note": "B0018 first 3 EIS cycles show Rct=95–102 mΩ (anomalous high; likely temperature/conditioning artifact). Steady-state Rct≈84–92 mΩ. Robust delta (first-10%% vs last-10%% of matched cycles) used throughout.",
+        "source": "EIS Re/Rct stored directly in NASA .mat — no dV/I approximation",
         "note_first_19": "full 132/132 discharge coverage"
       }
     }
@@ -179,15 +179,156 @@
     "/Users/himanshusharma/Desktop/opencathode-stack/data/figures/module3/fig4_resistance.png"
   ],
   "references": [
-    "Dubarry M, Anse\u00e1n D. 'Best practices for incremental capacity analysis.' Front. Energy Res. 10:1023555 (2022). doi:10.3389/fenrg.2022.1023555",
+    "Dubarry M, Anseán D. 'Best practices for incremental capacity analysis.' Front. Energy Res. 10:1023555 (2022). doi:10.3389/fenrg.2022.1023555",
     "Sulzer V, et al. 'The challenge and opportunity of battery lifetime prediction from field data.' Joule 5(8):1934-1955 (2021). doi:10.1016/j.joule.2021.06.005",
     "Saha B, Goebel K. NASA Ames Prognostics Data Repository (2007)."
   ],
   "honest_limitations": [
-    "No half-cell reference data: true LLI/LAM separation (Dubarry & Anse\u00e1n 2022) requires fitting U_pos(x)\u2212U_neg(y); without it all mode attributions are phenomenological.",
-    "NASA B0005\u2013B0018 are LCO/NMC 18650 cells with broad IC peaks (FWHM \u2248 80\u2013150 mV). Peak shift signals of 30\u201385 mV are physically real but close to IC noise floor.",
+    "No half-cell reference data: true LLI/LAM separation (Dubarry & Anseán 2022) requires fitting U_pos(x)−U_neg(y); without it all mode attributions are phenomenological.",
+    "NASA B0005–B0018 are LCO/NMC 18650 cells with broad IC peaks (FWHM ≈ 80–150 mV). Peak shift signals of 30–85 mV are physically real but close to IC noise floor.",
     "Regression-based LLI/LAM quantification is circular (see circularity_finding above). Slope ratio is the correct quantitative metric.",
-    "B0006 K-instability is genuine peak-identity ambiguity (total drift 171 mV, new peaks emerge and merge) \u2014 distinct from B0005/B0007/B0018 where K instability is harmless noise-peak variation far from the dominant peak.",
-    "Total K count (3-12 at prom=0.015) is NOT the same as dominant-peak tracking stability. The headline slope_m and \u0394\u03bc numbers are grounded in dominant-peak tracking, which has 0 jumps >50 mV for all cells. A pre-run diagnostic at only 3 sampled cycles (1, mid, final) at prom=0.02 showed K=5 stable \u2014 this was later found to be a spot-check artifact; the full-run K distribution was investigated cycle-by-cycle and the dominant peak tracking was confirmed robust."
-  ]
+    "B0006 K-instability is genuine peak-identity ambiguity (total drift 171 mV, new peaks emerge and merge) — distinct from B0005/B0007/B0018 where K instability is harmless noise-peak variation far from the dominant peak.",
+    "Total K count (3-12 at prom=0.015) is NOT the same as dominant-peak tracking stability. The headline slope_m and Δμ numbers are grounded in dominant-peak tracking, which has 0 jumps >50 mV for all cells. A pre-run diagnostic at only 3 sampled cycles (1, mid, final) at prom=0.02 showed K=5 stable — this was later found to be a spot-check artifact; the full-run K distribution was investigated cycle-by-cycle and the dominant peak tracking was confirmed robust."
+  ],
+  "cross_module_synthesis": {
+    "_provenance": {
+      "B0006_exclusion_commit": "0dbbe37 (2026-07-05 22:58:00 +0530) — Module 3 initial commit; B0006 marked qualitative-only before cross-module question was posed",
+      "K_stability_fix_commit": "c224fe2 (2026-07-05 23:20:54 +0530) — K-stability clarification",
+      "cross_module_question_posed": "after c224fe2; B0006 exclusion pre-dates this analysis",
+      "note": "Verify via: git show 0dbbe37 --follow -p -- data/nasa_ica_report.json | grep -A4 per_cell_status"
+    },
+    "_statistical_power": {
+      "n_check_A": 3,
+      "n_check_B": 4,
+      "min_p_n3": 0.1667,
+      "min_p_n4_one_tail": 0.0417,
+      "statement": "No result from Check A can be statistically significant (n=3; min achievable p=1/6=0.167). Check B is underpowered (n=4). This is a plausibility check and coherence audit — not a validated correlation.",
+      "D_per_cycle_note": "All four cells share identical protocol (1C CC, DoD≈100%, T≈31-33°C). D_per_cycle≈constant across cells; cross-cell variation in β captures mechanical susceptibility, not stress dose."
+    },
+    "module2_per_cell": {
+      "B0005": {
+        "beta": 0.2028,
+        "gamma": 1.3123,
+        "fade_pct": 28.6,
+        "r2_full": 0.9783
+      },
+      "B0006": {
+        "beta": 0.3414,
+        "gamma": 0.9394,
+        "fade_pct": 41.7,
+        "r2_full": 0.9789
+      },
+      "B0007": {
+        "beta": 0.171,
+        "gamma": 1.209,
+        "fade_pct": 24.3,
+        "r2_full": 0.976
+      },
+      "B0018": {
+        "beta": 0.2636,
+        "gamma": 0.8872,
+        "fade_pct": 27.7,
+        "r2_full": 0.9538
+      }
+    },
+    "anchor_check": {
+      "metric": "β vs fade_pct (n=4)",
+      "purpose": "Ground-truth: β should rank-order with actual SOH fade",
+      "spearman_rs": 0.8,
+      "p_two_tailed": 0.2,
+      "rank_order": {
+        "rank_beta": {
+          "1st": "B0007",
+          "2nd": "B0005",
+          "3rd": "B0018",
+          "4th": "B0006"
+        },
+        "rank_fade_pct": {
+          "1st": "B0007",
+          "2nd": "B0018",
+          "3rd": "B0005",
+          "4th": "B0006"
+        }
+      },
+      "inversion": "B0005 (β-rank 2, fade-rank 3) vs B0018 (β-rank 3, fade-rank 2) — actual fade difference 0.9% (28.6% vs 27.7%), within measurement noise. B0006 and B0007 agree perfectly.",
+      "assessment": "β is a reasonable proxy for degradation magnitude at this n; single inversion is noise between two nearly-identical fade values."
+    },
+    "check_A_LAM_vs_stress": {
+      "metric": "slope_m vs β",
+      "cells_included": [
+        "B0005",
+        "B0007",
+        "B0018"
+      ],
+      "cells_excluded": {
+        "B0006": "qualitative-only, pre-registered before this analysis (commit 0dbbe37)"
+      },
+      "n": 3,
+      "spearman_rs": -1.0,
+      "p_two_tailed": 0.3333,
+      "rank_order": {
+        "rank_beta": {
+          "1st": "B0007(0.171)",
+          "2nd": "B0005(0.203)",
+          "3rd": "B0018(0.264)"
+        },
+        "rank_slope_m": {
+          "1st": "B0018(1.854)",
+          "2nd": "B0005(1.893)",
+          "3rd": "B0007(1.903)"
+        }
+      },
+      "pre_registered_category": "PERFECT DISAGREEMENT",
+      "pre_registered_interpretation": "Suggests the two modules are measuring different degradation axes. Stress-fatigue model may be capturing a signal (faster capacity drop early) that is distinct from phase-transition peak loss. Honest conclusion: no evidence for stress→LAM coupling in these cells; mechanisms appear independent.",
+      "critical_qualifier": "slope_m range across the 3 cells is 0.049 (1.854–1.903), which is ~2.6% of the baseline value (~1.9). This is within IC fitting noise. The 'perfect disagreement' rs=-1.0 is a rank ordering of near-identical values; it does not represent a meaningful anti-correlation. The pre-registered category is PERFECT DISAGREEMENT, and the conclusion stands, but a reader should understand the signal amplitude is negligible — all three cells show slope_m≈1.9 ± noise."
+    },
+    "check_B_CL_vs_stress": {
+      "metric": "ΔRe+ΔRct vs β (and Re-only, Rct-only separately)",
+      "cells_included": [
+        "B0005",
+        "B0006",
+        "B0007",
+        "B0018"
+      ],
+      "n": 4,
+      "spearman_rs_total": -0.4,
+      "spearman_rs_Re_only": -0.4,
+      "spearman_rs_Rct_only": -0.4,
+      "p_two_tailed": 0.6,
+      "rank_order": {
+        "rank_beta": {
+          "1st": "B0007(0.171)",
+          "2nd": "B0005(0.203)",
+          "3rd": "B0018(0.264)",
+          "4th": "B0006(0.341)"
+        },
+        "rank_dR_tot": {
+          "1st": "B0018(3.5mΩ)",
+          "2nd": "B0005(33.4mΩ)",
+          "3rd": "B0006(41.6mΩ)",
+          "4th": "B0007(54.8mΩ)"
+        }
+      },
+      "key_discordances": [
+        "B0007: rank_β=1 (lowest, most resistant to stress-fatigue) but rank_ΔR=4 (highest resistance rise, 54.8mΩ). 3-rank swap. B0007's impedance growth appears driven by a mechanism independent of stress-fatigue susceptibility.",
+        "B0018: rank_β=3 (second-highest stress susceptibility) but rank_ΔR=1 (essentially flat, ΔR=3.5mΩ). B0018's capacity loss from stress is not accompanied by resistance growth — possibly because its fade is SEI-like (γ<1=0.887, decelerating) rather than particle-crack driven.",
+        "ΔRe-only and ΔRct-only give identical rs=-0.40: the discordance is not specific to one resistance component — B0007 is anomalously high in both Re and Rct relative to its β."
+      ],
+      "pre_registered_category": "WEAK/MIXED",
+      "pre_registered_interpretation": "CL and stress-fatigue proceed with no clear coupling. B0007's anomalously high resistance despite low β suggests its impedance growth is driven by a mechanism other than mechanical stress (possibly SEI growth rate or batch-specific chemistry). B0018's near-zero ΔR despite moderate β is consistent with its γ<1 (decelerating fade, possibly SEI-dominated) rather than particle-cracking profile.",
+      "B0007_outlier_note": "B0007 was already flagged in Module 3 as having ΔRe+ΔRct=54.8mΩ, 1.3-15× larger than other cells. Its removal would change rs for n=3 (B0005, B0006, B0018) but this was not pre-registered and is not computed here.",
+      "B0018_Rct_caveat": "B0018 ΔRct=-0.2mΩ uses robust delta (first 10% vs last 10% of matched EIS cycles) to correct for conditioning artifact in first 3 EIS cycles (Rct=95-102mΩ vs steady-state ~84mΩ). The robust delta is itself valid but the near-zero result means B0018's Rct trajectory was flat across its 132 discharge lifetime."
+    },
+    "overall_conclusion": {
+      "statement": "No evidence for stress-fatigue → LAM or stress-fatigue → CL coupling in these 4 cells at n=3/4. Both checks fall into their respective 'no coupling' pre-registered categories (PERFECT DISAGREEMENT and WEAK/MIXED). The two modules appear to be capturing independent degradation axes in this dataset.",
+      "physical_interpretation": "All cells share identical protocol (1C, 100% DoD), so β variation reflects cell-to-cell manufacturing susceptibility, not controlled stress amplitude. In this regime, β co-varies with total capacity fade (rs=0.8 anchor) but not with IC peak degradation rate (slope_m) or resistance rise (ΔR). This is consistent with Sulzer 2021's finding that field/lab fade at this depth is dominated by SEI chemistry rather than mechanical particle cracking — both Module 2's β and Module 3's slope_m may be measuring facets of the same SEI-driven process, manifesting differently in the two measurement domains.",
+      "what_would_be_needed_to_test_the_stress_LAM_link": [
+        "Controlled DoD sweep (e.g., 25%/50%/75%/100% DoD, same cells or matched chemistry) — stress amplitude variation is required, not just cell-to-cell susceptibility variation at fixed DoD",
+        "n≥10 cells to have statistical power to resolve correlations",
+        "Half-cell reference to confirm LAM attribution in slope_m is genuinely active-material structural loss, not stoichiometric"
+      ],
+      "n3_power_restatement": "This cross-module synthesis is a coherence audit, not a validated result. The pre-registered interpretations are applied, but no causal claim about stress driving LAM or CL is supported or refuted by these 4 cells."
+    },
+    "figure": "data/figures/module3/fig5_cross_module_synthesis.png"
+  }
 }
