@@ -6,9 +6,20 @@ extrapolation using leave-one-cell-out validation across n=4 cells. This is a
 small-sample demonstration, not a validated general method — n=4 LOO folds is not
 enough to make strong claims about generalization even within LCO chemistry. The
 contribution is: (1) demonstrating that a physics-informed mean function improves
-early extrapolation over a naive GP, and (2) demonstrating properly calibrated
-(not falsely point-estimate) uncertainty bounds, which most published early-cycle
-prediction papers do not report.
+early extrapolation over a naive GP, and (2) demonstrating a methodology for
+calibrated uncertainty quantification, and empirically identifying WHERE it succeeds
+(N=20, coverage 87%) and WHERE it fails (N>=50, coverage 60-63%, and catastrophically
+for out-of-distribution cells like B0006). The honest finding is that calibration is
+achievable only when the physics prior still dominates the likelihood — as N grows,
+kernel-driven overconfidence emerges that this architecture does not correct for.
+
+NAMED LIMITATION: The Matern52 kernel's amplitude/length-scale and sigma_obs are
+estimated from training-cell WITHIN-cell residual structure only; they do not and
+cannot capture between-cell systematic deviation on the held-out cell. This is why
+coverage degrades at higher N even as the kernel posterior itself converges cleanly
+(R-hat=1.0000) — convergence of the sampler is not the same as correctness of the
+uncertainty model. Any future n=4 LOO study with this architecture should expect
+the same failure mode.
 
 MODEL
 -----

@@ -15,7 +15,9 @@
       "mean_fn_prec": "Richardson, Osborne & Howey (2017) J. Power Sources 357:209-219",
       "related_work": "Nascimento et al. (2023) Sci. Rep. 13:13856 (RNN-based, not GP)",
       "pymc": "PyMC Dev Team (2023) PeerJ Comput. Sci. 9:e1516"
-    }
+    },
+    "scope": "WITHIN-CHEMISTRY (LCO), WITHIN-CELL LOO validation, n=4 cells. Contribution (1): physics-informed mean function gives 2.2-3.1x RMSE improvement over zero-mean baseline (confirmed). Contribution (2): empirically identifies where calibrated uncertainty succeeds (N=20, coverage 87%) and where it fails (N>=50, coverage 60-63%; B0006 catastrophic at 0.8%). Calibration holds only while the physics prior dominates the likelihood; kernel-driven overconfidence emerges as N grows.",
+    "named_limitation": "The Matern52 kernel amplitude/length-scale and sigma_obs are estimated from training-cell WITHIN-cell residual structure only; they do not and cannot capture between-cell systematic deviation on the held-out cell. Coverage degrades at higher N even as kernel hyperparameters converge cleanly (R-hat=1.0000) \u2014 sampler convergence is not the same as uncertainty model correctness. Any future n=4 LOO study with this architecture should expect the same failure mode."
   },
   "fold_priors": {
     "B0005": {
