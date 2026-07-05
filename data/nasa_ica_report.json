@@ -15,17 +15,18 @@
     "statement": "A(n)/A\u2080 tracks SOH(n) with r \u2248 0.99 (R\u00b2 \u2248 0.97\u20130.99) for all cells. This means the raw peak-area fraction \u0394A_rel is algebraically equivalent to \u0394SOH: \u0394A_rel \u2261 \u0394SOH up to a linear rescaling. Any regression of \u0394SOH on \u0394A_rel achieves R\u00b2 \u2248 0.99 by circularity, NOT by discovering a physical LLI/LAM decomposition.",
     "implication": "A reported 'LAM % of total fade' derived from this regression would be a statistical artifact. The slope deviation from 1.0 (the ~1.9\u00d7 factor) is the only information in A(n) that is NOT already present in SOH(n)."
   },
+  "peak_stability_note": "Two distinct claims about K (peak count) must not be conflated: (1) TOTAL K COUNT varies 3-12 across cells at prom=0.015; extra peaks are noise structures >150 mV from the dominant peak (median separation >380 mV). (2) DOMINANT PEAK TRACKING: 168/168 cycles tracked for B0005/B0007 with 0 jumps >50 mV; 132/132 for B0018 with 0 jumps >50 mV and 2 oscillations of \u00b130 mV (investigated, confirmed noise within adjacent-peak cluster, not tracker jumps to a different peak). The headline slope_m and \u0394\u03bc numbers depend on dominant-peak tracking quality, not total K count.",
   "per_cell_status": {
-    "B0005": "quantitative \u2014 K=5 stable, slope ratio computed",
-    "B0006": "qualitative only \u2014 K unstable (3\u21925\u21924); slope ratio unreliable",
-    "B0007": "single-factor \u2014 K=5 stable but LLI and LAM structurally collinear (r=\u22120.927); cause is co-monotonicity NOT identity swap (verified cycle-by-cycle: no jumps > 50 mV in 168 cycles)",
-    "B0018": "quantitative \u2014 K=5 stable, slope ratio computed"
+    "B0005": "quantitative \u2014 dominant peak stable (0 jumps >50 mV in 168 cycles; K=3-10 total, extra peaks are noise >150 mV from dominant)",
+    "B0006": "qualitative only \u2014 K unstable (2-11) coupled with 2\u00d7 larger drift; peak identity ambiguous across lifetime",
+    "B0007": "single-factor \u2014 dominant peak stable (0 jumps >50 mV in 168 cycles; K=2-10 total); LLI and LAM structurally collinear (r=\u22120.927), cause is co-monotonicity NOT identity swap (verified cycle-by-cycle)",
+    "B0018": "quantitative \u2014 dominant peak stable (0 jumps >50 mV in 132 cycles; 2 oscillations \u00b130 mV at cycles 73-74 and 126-127 investigated, confirmed as noise within 30 mV of peak, not tracking errors; K=4-12 total)"
   },
   "per_cell": {
     "B0005": {
       "status": "quantitative",
       "n_discharge_cycles": 168,
-      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=3 med=8 max=10 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_peak_count_note": "Total K varies 3-10 (prom=0.015). Extra peaks beyond the dominant are noise structures in the 2.7-3.4 V region (prominence \u22640.5), median >380 mV from dominant peak at ~3.49 V (prominence ~5.0). Dominant peak tracked 168/168 cycles, 0 jumps >25 mV. K drops to 3-5 in late life (cycles 111+) as low-voltage IC structures collapse \u2014 IC simplification, not tracking failure.",
       "K_range_min_max": [
         3,
         10
@@ -62,7 +63,7 @@
     "B0006": {
       "status": "qualitative_only_K_unstable",
       "n_discharge_cycles": 168,
-      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=2 med=6 max=11 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_peak_count_note": "Total K varies 2-11 (prom=0.015). Unlike B0005/B0007/B0018, B0006 shows genuine peak-identity ambiguity: new low-voltage peaks emerge and merge over its lifetime (total drift 171 mV vs 52-73 mV for other cells). The dominant-peak identity shifts over the cell's lifetime, making slope_m unreliable. QUALITATIVE ONLY.",
       "K_range_min_max": [
         2,
         11
@@ -99,7 +100,7 @@
     "B0007": {
       "status": "single_factor_co_monotone",
       "n_discharge_cycles": 168,
-      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=2 med=7 max=10 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_peak_count_note": "Total K varies 2-10 (prom=0.015). Extra peaks are noise structures >150 mV from dominant, with 6.5% of cycles (11/168) at high-K \u2014 extra peaks 89% of the time >150 mV from dominant (median separation 444 mV). Dominant peak tracked 168/168 cycles, 0 jumps >50 mV, 0 jumps >25 mV. Collinearity (r=\u22120.927) is structural co-monotonicity, not an artifact of K instability.",
       "K_range_min_max": [
         2,
         10
@@ -136,7 +137,7 @@
     "B0018": {
       "status": "quantitative",
       "n_discharge_cycles": 132,
-      "K_peak_count_note": "K varies with IC noise; proximity tracker is robust to K variation. K min=4 med=8 max=12 (prom=0.015). B0006 distinction: K instability coupled with 2\u00d7 larger drift.",
+      "K_peak_count_note": "Total K varies 4-12 (prom=0.015). Extra peaks at high-K cycles (4/132, 3%) are noise structures >150 mV from dominant (median separation 389 mV); dominant peak at those cycles matches surrounding-cycle trajectory within \u226414 mV. Dominant peak tracked 132/132 cycles, 0 jumps >50 mV. Two oscillations of \u00b130 mV at cycle windows 72-77 and 123-129 were investigated: tracker bounces among closely-spaced peaks all within \u00b130 mV of the true 3.41-3.47 V dominant peak \u2014 noise in peak position estimate, not a jump to a different peak. Status confirmed: quantitative.",
       "K_range_min_max": [
         4,
         12
@@ -186,6 +187,7 @@
     "No half-cell reference data: true LLI/LAM separation (Dubarry & Anse\u00e1n 2022) requires fitting U_pos(x)\u2212U_neg(y); without it all mode attributions are phenomenological.",
     "NASA B0005\u2013B0018 are LCO/NMC 18650 cells with broad IC peaks (FWHM \u2248 80\u2013150 mV). Peak shift signals of 30\u201385 mV are physically real but close to IC noise floor.",
     "Regression-based LLI/LAM quantification is circular (see circularity_finding above). Slope ratio is the correct quantitative metric.",
-    "B0006 K-instability means its slope ratio and peak drift cannot be reliably attributed to a single physical peak across the cell's lifetime."
+    "B0006 K-instability is genuine peak-identity ambiguity (total drift 171 mV, new peaks emerge and merge) \u2014 distinct from B0005/B0007/B0018 where K instability is harmless noise-peak variation far from the dominant peak.",
+    "Total K count (3-12 at prom=0.015) is NOT the same as dominant-peak tracking stability. The headline slope_m and \u0394\u03bc numbers are grounded in dominant-peak tracking, which has 0 jumps >50 mV for all cells. A pre-run diagnostic at only 3 sampled cycles (1, mid, final) at prom=0.02 showed K=5 stable \u2014 this was later found to be a spot-check artifact; the full-run K distribution was investigated cycle-by-cycle and the dominant peak tracking was confirmed robust."
   ]
 }

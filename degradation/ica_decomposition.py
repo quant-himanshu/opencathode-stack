@@ -49,9 +49,34 @@ redundant with the SOH value already known from capacity measurement.
 
 FURTHER LIMITATIONS
 ═══════════════════
-• B0006: peak count K varies (3→5→4) over the cell's lifetime due to
-  new low-voltage peaks emerging and then merging. Peak identity is
-  ambiguous; slope ratio is unreliable. B0006 results are QUALITATIVE ONLY.
+• K-COUNT INSTABILITY vs DOMINANT-PEAK STABILITY (two different claims):
+  Total K (peak count) varies 3–12 across cells at prom=0.015. This is
+  driven by noise peaks that appear/disappear in the 2.7–3.4 V region,
+  typically >150 mV (median >380 mV) from the dominant peak. This K
+  variation does NOT contaminate the dominant-peak tracker (confirmed
+  cycle-by-cycle for all cells — 0 jumps >50 mV in any cell). A spot-
+  check at 3 cycles (1, mid, final) with prom=0.02 reported K=5 stable;
+  the full-run K distribution was then investigated and the above
+  two-part characterization was confirmed. The headline slope_m and Δμ
+  depend on dominant-peak tracking quality, not total K count.
+
+• B0005/B0007: K=3–10 and K=2–10 respectively; all extra peaks are noise
+  structures far from the dominant peak. Dominant peak: 0 jumps >50 mV,
+  0 jumps >25 mV. QUANTITATIVE results stand.
+
+• B0018: K=4–12; extra peaks at high-K cycles (4/132) are noise >150 mV
+  from dominant (median separation 389 mV), dominant peak matches
+  surrounding trajectory within ≤14 mV at those cycles. Two oscillations
+  of ±30 mV at cycle windows 72–77 and 123–129 were investigated:
+  tracker bounces among closely-spaced peaks all within ±30 mV of the
+  true dominant peak — noise in peak-position estimate, not a jump to a
+  different peak. QUANTITATIVE status confirmed.
+
+• B0006: peak count K varies (2–11) with total drift 2× larger than other
+  cells (171 mV vs 52–73 mV). New low-voltage peaks emerge and merge over
+  its lifetime. Dominant-peak identity genuinely shifts; this is NOT noise-
+  peak variation. Peak identity is ambiguous; slope ratio is unreliable.
+  B0006 results are QUALITATIVE ONLY.
 
 • B0007: the LLI feature (|Δμ/σ|) and LAM feature (ΔA_rel) have
   r = −0.927 — not from peak identity swapping (verified: smooth monotone
