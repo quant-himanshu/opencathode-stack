@@ -29,44 +29,78 @@
     }
   },
   "nsa_weakest_cell": {
-    "configuration": {
-      "n_detectors": 200,
-      "detector_radius": 0.25,
-      "feature_coverage": "V_norm and T_norm from real Quartz data; SOC=pack-level proxy; SOH=1.0 nominal; SEI=0.05 nominal; plating_risk=0.01 nominal",
-      "self_set": "100 timesteps × 36 cells from WLTP Cycle_3..10 (3,600 observations)"
+    "recalibration": {
+      "approach": "Option (a) — 2D effective subspace (V_norm, T_norm) only; 6D→2D scope reduction documented in code docstring",
+      "root_cause_fixed": "Original failure: hand-crafted 6D fault centroids at min-distance 0.70 from any real observation, r=0.25, 2.8× gap. Root cause: 4/6 features (SOC, SOH, SEI_norm, plating_risk) are imputed constants identical across all cells — the 6D self-cloud is a 2D slice; centroids placed in the remaining 6D space are unreachable by real data.",
+      "2d_scope_limitation_restated": "The recalibrated NSA operates only on V_norm and T_norm. It cannot detect SOH-based faults, SEI growth, or plating risk — those features are imputed constants with zero inter-cell information. This limitation does NOT disappear with recalibration; it is a hardware/data constraint that persists until real per-cell SOH/SEI/plating sensors exist."
     },
-    "test_A_chronic_full_dataset": {
-      "n_rows_sampled": 2000,
-      "n_cells": 36,
-      "result": "DEGENERATE NULL — all 36 cells scored exactly 0.0000; Spearman undefined",
-      "pre_registered_category": "NULL",
-      "root_cause": {
-        "mechanism": "The hand-crafted fault signature centroids (SEI: SEI_norm=3.0, SOH=0.75; capacity_fade: SOH=0.60, SEI_norm=2.5; thermal: T_norm=1.0; plating: plating_risk=0.8) are designed for cells in genuinely degraded states. The Quartz pack is healthy (SOH=1.0, SEI_norm=0.05, T≈30°C, plating=0.01).",
-        "distances": {
-          "typical_cell_to_nearest_fault": "1.070 (plating_risk signature)",
-          "deep_discharge_P3S10_to_nearest_fault": "1.579 (thermal_stress signature)",
-          "detector_radius": 0.25,
-          "ratio_distance_to_radius": "4.3× – 6.3×"
-        },
-        "minimum_radius_for_any_activation": 0.7,
-        "interpretation": "No Quartz observation in any operating condition is within 0.70 of any detector. The NSA correctly identifies all cells as 'not in a fault state' — but this makes per-cell ranking impossible. This is a DATASET MISMATCH (healthy pack vs fault-targeted detectors), not an NSA algorithm failure."
+    "stage_1_self_cloud": {
+      "n_cells": 35,
+      "p3s11_excluded": "known faulty temperature sensor (476°C mean)",
+      "self_set_definition": "35 per-cell mean (V_norm, T_norm) positions across all 634,450 WLTP timesteps",
+      "v_norm_span_across_cells": 0.0084,
+      "t_norm_span_across_cells": 0.0844,
+      "centroid": {"V_norm": 0.533969, "T_norm": 0.081582},
+      "p95_radius": 0.035059,
+      "p3s12_fringe_rank": "14/35 (distance 0.0231 from centroid)",
+      "p3s10_fringe_rank": "24/35 (distance 0.0107 from centroid)",
+      "fringe_cells_are_thermal": "Cells furthest from centroid (P1S1, P3S4, P1S7) are thermal position outliers (end-of-string T_norm extremes), not voltage/capacity outliers"
+    },
+    "stage_2_detector_training": {
+      "r": 0.014024,
+      "r_formula": "0.4 × p95 — single pre-chosen multiplier, not tuned",
+      "sampling_box": {
+        "V_norm": [0.393733, 0.674204],
+        "T_norm": [-0.058654, 0.221817]
       },
-      "is_data_limitation": true
+      "N_CANDIDATE": 50000,
+      "n_survivors": 47848,
+      "survivor_fraction": 0.957,
+      "calibration_check": "OK — not 0% or ~100%",
+      "sanity_check": "min(distance from survivor to any self-point) = 0.014030 > r = 0.014024 — PASS",
+      "note_high_survival": "95.7% survival is expected: the 35 self-points (tight cluster spanning ~0.008 × 0.084) occupy only ~4.3% of the sampling box area. Detectors fill the surrounding space."
     },
-    "test_B_deep_discharge_subset": {
-      "n_rows": 15292,
-      "n_cells_present": 36,
-      "soc_range": "1%–4%",
-      "cycles": [
-        "Cycle_1",
-        "Cycle_2"
-      ],
-      "result": "DEGENERATE NULL — same root cause as Test A; all cells 0.0000",
-      "pre_registered_category": "NULL (expected as pre-registered)",
-      "note": "Even at deep discharge, cell state features remain far from fault signature regions. The capacity-exhaustion signal (P3S10 depleting first) is not distinguishable in 6D feature space when SOH=1.0 and SEI=nominal for all cells.",
-      "is_data_limitation": true
+    "stage_3_scores": {
+      "scoring_primary": "mean over all 634,450 timesteps of per-timestep activation fraction (fraction of detectors within r of cell's (V_norm,T_norm))",
+      "scoring_secondary": "max over all 634,450 timesteps of per-timestep activation fraction",
+      "primary_range": {"min": 0.003153, "min_cell": "P2S10", "max": 0.003688, "max_cell": "P3S7"},
+      "primary_std": 0.000158,
+      "secondary_range": {"min": 0.009488, "min_cell": "P3S8", "max": 0.009885, "max_cell": "P2S3"},
+      "secondary_std": 0.000086,
+      "degeneracy_verdict": "DEGENERATE — both primary and secondary std < 0.001 threshold",
+      "null_type_classification": "Null Type A + B (primary), Null Type C ruled out by LOCO",
+      "null_type_A_explanation": "The cycling range (V_norm std ≈ 0.188 per cell across all timesteps) dominates over inter-cell differences (~0.004 V_norm at any given timestep). All cells traverse the full V_norm range during WLTP; detector activations during cycling excursions swamp the small per-cell offsets.",
+      "null_type_B_explanation": "95.7% detector survival distributes detectors throughout the sampling box. The inter-cell V_norm and T_norm differences (0.004 and 0.008 normalized) are far smaller than the box extent (~0.28), so all cells activate approximately equal detector fractions.",
+      "small_residual_structure": "Primary relative range = 15.5% (max/min = 0.003688/0.003153). Structure is driven by T_norm position bias — cells with low T_norm (P1S1: 0.035, P1S7: 0.048) rank highest because their self-deletion region is at the T_norm fringe; P2-cluster cells near the centroid (T_norm ≈ 0.08) rank lowest due to denser mutual self-deletion."
     },
-    "honest_limitation": "NSA requires cells to be in or near fault-state regions of the 6D feature space to produce non-zero anomaly scores. For a healthy pack (all cells SOH≈1.0), the algorithm correctly identifies all cells as normal but cannot rank-order them by health. A voltage-threshold rule or a relative-ranking comparator would be more appropriate for this use case."
+    "stage_4_spearman_2x2": {
+      "note": "Scores are degenerate (std < 0.001); Spearman operates on tiny rank differences. Results are noise-driven and declared NULL per pre-registration despite some rs values entering WEAK range.",
+      "primary_vs_criterion_A_deficit": {"rs": -0.2244, "p": 0.1951, "category": "WEAK by rs threshold — NULL per degenerate-score rule; sign NEGATIVE (anti-correlated: high activation = low deficit, T_norm fringe effect, not health signal)"},
+      "primary_vs_criterion_B_minV": {"rs": -0.1768, "p": 0.3096, "category": "WEAK by rs — NULL per degenerate-score rule"},
+      "secondary_vs_criterion_A_deficit": {"rs": 0.2087, "p": 0.2289, "category": "WEAK by rs — NULL per degenerate-score rule"},
+      "secondary_vs_criterion_B_minV": {"rs": 0.1326, "p": 0.4475, "category": "WEAK by rs — NULL per degenerate-score rule"},
+      "2x2_summary": "ALL NULL — degenerate input scores propagate to null correlations"
+    },
+    "loco_diagnostic": {
+      "triggered_by": "null outcome in Stage 3+4",
+      "pre_registration": "run only as null diagnostic; remove one cell from self-set, regenerate detectors, recompute only that cell's score",
+      "p3s12_loco": {
+        "delta_primary": 0.000001,
+        "delta_secondary": -0.000003,
+        "relative_change_pct": 0.0,
+        "verdict": "Negligible — circularity NOT the primary cause of null"
+      },
+      "p3s10_loco": {
+        "delta_primary": 0.000000,
+        "delta_secondary": -0.000001,
+        "relative_change_pct": 0.0,
+        "verdict": "Negligible — circularity NOT the primary cause of null"
+      },
+      "conclusion": "Null Type C (circularity) ruled out. P3S12 and P3S10 sit near the self-cloud centroid (fringe ranks 14 and 24 of 35), so their own self-points have minimal impact on detector placement. The null is structural: V_norm cycling amplitude dominates inter-cell differences by ~47× (0.188 vs 0.004)."
+    },
+    "final_result": "DEGENERATE NULL — Null Type A+B. Recalibrated NSA with genuine negative selection and data-derived r produces non-zero but indistinguishable anomaly scores across all 35 cells. The 2D (V,T) signal that weakly survives (primary rs=-0.22 with Criterion A) reflects thermal string-position bias, not voltage health ranking, and is anti-correlated with the pre-registered weakest-cell criterion.",
+    "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA detects anomalies in V_norm × T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar), not negative selection. NSA is designed for binary fault/non-fault detection with degraded cells in the training set — it is structurally unsuitable for fine-grained health ranking within a healthy population.",
+    "code_updated": "diagnosis/weakest_cell.py rewritten: 6D→2D, genuine negative-selection training (self-deletion from data-derived self-set), primary/secondary scoring methods, 6D expansion path documented in module docstring. All 20 validate() tests PASS."
   },
   "aco_kuramoto": {
     "topology_used": "n_parallel=3, n_series=12 (Quartz topology — not default 5×4)",
@@ -138,13 +172,9 @@
     "overall": "ALL ARCHITECTURE CHECKS PASS — accuracy validation not possible with available data"
   },
   "summary_table": {
-    "NSA_Test_A": {
-      "result": "DEGENERATE NULL",
-      "category": "NULL (data limitation — healthy pack, fault detectors inactive)"
-    },
-    "NSA_Test_B": {
-      "result": "DEGENERATE NULL",
-      "category": "NULL (same root cause — expected as pre-registered)"
+    "NSA_recalibrated": {
+      "result": "DEGENERATE NULL (Null Type A+B)",
+      "category": "NULL — recalibrated 2D NSA with genuine negative selection; cycling amplitude 47× inter-cell V differences; LOCO rules out circularity (Type C). 2D scope limitation (no SOH/SEI/plating) persists."
     },
     "ACO_Check_1_KCL": {
       "result": "PASS",
