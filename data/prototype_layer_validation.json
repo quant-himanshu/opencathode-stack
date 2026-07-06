@@ -188,7 +188,7 @@
   },
   "battgp_vdetector": {
     "battgp_vdetector_preregistration": {
-      "status": "LOCKED \u2014 GP-confidence gating added; pre-registered before any detection code is written",
+      "status": "FULLY LOCKED \u2014 all conditions set before 27-system batch run. Commits: 34d096f (initial), b89c635 (GP-confidence gate), 12668d0 (pipeline+smoke test), pending (trivial verdict rule + calibration note).",
       "locked_commit": "pending",
       "dataset": "BattGP Zenodo 13715694 \u2014 28 LFP 8s1p field-return systems",
       "calibration_system": {
@@ -300,6 +300,28 @@
         "no_silent_drops": "Every held-out system appears in exactly one of: N_agree + N_disagree + N_no_fault + N_gate_fail = N_held_out. No pack is silently excluded.",
         "gp_confident_threshold": 0.5,
         "gp_weak_cell_definition": "argmax(mean R_upper{i} band_i fault prob over last 24 hourly predictions), evaluated only when GP-confident=True"
+      },
+      "smoke_test_calibration_note": {
+        "system": "data_sys_17",
+        "smoke_test_outcome": "AGREE, ratio=13.38, GP band_prob=1.000",
+        "why_this_is_NOT_evidence": "data_sys_17 is the CALIBRATION system: V_norm bounds were set from its healthy-7 cells, and Cell 3 (the fault) was identified during bound-setting. AGREE on this system is EXPECTED by construction \u2014 Cell 3 has a severe fault (R0=17.2 mOhm vs pack mean 8.7 mOhm, ~2x elevation), the V_norm formula was anchored to exactly this pack's healthy cells, and the high-current threshold was derived from this system's discharge profile. Ratio=13.38 on a 2x-R0 fault with snooped normalization is not a predictive baseline for held-out results.",
+        "held_out_interpretation": "The 27 held-out systems are the real test. Their faults may be far more subtle than Cell 3 in data_sys_17. A lower held-out AGREE-rate is a real finding, not a regression relative to the smoke test. The smoke test AGREE establishes only that the pipeline is wired correctly end-to-end \u2014 nothing about detection power on novel systems. Held-out results are interpreted on their own terms, independent of the smoke test numbers.",
+        "locked_before_batch_run": true
+      },
+      "trivial_vs_vdetector_verdict_rule": {
+        "counting_on": "gate-pass AND GP-confident held-out systems only (the N_gp_confident subset)",
+        "required_counts": {
+          "N_same": "count where trivial_pred == vdetector_pred (V-detector is redundant on these \u2014 identical prediction, no added value possible)",
+          "N_different": "count where trivial_pred != vdetector_pred (the ONLY cases where V-detector can demonstrate value over the baseline)"
+        },
+        "value_test": "In the N_different subset ONLY: count how many times V-detector agrees with GP vs how many times trivial agrees with GP. This is the sole evidentiary test of whether the immune-inspired algorithm beats the one-line median. If N_different is 0 or very small, V-detector has no opportunity to demonstrate value.",
+        "headline_rule": "The 7-field breakdown (N_total / N_gate_pass / N_gp_confident / N_agree / N_disagree / N_no_fault / N_gate_fail) MUST be reported alongside N_same and N_different. Reporting a headline agreement rate without this split is not permitted.",
+        "pre_registered_honest_conclusion": {
+          "trigger": "trivial_pred == vdetector_pred on >= 90% of GP-confident gate-pass systems",
+          "mandatory_wording": "On BattGP LFP field data, the V-detector reduces to per-cell mean-voltage ranking; the negative-selection machinery adds no detection value over a one-line baseline. The immune-inspired approach is not justified on this data.",
+          "rationale": "Locked pre-batch to eliminate post-hoc incentive to rationalize V-detector value. If the trivial baseline and V-detector make identical predictions, the sophisticated algorithm is not contributing \u2014 and that is the honest result to report."
+        },
+        "locked_before_batch_run": true
       }
     }
   },
