@@ -103,26 +103,24 @@
     "loco_diagnostic": {
       "triggered_by": "null outcome — pre-registration requirement",
       "self_set_type": "timestep self-set (corrected), 100,940 self-points; removed 2,884 readings per held-out cell (2.9%)",
-      "retraction": "Previous LOCO (commit 1eb8ff2) removed 1 of 35 mean points — statistical power was negligible. 'Type C ruled out definitively' claim from that run is RETRACTED and replaced by this result.",
+      "retraction": "Previous LOCO (commit 1eb8ff2) removed 1 of 35 mean points — statistical power was negligible. 'Type C ruled out definitively' claim from that run is RETRACTED and replaced by this structural argument.",
       "p3s12_loco": {
         "self_points_removed": 2884,
         "pct_of_self_set": 2.9,
         "surviving_detectors": 45386,
         "delta_primary": 0.000000,
-        "delta_secondary": 0.000000,
-        "verdict": "No change — circularity NOT the primary cause of null"
+        "delta_secondary": 0.000000
       },
       "p3s10_loco": {
         "self_points_removed": 2884,
         "pct_of_self_set": 2.9,
         "surviving_detectors": 45386,
         "delta_primary": 0.000000,
-        "delta_secondary": 0.000000,
-        "verdict": "No change — circularity NOT the primary cause of null"
+        "delta_secondary": 0.000000
       },
-      "conclusion": "Null Type C (circularity) definitively ruled out. Removing 2.9% of self-points (all of P3S12 or P3S10's readings) causes zero change in scores, because the 0.004 V_norm offset between these cells and the pack mean is negligible relative to r=0.124. Even with their data removed, the remaining 34 cells cover those cells' operating regions completely."
+      "conclusion": "In this geometry, single-cell circularity is structurally impossible. At r=0.124 the entire Quartz operating range is covered by the 100,940-point self-set; removing any single cell's 2,884 readings (2.9%) cannot open a gap larger than the V_norm offset between that cell and its neighbours (~0.004), which is negligible relative to r. The surviving detector count is identical (45,386) before and after removal for both P3S12 and P3S10. Type C is ruled out by entailment — no individual cell defines any part of the self-boundary — not by an empirical test with independent statistical power."
     },
-    "final_result": "DEGENERATE NULL — Null Type A, confirmed by both self-set constructions. PRIMARY scores exactly 0 for all 35 cells. The cycling envelope of a healthy WLTP pack occupies the entire NSA detector space at this r; no non-self region exists within the cells' actual operating range. LOCO (2,884 points removed, not 1) confirms Type C does not contribute. Retracted: 'per-cell-means LOCO ruled out Type C definitively' (no statistical power at 1/35 points).",
+    "final_result": "DEGENERATE NULL — Null Type A confirmed. PRIMARY exactly 0 for all 35 cells; SECONDARY marginally non-zero but degenerate (std=0.000071 < 0.001, three thermal-fringe cells with single-timestep activations). The cycling envelope of a healthy WLTP pack occupies the entire NSA operating region at r=0.124; no non-self region is reachable by any real Quartz observation. Type C ruled out by entailment (structural impossibility, not empirical LOCO power).",
     "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA operates on V_norm × T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar). NSA is designed for binary fault/non-fault detection with degraded cells in the training set — structurally unsuitable for fine-grained health ranking within a healthy population.",
     "code_updated": "diagnosis/weakest_cell.py rewritten (2D, genuine negative selection, 6D expansion path). All 20 validate() tests PASS."
   },
@@ -197,8 +195,8 @@
   },
   "summary_table": {
     "NSA_recalibrated": {
-      "result": "DEGENERATE NULL (Null Type A — confirmed by both per-cell-means and timestep self-sets)",
-      "category": "NULL — cycling envelope covers entire Quartz operating range at r=0.124; PRIMARY all-zero; LOCO (2,884 points removed) rules out Type C. Pre-registration deviation documented: per-cell-means shortcut in commit 1eb8ff2 retracted and rerun with correct timestep self-set."
+      "result": "DEGENERATE NULL — Null Type A",
+      "category": "NSA — recalibrated correctly (genuine negative selection, 2D V/T subspace, pre-registered protocol); outcome = Null Type A: architecture structurally unsuitable for relative health ranking within a healthy homogeneous pack (cycling amplitude dominates inter-cell spread 47×). 2D scope limitation is permanent absent real per-cell SOH/SEI/plating sensors. Recommended replacement for this use case: pack-centroid relative outlier score."
     },
     "ACO_Check_1_KCL": {
       "result": "PASS",
