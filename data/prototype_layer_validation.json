@@ -1,0 +1,166 @@
+{
+  "module": "Prototype Layer Validation — GNN / NSA / ACO+Kuramoto",
+  "dataset_used": "Quartz WLTP 36-cell pack (10 parquet files, 634,450 rows)",
+  "commit_at_validation": "c72914b",
+  "weakest_cell_ground_truth": {
+    "criterion_A_chronic": {
+      "metric": "mean voltage deficit from pack mean across all 634,450 rows",
+      "top3": [
+        "P3S12 (−6.4 mV)",
+        "P2S12 (−4.6 mV)",
+        "P1S6 (−4.2 mV)"
+      ],
+      "mechanism": "chronic undervoltage — higher internal resistance or position-dependent bias; both S12 cells at end-of-string",
+      "prior_session_claim": "P3S10 weakest — reconciled: prior session used min-instantaneous criterion, not mean deficit"
+    },
+    "criterion_B_transient": {
+      "metric": "minimum instantaneous voltage in SOC<5% subset (15,292 rows, all 36 cells present)",
+      "top3": [
+        "P3S10 (2.859 V)",
+        "P1S3 (2.892 V)",
+        "P2S8 (2.898 V)"
+      ],
+      "mechanism": "capacity exhaustion — cell depletes first at deep discharge (lower capacity than peers)"
+    },
+    "rank_correlation_between_criteria": {
+      "spearman_rs": -0.01,
+      "p": 0.952,
+      "interpretation": "The two criteria are statistically independent — they measure different failure modes. Confirmed: rs=-0.01 ≈ orthogonal."
+    }
+  },
+  "nsa_weakest_cell": {
+    "configuration": {
+      "n_detectors": 200,
+      "detector_radius": 0.25,
+      "feature_coverage": "V_norm and T_norm from real Quartz data; SOC=pack-level proxy; SOH=1.0 nominal; SEI=0.05 nominal; plating_risk=0.01 nominal",
+      "self_set": "100 timesteps × 36 cells from WLTP Cycle_3..10 (3,600 observations)"
+    },
+    "test_A_chronic_full_dataset": {
+      "n_rows_sampled": 2000,
+      "n_cells": 36,
+      "result": "DEGENERATE NULL — all 36 cells scored exactly 0.0000; Spearman undefined",
+      "pre_registered_category": "NULL",
+      "root_cause": {
+        "mechanism": "The hand-crafted fault signature centroids (SEI: SEI_norm=3.0, SOH=0.75; capacity_fade: SOH=0.60, SEI_norm=2.5; thermal: T_norm=1.0; plating: plating_risk=0.8) are designed for cells in genuinely degraded states. The Quartz pack is healthy (SOH=1.0, SEI_norm=0.05, T≈30°C, plating=0.01).",
+        "distances": {
+          "typical_cell_to_nearest_fault": "1.070 (plating_risk signature)",
+          "deep_discharge_P3S10_to_nearest_fault": "1.579 (thermal_stress signature)",
+          "detector_radius": 0.25,
+          "ratio_distance_to_radius": "4.3× – 6.3×"
+        },
+        "minimum_radius_for_any_activation": 0.7,
+        "interpretation": "No Quartz observation in any operating condition is within 0.70 of any detector. The NSA correctly identifies all cells as 'not in a fault state' — but this makes per-cell ranking impossible. This is a DATASET MISMATCH (healthy pack vs fault-targeted detectors), not an NSA algorithm failure."
+      },
+      "is_data_limitation": true
+    },
+    "test_B_deep_discharge_subset": {
+      "n_rows": 15292,
+      "n_cells_present": 36,
+      "soc_range": "1%–4%",
+      "cycles": [
+        "Cycle_1",
+        "Cycle_2"
+      ],
+      "result": "DEGENERATE NULL — same root cause as Test A; all cells 0.0000",
+      "pre_registered_category": "NULL (expected as pre-registered)",
+      "note": "Even at deep discharge, cell state features remain far from fault signature regions. The capacity-exhaustion signal (P3S10 depleting first) is not distinguishable in 6D feature space when SOH=1.0 and SEI=nominal for all cells.",
+      "is_data_limitation": true
+    },
+    "honest_limitation": "NSA requires cells to be in or near fault-state regions of the 6D feature space to produce non-zero anomaly scores. For a healthy pack (all cells SOH≈1.0), the algorithm correctly identifies all cells as normal but cannot rank-order them by health. A voltage-threshold rule or a relative-ranking comparator would be more appropriate for this use case."
+  },
+  "aco_kuramoto": {
+    "topology_used": "n_parallel=3, n_series=12 (Quartz topology — not default 5×4)",
+    "check_1_KCL": {
+      "description": "ACO outputs must sum to I_total across 50 real-parameter draws",
+      "result": "PASS",
+      "max_violation_A": 4.44e-16,
+      "note": "Machine-epsilon level; KCL satisfied exactly"
+    },
+    "check_2_monotone": {
+      "description": "Best cell (SOH=0.95, risk=0.05) gets more current than worst (SOH=0.75, risk=0.40)",
+      "result": "PASS",
+      "scenarios_passed": "10/10",
+      "calibration_concern": "In 8 of 10 scenarios the worst cell receives exactly 0.000A — full current concentration on best cell, not modulation. With I_total=2A split across 3 cells, the heuristic eta differential (0.95/0.05=19 vs 0.75/0.40=1.875) is so large that all 20 ants route to the best cell. Real packs require minimum current floors to prevent cell starvation."
+    },
+    "check_3_kuramoto_convergence": {
+      "description": "Order parameter R increases after 50 Kuramoto steps on real-param SOC imbalance",
+      "result": "PASS",
+      "real_param_test": {
+        "R_initial": 0.738967,
+        "R_final": 0.995237,
+        "delta_R": 0.25627
+      },
+      "extreme_imbalance_test": {
+        "R_initial": 0.931409,
+        "R_final": 0.99912,
+        "delta_R": 0.067711
+      },
+      "calibration_concern": "delta_soc magnitudes reach ±13–17% SOC per call (mean_abs=9.9%). This exceeds physically realizable balancing rates for passive or active cell balancers — a typical balancer achieves <1% SOC correction per cycle. The Kuramoto output should be treated as a synchronization target direction, not a directly actionable setpoint."
+    },
+    "check_4_TR_risk": {
+      "description": "TR risk = 0 for all Quartz temperatures; correct boundary behavior",
+      "result": "PASS",
+      "quartz_max_T_clean": "42.0°C (315.2 K)",
+      "margin_to_onset_K": 38.0,
+      "boundary_checks": {
+        "at_onset_80C": "tr_risk=0.0 (correct — onset is not yet runaway)",
+        "above_onset_85C": "tr_risk=0.05 (correct — positive above onset)",
+        "at_runaway_150C": "tr_risk=0.700 (correct — formula matches Feng 2018)"
+      }
+    },
+    "overall": "ALL PASS (4/4)"
+  },
+  "gnn_graphsage": {
+    "architecture": "3-layer GraphSAGE, N_NODES=20, INPUT_DIM=7, OUTPUT_DIM=4, n_params=9,428",
+    "checks": {
+      "output_shape": "PASS — (20,4) as expected",
+      "output_bounds": "PASS — Sigmoid head enforces [0,1]; min=0.394 max=0.740",
+      "output_finite": "PASS",
+      "kcl_residual": "PASS — finite, ≥0; residual=0.003047",
+      "adjacency_splitting": "PASS — series/parallel/thermal correctly partitioned",
+      "latency_cpu": "PASS — p99=309µs < 500µs target",
+      "numpy_interface": "PASS"
+    },
+    "real_distribution_input_test": {
+      "result": "PASS (bounds)",
+      "finding": "std=0.000 across all 20 output nodes for real Quartz inputs — GNN produces identical outputs for all cells when inputs are near-uniform (SOC=0.99 for all, V spread=37mV, T spread=2.8°C). BatchNorm collapses all representations to the same value when node features are near-identical.",
+      "implication": "The GNN has zero per-cell discrimination when inputs are near-uniform. For a healthy pack with small inter-cell differences, the GNN is a constant estimator — not a per-cell estimator. This is expected for an untrained model but is also a concern for the architecture: BatchNorm in the SAGEConv layers normalizes across nodes in the forward pass, which will tend to homogenize outputs when inputs are similar."
+    },
+    "data_limitation": {
+      "n_nodes_mismatch": "GNN hardcoded to N_NODES=20; Quartz has 36 cells. Architecture change required.",
+      "no_supervised_target": "No per-cell SOC or SOH ground truth exists in Quartz dataset. Accuracy cannot be measured — only architecture correctness.",
+      "statement": "GNN validated for architecture correctness only. Accuracy validation requires: (a) dataset with per-cell SOC/SOH ground truth, OR (b) synthetic training data from DFN cell model. This is a DATA LIMITATION, not a model limitation."
+    },
+    "overall": "ALL ARCHITECTURE CHECKS PASS — accuracy validation not possible with available data"
+  },
+  "summary_table": {
+    "NSA_Test_A": {
+      "result": "DEGENERATE NULL",
+      "category": "NULL (data limitation — healthy pack, fault detectors inactive)"
+    },
+    "NSA_Test_B": {
+      "result": "DEGENERATE NULL",
+      "category": "NULL (same root cause — expected as pre-registered)"
+    },
+    "ACO_Check_1_KCL": {
+      "result": "PASS",
+      "detail": "max violation = 4.44e-16 A"
+    },
+    "ACO_Check_2_mono": {
+      "result": "PASS (10/10)",
+      "detail": "calibration concern: worst cell starved to 0A"
+    },
+    "ACO_Check_3_Kura": {
+      "result": "PASS",
+      "detail": "R: 0.739→0.995; calibration concern: delta_soc up to ±17%"
+    },
+    "ACO_Check_4_TR": {
+      "result": "PASS",
+      "detail": "all Quartz temps well below 80°C onset"
+    },
+    "GNN_architecture": {
+      "result": "ALL PASS (7/7)",
+      "detail": "accuracy validation not possible; BatchNorm collapse on uniform inputs"
+    }
+  }
+}
