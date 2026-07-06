@@ -61,16 +61,19 @@ H = [∂OCV/∂SOC,   1.0]        (∂δV/∂SOC := 0)
 dcal/dSOC in H. The PCHIP spline slope introduced large, erratic Kalman gain swings.
 Result: BMW i3 — 0/63 trips converged (SOC RMSE = N/A); VED — SOC RMSE = 45.6%.
 Round 3 fix (commit `6585528`): zeroed ∂δV/∂SOC in H. Post-fix figures:
-BMW 20.8%, Deng 11.9%, VED 25.5% (commit `6585528`) / 20.2% (JSON, `ved_ekf.soc_rmse_pct` —
-later run; the two figures bracket the same regime). The decoupling is the binding
-architectural fix that makes fleet convergence possible.
+BMW 20.8%, Deng 11.9%, VED 25.5% (commit `6585528`, ~409 held-out segments, 90%
+of 454 full VED set) / 20.2% (JSON `ved_ekf.soc_rmse_pct`, n_eval=38, "30 vehicles,
+20-trip limit" subsample — different eval set, smaller and capped; source of
+discrepancy is eval-set size, not a re-run of the same evaluation). Treat as 20–26%
+range; the larger-n figure is from the more representative eval. The decoupling is the
+binding architectural fix that makes fleet convergence possible.
 
 **Honest cost of the decoupling.** On flat-OCV chemistry regions (LFP plateau,
 SOC 30–75%), ∂OCV/∂SOC → 0 → H ≈ 0 → Kalman gain K ≈ 0. The filter becomes
-voltage-blind and falls back to open-loop coulomb counting. Adaptive process noise
-Q ∝ 1/|∂OCV/∂SOC| (source: Mikhak 2024, PMC12936157) partially mitigates this by
-widening P, but does not restore observability. This is a known architectural
-limitation — not a future-work item, a structural property.
+voltage-blind and falls back to open-loop coulomb counting. Adaptive process-noise
+scaling (Q widened when |∂OCV/∂SOC| is small) is a standard partial mitigation but
+does not restore observability. This is a known architectural limitation — not a
+future-work item, a structural property.
 
 ### 1.4 Scope
 
