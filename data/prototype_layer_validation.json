@@ -1,17 +1,17 @@
 {
-  "module": "Prototype Layer Validation — GNN / NSA / ACO+Kuramoto",
+  "module": "Prototype Layer Validation \u2014 GNN / NSA / ACO+Kuramoto",
   "dataset_used": "Quartz WLTP 36-cell pack (10 parquet files, 634,450 rows)",
   "commit_at_validation": "c72914b",
   "weakest_cell_ground_truth": {
     "criterion_A_chronic": {
       "metric": "mean voltage deficit from pack mean across all 634,450 rows",
       "top3": [
-        "P3S12 (−6.4 mV)",
-        "P2S12 (−4.6 mV)",
-        "P1S6 (−4.2 mV)"
+        "P3S12 (\u22126.4 mV)",
+        "P2S12 (\u22124.6 mV)",
+        "P1S6 (\u22124.2 mV)"
       ],
-      "mechanism": "chronic undervoltage — higher internal resistance or position-dependent bias; both S12 cells at end-of-string",
-      "prior_session_claim": "P3S10 weakest — reconciled: prior session used min-instantaneous criterion, not mean deficit"
+      "mechanism": "chronic undervoltage \u2014 higher internal resistance or position-dependent bias; both S12 cells at end-of-string",
+      "prior_session_claim": "P3S10 weakest \u2014 reconciled: prior session used min-instantaneous criterion, not mean deficit"
     },
     "criterion_B_transient": {
       "metric": "minimum instantaneous voltage in SOC<5% subset (15,292 rows, all 36 cells present)",
@@ -20,27 +20,30 @@
         "P1S3 (2.892 V)",
         "P2S8 (2.898 V)"
       ],
-      "mechanism": "capacity exhaustion — cell depletes first at deep discharge (lower capacity than peers)"
+      "mechanism": "capacity exhaustion \u2014 cell depletes first at deep discharge (lower capacity than peers)"
     },
     "rank_correlation_between_criteria": {
       "spearman_rs": -0.01,
       "p": 0.952,
-      "interpretation": "The two criteria are statistically independent — they measure different failure modes. Confirmed: rs=-0.01 ≈ orthogonal."
+      "interpretation": "The two criteria are statistically independent \u2014 they measure different failure modes. Confirmed: rs=-0.01 \u2248 orthogonal."
     }
   },
   "nsa_weakest_cell": {
     "recalibration": {
-      "approach": "Option (a) — 2D effective subspace (V_norm, T_norm) only; 6D→2D scope reduction documented in code docstring",
-      "root_cause_fixed": "Original failure: hand-crafted 6D fault centroids at min-distance 0.70 from any real observation, r=0.25, 2.8× gap. Root cause: 4/6 features (SOC, SOH, SEI_norm, plating_risk) are imputed constants identical across all cells — the 6D self-cloud is a 2D slice; centroids placed in the remaining 6D space are unreachable by real data.",
-      "2d_scope_limitation_restated": "The recalibrated NSA operates only on V_norm and T_norm. It cannot detect SOH-based faults, SEI growth, or plating risk — those features are imputed constants with zero inter-cell information. This limitation does NOT disappear with recalibration; it is a hardware/data constraint that persists until real per-cell SOH/SEI/plating sensors exist."
+      "approach": "Option (a) \u2014 2D effective subspace (V_norm, T_norm) only; 6D\u21922D scope reduction documented in code docstring",
+      "root_cause_fixed": "Original failure: hand-crafted 6D fault centroids at min-distance 0.70 from any real observation, r=0.25, 2.8\u00d7 gap. Root cause: 4/6 features (SOC, SOH, SEI_norm, plating_risk) are imputed constants identical across all cells \u2014 the 6D self-cloud is a 2D slice; centroids placed in the remaining 6D space are unreachable by real data.",
+      "2d_scope_limitation_restated": "The recalibrated NSA operates only on V_norm and T_norm. It cannot detect SOH-based faults, SEI growth, or plating risk \u2014 those features are imputed constants with zero inter-cell information. This limitation does NOT disappear with recalibration; it is a hardware/data constraint that persists until real per-cell SOH/SEI/plating sensors exist."
     },
     "stage_1_self_cloud": {
       "n_cells": 35,
-      "p3s11_excluded": "known faulty temperature sensor (476°C mean)",
+      "p3s11_excluded": "known faulty temperature sensor (476\u00b0C mean)",
       "self_set_definition": "35 per-cell mean (V_norm, T_norm) positions across all 634,450 WLTP timesteps",
       "v_norm_span_across_cells": 0.0084,
       "t_norm_span_across_cells": 0.0844,
-      "centroid": {"V_norm": 0.533969, "T_norm": 0.081582},
+      "centroid": {
+        "V_norm": 0.533969,
+        "T_norm": 0.081582
+      },
       "p95_radius": 0.035059,
       "p3s12_fringe_rank": "14/35 (distance 0.0231 from centroid)",
       "p3s10_fringe_rank": "24/35 (distance 0.0107 from centroid)",
@@ -48,37 +51,52 @@
     },
     "pre_registration_deviation": {
       "deviation": "Self-set used in commit 1eb8ff2 was 35 per-cell MEAN positions, not real per-timestep readings as pre-registration specified ('real healthy readings sampled uniformly across all cells AND TIMESTEPS').",
-      "why_taken": "Stage 1 analysis surfaced two interpretations of 'p95 self-cloud radius' (0.035 per-cell-means vs 0.311 all-observations). The pre-registration rationale mentioned '~0.025–0.056 normalized units', which matches the per-cell-means span. This was an interpretation error — the pre-registration text is unambiguous. Deviation was flagged by user review of commit 1eb8ff2.",
-      "impact_on_conclusion": "Per-cell-means run produced degenerate non-zero scores (PRIMARY std=0.000158) with T_norm-position-driven residual structure. Timestep-self-set rerun produces PRIMARY std=0.000000 (all exactly zero) — a stronger null. The final null verdict does NOT change, but the mechanism is now cleaner: Type A (cycling envelope covers Quartz operating range), Type B and Type C both ruled out. The per-cell-means LOCO (1 point of 35) had no statistical power; retracted and replaced by the timestep LOCO below (2,884 points removed per cell)."
+      "why_taken": "Stage 1 analysis surfaced two interpretations of 'p95 self-cloud radius' (0.035 per-cell-means vs 0.311 all-observations). The pre-registration rationale mentioned '~0.025\u20130.056 normalized units', which matches the per-cell-means span. This was an interpretation error \u2014 the pre-registration text is unambiguous. Deviation was flagged by user review of commit 1eb8ff2.",
+      "impact_on_conclusion": "Per-cell-means run produced degenerate non-zero scores (PRIMARY std=0.000158) with T_norm-position-driven residual structure. Timestep-self-set rerun produces PRIMARY std=0.000000 (all exactly zero) \u2014 a stronger null. The final null verdict does NOT change, but the mechanism is now cleaner: Type A (cycling envelope covers Quartz operating range), Type B and Type C both ruled out. The per-cell-means LOCO (1 point of 35) had no statistical power; retracted and replaced by the timestep LOCO below (2,884 points removed per cell)."
     },
     "stage_2_detector_training_means_run": {
-      "_note": "DEVIATED FROM PRE-REGISTRATION — documented above. Results retained for audit trail.",
+      "_note": "DEVIATED FROM PRE-REGISTRATION \u2014 documented above. Results retained for audit trail.",
       "self_set": "35 per-cell mean positions (incorrect)",
       "r": 0.014024,
       "p95_r": 0.035059,
       "n_survivors": 47848,
       "survivor_fraction": 0.957,
       "primary_std": 0.000158,
-      "secondary_std": 0.000086
+      "secondary_std": 8.6e-05
     },
     "stage_2_detector_training": {
-      "self_set": "100,940 per-timestep (V_norm, T_norm) observations — every 220th row × 35 cells (PRE-REGISTERED)",
-      "r": 0.124250,
-      "r_formula": "0.4 × p95 — single pre-chosen multiplier, not tuned",
+      "self_set": "100,940 per-timestep (V_norm, T_norm) observations \u2014 every 220th row \u00d7 35 cells (PRE-REGISTERED)",
+      "r": 0.12425,
+      "r_formula": "0.4 \u00d7 p95 \u2014 single pre-chosen multiplier, not tuned",
       "p95_r": 0.310624,
       "p50_r": 0.164061,
-      "centroid": {"V_norm": 0.534114, "T_norm": 0.081589},
+      "centroid": {
+        "V_norm": 0.534114,
+        "T_norm": 0.081589
+      },
       "sampling_box": {
-        "V_norm": [-0.708382, 1.776611],
-        "T_norm": [-1.160907, 1.324086]
+        "V_norm": [
+          -0.708382,
+          1.776611
+        ],
+        "T_norm": [
+          -1.160907,
+          1.324086
+        ]
       },
       "N_CANDIDATE": 50000,
       "n_survivors": 45386,
       "survivor_fraction": 0.908,
-      "calibration_check": "OK — not 0% or ~100%",
+      "calibration_check": "OK \u2014 not 0% or ~100%",
       "quartz_operating_range": {
-        "V_norm": [0.0, 0.8060],
-        "T_norm": [-0.0784, 0.3406]
+        "V_norm": [
+          0.0,
+          0.806
+        ],
+        "T_norm": [
+          -0.0784,
+          0.3406
+        ]
       },
       "survivors_within_quartz_reach": "1,066 / 45,386 (2.3%)",
       "survivors_outside_quartz_reach": "44,320 / 45,386 (97.7%)",
@@ -87,45 +105,89 @@
     "stage_3_scores": {
       "scoring_primary": "mean over all 634,450 timesteps of per-timestep activation fraction",
       "scoring_secondary": "max over all 634,450 timesteps of per-timestep activation fraction",
-      "primary_range": {"min": 0.000000, "max": 0.000000},
-      "primary_std": 0.000000,
-      "secondary_range": {"min": 0.000000, "max": 0.000286, "max_cells": "P3S4 (0.000242), P3S9 (0.000110), P1S1 (0.000022) — extreme T outliers, single-timestep activations"},
-      "secondary_std": 0.000071,
-      "degeneracy_verdict": "DEGENERATE — PRIMARY all exactly 0.0; SECONDARY std=0.000071 < 0.001",
-      "null_type_classification": "Null Type A — confirmed",
-      "null_type_A_confirmed": "Cycling-envelope self-set at r=0.124 covers the entire Quartz WLTP operating range. Surviving detectors exist only in T/V extremes no cell ever reaches: T_norm > 0.466 (>48°C, Quartz max 40°C), T_norm < -0.203 (<14.9°C), V_norm outside [0, 0.930]. The 47× cycling/inter-cell ratio (V_norm cycling std=0.188 vs inter-cell differences=0.004) is confirmed as the structural explanation — not an artifact of the per-cell-means shortcut.",
+      "primary_range": {
+        "min": 0.0,
+        "max": 0.0
+      },
+      "primary_std": 0.0,
+      "secondary_range": {
+        "min": 0.0,
+        "max": 0.000286,
+        "max_cells": "P3S4 (0.000242), P3S9 (0.000110), P1S1 (0.000022) \u2014 extreme T outliers, single-timestep activations"
+      },
+      "secondary_std": 7.1e-05,
+      "degeneracy_verdict": "DEGENERATE \u2014 PRIMARY all exactly 0.0; SECONDARY std=0.000071 < 0.001",
+      "null_type_classification": "Null Type A \u2014 confirmed",
+      "null_type_A_confirmed": "Cycling-envelope self-set at r=0.124 covers the entire Quartz WLTP operating range. Surviving detectors exist only in T/V extremes no cell ever reaches: T_norm > 0.466 (>48\u00b0C, Quartz max 40\u00b0C), T_norm < -0.203 (<14.9\u00b0C), V_norm outside [0, 0.930]. The 47\u00d7 cycling/inter-cell ratio (V_norm cycling std=0.188 vs inter-cell differences=0.004) is confirmed as the structural explanation \u2014 not an artifact of the per-cell-means shortcut.",
       "secondary_trace_explanation": "Three cells show non-zero secondary scores (P3S4=0.000242, P3S9=0.000110, P1S1=0.000022). These are single-timestep activations where those cells' T_norm reaches within r of the detector boundary at the high-T fringe. All are below any physically meaningful threshold and contribute std=0.000071, well below the 0.001 degeneracy threshold."
     },
     "stage_4_spearman_2x2": {
-      "note": "PRIMARY scores are all exactly 0 — Spearman undefined for primary. SECONDARY scores have std=0.000071; correlation analysis would operate on effectively constant values. Table is trivially NULL; not re-run on all-zero primary.",
-      "2x2_summary": "ALL NULL — primary scores all-zero; secondary scores degenerate (std=0.000071)"
+      "note": "PRIMARY scores are all exactly 0 \u2014 Spearman undefined for primary. SECONDARY scores have std=0.000071; correlation analysis would operate on effectively constant values. Table is trivially NULL; not re-run on all-zero primary.",
+      "2x2_summary": "ALL NULL \u2014 primary scores all-zero; secondary scores degenerate (std=0.000071)"
     },
     "loco_diagnostic": {
-      "triggered_by": "null outcome — pre-registration requirement",
+      "triggered_by": "null outcome \u2014 pre-registration requirement",
       "self_set_type": "timestep self-set (corrected), 100,940 self-points; removed 2,884 readings per held-out cell (2.9%)",
-      "retraction": "Previous LOCO (commit 1eb8ff2) removed 1 of 35 mean points — statistical power was negligible. 'Type C ruled out definitively' claim from that run is RETRACTED and replaced by this structural argument.",
+      "retraction": "Previous LOCO (commit 1eb8ff2) removed 1 of 35 mean points \u2014 statistical power was negligible. 'Type C ruled out definitively' claim from that run is RETRACTED and replaced by this structural argument.",
       "p3s12_loco": {
         "self_points_removed": 2884,
         "pct_of_self_set": 2.9,
         "surviving_detectors": 45386,
-        "delta_primary": 0.000000,
-        "delta_secondary": 0.000000
+        "delta_primary": 0.0,
+        "delta_secondary": 0.0
       },
       "p3s10_loco": {
         "self_points_removed": 2884,
         "pct_of_self_set": 2.9,
         "surviving_detectors": 45386,
-        "delta_primary": 0.000000,
-        "delta_secondary": 0.000000
+        "delta_primary": 0.0,
+        "delta_secondary": 0.0
       },
-      "conclusion": "In this geometry, single-cell circularity is structurally impossible. At r=0.124 the entire Quartz operating range is covered by the 100,940-point self-set; removing any single cell's 2,884 readings (2.9%) cannot open a gap larger than the V_norm offset between that cell and its neighbours (~0.004), which is negligible relative to r. The surviving detector count is identical (45,386) before and after removal for both P3S12 and P3S10. Type C is ruled out by entailment — no individual cell defines any part of the self-boundary — not by an empirical test with independent statistical power."
+      "conclusion": "In this geometry, single-cell circularity is structurally impossible. At r=0.124 the entire Quartz operating range is covered by the 100,940-point self-set; removing any single cell's 2,884 readings (2.9%) cannot open a gap larger than the V_norm offset between that cell and its neighbours (~0.004), which is negligible relative to r. The surviving detector count is identical (45,386) before and after removal for both P3S12 and P3S10. Type C is ruled out by entailment \u2014 no individual cell defines any part of the self-boundary \u2014 not by an empirical test with independent statistical power."
     },
-    "final_result": "DEGENERATE NULL — Null Type A confirmed. PRIMARY exactly 0 for all 35 cells; SECONDARY marginally non-zero but degenerate (std=0.000071 < 0.001, three thermal-fringe cells with single-timestep activations). The cycling envelope of a healthy WLTP pack occupies the entire NSA operating region at r=0.124; no non-self region is reachable by any real Quartz observation. Type C ruled out by entailment (structural impossibility, not empirical LOCO power).",
-    "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA operates on V_norm × T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar). NSA is designed for binary fault/non-fault detection with degraded cells in the training set — structurally unsuitable for fine-grained health ranking within a healthy population.",
-    "code_updated": "diagnosis/weakest_cell.py rewritten (2D, genuine negative selection, 6D expansion path). All 20 validate() tests PASS."
+    "final_result": "DEGENERATE NULL \u2014 Null Type A confirmed. PRIMARY exactly 0 for all 35 cells; SECONDARY marginally non-zero but degenerate (std=0.000071 < 0.001, three thermal-fringe cells with single-timestep activations). The cycling envelope of a healthy WLTP pack occupies the entire NSA operating region at r=0.124; no non-self region is reachable by any real Quartz observation. Type C ruled out by entailment (structural impossibility, not empirical LOCO power).",
+    "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA operates on V_norm \u00d7 T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar). NSA is designed for binary fault/non-fault detection with degraded cells in the training set \u2014 structurally unsuitable for fine-grained health ranking within a healthy population.",
+    "code_updated": "diagnosis/weakest_cell.py rewritten (2D, genuine negative selection, 6D expansion path). All 20 validate() tests PASS.",
+    "vdetector_arc": {
+      "study_type": "V-detector (variable-radius NSA) sub-study \u2014 CLOSED",
+      "commits": {
+        "implementation": "f0683a3",
+        "loo_within_cell": "ea26ea3"
+      },
+      "unit_tests": "14/14 PASS \u2014 self-deletion correct (r_i <= nearest_dist for all detectors); array interface matches scalar; saturation check operational",
+      "four_way_consolidated_finding": {
+        "1_standard_nsa_fixed_r": {
+          "method": "Fixed-r NSA, r=0.124 (0.4 \u00d7 p95), timestep self-set, 100,940 points",
+          "result": "DEGENERATE NULL \u2014 97.7% of detectors outside Quartz operating envelope; PRIMARY exactly 0.000000 for all 35 cells",
+          "commit": "3ddc594"
+        },
+        "2_cross_cell_rank": {
+          "method": "V-detector \u03b4=3\u00d7 positive control, 12-cell synthetic pack, seed=42",
+          "result": "CONFOUNDED \u2014 P1S7 ranks top-1 at \u03b4=0 (score=0.000073) with no injection; natural cell-to-cell variation exceeds injected signal; Stage 1 SUCCESS re-characterised as confounded",
+          "commit": "f0683a3",
+          "diagnostic_result_file": "data/vdetector_positive_control.json"
+        },
+        "3_loo_within_cell_delta": {
+          "method": "35-cell LOO within-cell delta, both injection modes, seeds 42+43",
+          "result": "UNDERPOWERED \u2014 gate not yet applied; Mode A 30/35 positive but median(delta_A)=4.43e-7 vs noise_ceiling=9.92e-7 (2-seed estimate)",
+          "commit": "ea26ea3",
+          "result_file": "data/vdetector_loo_within_cell.json"
+        },
+        "4_power_gate_4seed": {
+          "method": "4-seed power gate (seeds 42\u201345), per-cell max-pairwise noise floor",
+          "result": "GATE FAILS \u2014 ratio=0.32 (threshold >=2). noise_ceiling=1.372e-6, median(delta_A)=4.429e-7. Test underpowered: comparing two noise sources, not signal vs noise.",
+          "root_cause": "92.8% of detectors capped at r_max=0.150 (far from self-boundary); only 7.2% (~3,500 of 48,800) are near-boundary and geometrically capable of sensing the \u03b4=0.012 injection. Effective boundary-sensitive detector count insufficient to resolve signal above sampling noise."
+        }
+      },
+      "conclusion": "In the healthy Quartz pack, weak-cell detection in V/T space is not achievable by any NSA variant because the injected or natural signal (delta=0.012, inter-cell spread=0.004) is 16\u201347x smaller than the cycling amplitude (V_norm std=0.188). This is a data/geometry limit, independent of algorithm. V-detector calibration is sound (14/14 unit tests, self-deletion correct, saturation check clear); it simply has no signal to resolve here. The Null Type A geometry is confirmed by four independent methods, all yielding the same structural message.",
+      "r_max_tuning_warning": "DO NOT tune r_max to force ratio above 2. If r_max sensitivity is explored it must be a pre-registered study reporting the full ratio-vs-r_max curve, not a single winning value. Even resolving a SYNTHETIC injection would not constitute proof of real weak-cell detection in a genuinely degraded pack \u2014 it would only confirm algorithm mechanics on manufactured signal. Any claim of real detection requires a dataset with genuine degraded-cell signal and an independent fault ground truth.",
+      "mode_b_attribution_preregistered": "Mode B effective mean offset at WLTP V_norm\u22480.55: delta\u00d7(1-0.55)=0.0054 \u2014 2.2\u00d7 weaker than Mode A (0.0120). Mode B fail is ambiguous between (a) algorithm shape-blind and (b) weaker effective signal. Attribution requires equal-signal comparison: Mode A at delta=0.005 vs Mode B at delta=0.012. Deferred until power gate passes on a dataset with genuine signal.",
+      "next_stage_justification": "BattGP (Zenodo 13715694) provides 28 fault-return LFP packs with per-cell voltage time series (U_Cell_1..8) and real degraded cells. Power-gate protocol applies before any detection verdict.",
+      "status": "CLOSED \u2014 structural limit proven"
+    }
   },
   "aco_kuramoto": {
-    "topology_used": "n_parallel=3, n_series=12 (Quartz topology — not default 5×4)",
+    "topology_used": "n_parallel=3, n_series=12 (Quartz topology \u2014 not default 5\u00d74)",
     "check_1_KCL": {
       "description": "ACO outputs must sum to I_total across 50 real-parameter draws",
       "result": "PASS",
@@ -136,7 +198,7 @@
       "description": "Best cell (SOH=0.95, risk=0.05) gets more current than worst (SOH=0.75, risk=0.40)",
       "result": "PASS",
       "scenarios_passed": "10/10",
-      "calibration_concern": "In 8 of 10 scenarios the worst cell receives exactly 0.000A — full current concentration on best cell, not modulation. With I_total=2A split across 3 cells, the heuristic eta differential (0.95/0.05=19 vs 0.75/0.40=1.875) is so large that all 20 ants route to the best cell. Real packs require minimum current floors to prevent cell starvation."
+      "calibration_concern": "In 8 of 10 scenarios the worst cell receives exactly 0.000A \u2014 full current concentration on best cell, not modulation. With I_total=2A split across 3 cells, the heuristic eta differential (0.95/0.05=19 vs 0.75/0.40=1.875) is so large that all 20 ants route to the best cell. Real packs require minimum current floors to prevent cell starvation."
     },
     "check_3_kuramoto_convergence": {
       "description": "Order parameter R increases after 50 Kuramoto steps on real-param SOC imbalance",
@@ -151,17 +213,17 @@
         "R_final": 0.99912,
         "delta_R": 0.067711
       },
-      "calibration_concern": "delta_soc magnitudes reach ±13–17% SOC per call (mean_abs=9.9%). This exceeds physically realizable balancing rates for passive or active cell balancers — a typical balancer achieves <1% SOC correction per cycle. The Kuramoto output should be treated as a synchronization target direction, not a directly actionable setpoint."
+      "calibration_concern": "delta_soc magnitudes reach \u00b113\u201317% SOC per call (mean_abs=9.9%). This exceeds physically realizable balancing rates for passive or active cell balancers \u2014 a typical balancer achieves <1% SOC correction per cycle. The Kuramoto output should be treated as a synchronization target direction, not a directly actionable setpoint."
     },
     "check_4_TR_risk": {
       "description": "TR risk = 0 for all Quartz temperatures; correct boundary behavior",
       "result": "PASS",
-      "quartz_max_T_clean": "42.0°C (315.2 K)",
+      "quartz_max_T_clean": "42.0\u00b0C (315.2 K)",
       "margin_to_onset_K": 38.0,
       "boundary_checks": {
-        "at_onset_80C": "tr_risk=0.0 (correct — onset is not yet runaway)",
-        "above_onset_85C": "tr_risk=0.05 (correct — positive above onset)",
-        "at_runaway_150C": "tr_risk=0.700 (correct — formula matches Feng 2018)"
+        "at_onset_80C": "tr_risk=0.0 (correct \u2014 onset is not yet runaway)",
+        "above_onset_85C": "tr_risk=0.05 (correct \u2014 positive above onset)",
+        "at_runaway_150C": "tr_risk=0.700 (correct \u2014 formula matches Feng 2018)"
       }
     },
     "overall": "ALL PASS (4/4)"
@@ -169,34 +231,34 @@
   "gnn_graphsage": {
     "architecture": "3-layer GraphSAGE, N_NODES=20, INPUT_DIM=7, OUTPUT_DIM=4, n_params=9,428",
     "checks": {
-      "output_shape": "PASS — (20,4) as expected",
-      "output_bounds": "PASS — Sigmoid head enforces [0,1]; min=0.394 max=0.740",
+      "output_shape": "PASS \u2014 (20,4) as expected",
+      "output_bounds": "PASS \u2014 Sigmoid head enforces [0,1]; min=0.394 max=0.740",
       "output_finite": "PASS",
-      "kcl_residual": "PASS — finite, ≥0; residual=0.003047",
-      "adjacency_splitting": "PASS — series/parallel/thermal correctly partitioned",
-      "latency_cpu": "PASS — p99=309µs < 500µs target",
+      "kcl_residual": "PASS \u2014 finite, \u22650; residual=0.003047",
+      "adjacency_splitting": "PASS \u2014 series/parallel/thermal correctly partitioned",
+      "latency_cpu": "PASS \u2014 p99=309\u00b5s < 500\u00b5s target",
       "numpy_interface": "PASS"
     },
     "real_distribution_input_test": {
       "result": "PASS (bounds)",
-      "finding": "std≈0.000 across all 20 output nodes for real Quartz inputs (mean std=0.000819 vs 0.043327 on random-wide inputs). GNN produces near-identical outputs for all cells when inputs are near-uniform (SOC=0.99 for all, V spread=37mV, T spread=2.8°C).",
+      "finding": "std\u22480.000 across all 20 output nodes for real Quartz inputs (mean std=0.000819 vs 0.043327 on random-wide inputs). GNN produces near-identical outputs for all cells when inputs are near-uniform (SOC=0.99 for all, V spread=37mV, T spread=2.8\u00b0C).",
       "root_cause_investigation": {
-        "experiment": "Repeated with BatchNorm replaced by identity (same random-weight seed, same real inputs). Result: std=0.000819 — IDENTICAL to the BatchNorm case. Layer-by-layer probe: BN changes std from 0.003359 to 0.003359 (no change) because in eval mode with default init (running_mean=0, running_var=1), BatchNorm1d acts as identity.",
-        "conclusion": "RANDOM-WEIGHT ARTIFACT, NOT BATCHNORM. Collapse persists when BN is disabled. The collapse arises because random weight matrices W map near-identical input vectors to near-identical output vectors: ||W·(x_i−x_j)|| ≤ ||W||·||x_i−x_j||, and with Quartz's tiny inter-cell spread (0.025 normalized units in V_norm), even typical-scale W produces near-zero inter-node differences. BatchNorm is not a contributing factor."
+        "experiment": "Repeated with BatchNorm replaced by identity (same random-weight seed, same real inputs). Result: std=0.000819 \u2014 IDENTICAL to the BatchNorm case. Layer-by-layer probe: BN changes std from 0.003359 to 0.003359 (no change) because in eval mode with default init (running_mean=0, running_var=1), BatchNorm1d acts as identity.",
+        "conclusion": "RANDOM-WEIGHT ARTIFACT, NOT BATCHNORM. Collapse persists when BN is disabled. The collapse arises because random weight matrices W map near-identical input vectors to near-identical output vectors: ||W\u00b7(x_i\u2212x_j)|| \u2264 ||W||\u00b7||x_i\u2212x_j||, and with Quartz's tiny inter-cell spread (0.025 normalized units in V_norm), even typical-scale W produces near-zero inter-node differences. BatchNorm is not a contributing factor."
       },
-      "implication": "The near-zero std is a random-weight artifact on near-uniform inputs — not an architectural property that would persist after training. Whether trained weights would learn to amplify small inter-cell differences (and achieve per-cell discrimination) cannot be assessed without training data. This is consistent with the broader 'accuracy-untestable' status of the GNN."
+      "implication": "The near-zero std is a random-weight artifact on near-uniform inputs \u2014 not an architectural property that would persist after training. Whether trained weights would learn to amplify small inter-cell differences (and achieve per-cell discrimination) cannot be assessed without training data. This is consistent with the broader 'accuracy-untestable' status of the GNN."
     },
     "data_limitation": {
       "n_nodes_mismatch": "GNN hardcoded to N_NODES=20; Quartz has 36 cells. Architecture change required.",
-      "no_supervised_target": "No per-cell SOC or SOH ground truth exists in Quartz dataset. Accuracy cannot be measured — only architecture correctness.",
+      "no_supervised_target": "No per-cell SOC or SOH ground truth exists in Quartz dataset. Accuracy cannot be measured \u2014 only architecture correctness.",
       "statement": "GNN validated for architecture correctness only. Accuracy validation requires: (a) dataset with per-cell SOC/SOH ground truth, OR (b) synthetic training data from DFN cell model. This is a DATA LIMITATION, not a model limitation."
     },
-    "overall": "ALL ARCHITECTURE CHECKS PASS — accuracy validation not possible with available data"
+    "overall": "ALL ARCHITECTURE CHECKS PASS \u2014 accuracy validation not possible with available data"
   },
   "summary_table": {
     "NSA_recalibrated": {
-      "result": "DEGENERATE NULL — Null Type A",
-      "category": "NSA — recalibrated correctly (genuine negative selection, 2D V/T subspace, pre-registered protocol); outcome = Null Type A: architecture structurally unsuitable for relative health ranking within a healthy homogeneous pack (cycling amplitude dominates inter-cell spread 47×). 2D scope limitation is permanent absent real per-cell SOH/SEI/plating sensors. Recommended replacement for this use case: pack-centroid relative outlier score."
+      "result": "DEGENERATE NULL \u2014 Null Type A",
+      "category": "NSA \u2014 recalibrated correctly (genuine negative selection, 2D V/T subspace, pre-registered protocol); outcome = Null Type A confirmed by four independent methods (fixed-r NSA, cross-cell rank confound, LOO within-cell delta underpowered, 4-seed power gate ratio=0.32). Root cause: cycling amplitude (0.188) dominates inter-cell spread (0.004) and \u03b4=3\u00d7 injection (0.012) by 47\u00d7 and 16\u00d7 respectively. V-detector calibration sound (14/14 unit tests); geometry structurally limits detection. Recommended replacement: pack-centroid relative outlier score (validated against criterion B only \u2014 see final_project_report.md \u00a76.1). Next stage: BattGP (28 fault-return packs, genuine degraded-cell signal, power-gate protocol pre-registered)."
     },
     "ACO_Check_1_KCL": {
       "result": "PASS",
@@ -208,15 +270,15 @@
     },
     "ACO_Check_3_Kura": {
       "result": "PASS",
-      "detail": "R: 0.739→0.995; calibration concern: delta_soc up to ±17%"
+      "detail": "R: 0.739\u21920.995; calibration concern: delta_soc up to \u00b117%"
     },
     "ACO_Check_4_TR": {
       "result": "PASS",
-      "detail": "all Quartz temps well below 80°C onset"
+      "detail": "all Quartz temps well below 80\u00b0C onset"
     },
     "GNN_architecture": {
       "result": "ALL PASS (7/7)",
-      "detail": "accuracy validation not possible; near-zero inter-node std on uniform inputs is random-weight artifact (not BatchNorm — confirmed by BN-disabled control, std identical)"
+      "detail": "accuracy validation not possible; near-zero inter-node std on uniform inputs is random-weight artifact (not BatchNorm \u2014 confirmed by BN-disabled control, std identical)"
     }
   }
 }
