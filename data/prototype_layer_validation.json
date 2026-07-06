@@ -186,6 +186,102 @@
       "status": "CLOSED \u2014 structural limit proven"
     }
   },
+  "battgp_vdetector": {
+    "battgp_vdetector_preregistration": {
+      "status": "LOCKED \u2014 pre-registered before any detection code is written",
+      "locked_commit": "pending",
+      "dataset": "BattGP Zenodo 13715694 \u2014 28 LFP 8s1p field-return systems",
+      "calibration_system": {
+        "system_id": "data_sys_17",
+        "role": "BURNED for V_norm calibration only",
+        "why_burned": "Bound-setting required identifying the healthy 7 cells (by ranking p50 voltages, U_Cell_3 lowest) \u2014 this looked at which cell is faulty. Any detection result on data_sys_17 is contaminated by this snooping. Detection on data_sys_17 is shown as secondary/sanity only, never as primary evidence.",
+        "held_out_systems": "all 28 systems except data_sys_17 (27 systems) form the primary held-out validation set"
+      },
+      "feature_engineering": {
+        "v_norm_formula": "clip((V - 3.140) / 0.243, 0.0, 1.0)",
+        "v_norm_derivation": "healthy-7 cells of data_sys_17 (U_Cell_1,2,4,5,6,7,8) under BattGP segment criteria",
+        "v_low_V": 3.14,
+        "v_high_V": 3.383,
+        "span_V": 0.243,
+        "v_low_anchor": "healthy-7 p1 = 3.190 V \u2212 50 mV margin",
+        "v_high_anchor": "healthy-7 p99 = 3.333 V + 50 mV margin",
+        "why_healthy_bounds_not_all_cells": "All-8 version is circular: U_Cell_3's 2.567 V min sets V_low, accommodating exactly the cell we aim to detect. Healthy-7 anchors normalization to the normal operating range.",
+        "t_norm_formula": "(T_degC - 25) / 50",
+        "t_norm_assignment": "per BattGP TEMP_MAP: cells 1-2 -> T_Cell_1_2, cells 3-4 -> T_Cell_3_4, cells 5-6 -> T_Cell_5_6, cells 7-8 -> T_Cell_7_8",
+        "feature_vector": "(V_norm, T_norm) \u2014 2D, same as Quartz"
+      },
+      "segment_and_current_filter": {
+        "battgp_segment_criteria": {
+          "SOC_pct": "40-95",
+          "I_Batt_A": "-80 to -5 (discharge)",
+          "T_degC": "10-100",
+          "I_CNV_filter_A": "abs(I_CNV_Cell_k) < 20 for all k=1..8"
+        },
+        "high_current_subsegment": {
+          "threshold_A": 15,
+          "threshold_derivation": "median |I_Batt| in data_sys_17 discharge segments = 14.6 A, rounded to 15 A",
+          "signal_at_threshold": "V gap healthy-vs-degraded = 232 mV (delta_V_norm = 0.955) vs 67 mV (0.276) full-segment \u2014 3.5x improvement",
+          "re_derive_rule": "Once first 5 held-out systems are loaded, recompute pooled median |I| across calibration + those 5 systems. If pooled median deviates from 15 A by more than 5 A, update threshold and freeze it for all remaining systems. If within 5 A, keep 15 A. This re-derivation must complete BEFORE any detection is run on remaining systems.",
+          "all_training_and_scoring": "uses high-current sub-segment features only"
+        }
+      },
+      "detection_protocol": {
+        "method": "LOO within each system \u2014 8 iterations per system",
+        "per_iteration": {
+          "self_set": "pool high-current (V_norm, T_norm) features from the other 7 cells",
+          "vdetector_hyperparams": {
+            "r_min": 0.005,
+            "r_max": 0.15,
+            "n_candidate": 50000,
+            "rng_seed": 42
+          },
+          "primary_score_i": "mean activation fraction of cell i's high-current features"
+        },
+        "vdetector_prediction": "cell with highest PRIMARY score = V-detector predicted weak cell",
+        "r_max_warning": "r_max is NOT tuned. Any r_max sensitivity study must report the full ratio-vs-r_max curve, not a single winning value."
+      },
+      "trivial_baseline": {
+        "definition": "trivial_score_i = mean(V_norm_i) on high-current sub-segment samples; trivial_weak_cell = argmin(trivial_score_i)",
+        "implementation": "one-line mean \u2014 no training, no detectors, no hyperparameters",
+        "pre_registered_comparator_rule": "V-detector is reported as adding value ONLY IF its agreement rate with GP-inferred weak cell >= trivial baseline agreement rate. If V-detector merely replicates per-cell-mean ranking, this is reported honestly: the algorithm adds nothing over the mean on this data.",
+        "per_pack_triple": "(trivial_pred, vdetector_pred, gp_pred)",
+        "primary_metric": "agreement fraction with gp_pred, reported separately for trivial and V-detector"
+      },
+      "power_gate": {
+        "seeds": [
+          42,
+          43,
+          44,
+          45
+        ],
+        "signal_per_seed": "gap = max(PRIMARY_i) - mean(PRIMARY_j for j != argmax)",
+        "noise_ceiling": "p95 of {per-cell max-pairwise |delta gap| across 4 seeds}",
+        "ratio": "median(signal_gap over 4 seeds) / noise_ceiling",
+        "gate_threshold": 2.0,
+        "gate_fail_label": "UNDERPOWERED \u2014 INCONCLUSIVE",
+        "gate_fail_is_first_class_result": "gate-fail count (X/27) reported as primary result, not hidden"
+      },
+      "outcomes_per_held_out_system": {
+        "three_mutually_exclusive": [
+          "AGREE: gate passes AND V-detector top-1 == GP-inferred weak cell",
+          "DISAGREE: gate passes AND V-detector top-1 != GP-inferred weak cell",
+          "GATE-FAIL: ratio < 2"
+        ],
+        "baseline_outcomes": [
+          "BASELINE-AGREE: gate passes AND trivial top-1 == GP",
+          "BASELINE-DISAGREE: gate passes AND trivial top-1 != GP"
+        ],
+        "gp_source": "BattGP calc_fault_probabilities output \u2014 independent of our pipeline",
+        "framing": "method-agreement study, not validation against independent ground truth"
+      },
+      "mode_b_attribution": "DEFERRED \u2014 at constant high current the Mode A vs Mode B distinction is near-absent. Deferred until a study with broader current range or synthetic injection.",
+      "data_sys_17_snooped_sanity_check": {
+        "label": "CALIBRATION SYSTEM \u2014 snooped, excluded from primary results",
+        "may_be_shown_as": "secondary/sanity check only",
+        "known_answer": "U_Cell_3 degraded (p50=3.218V vs healthy p50=3.285V; min=2.567V vs healthy min=3.116V)"
+      }
+    }
+  },
   "aco_kuramoto": {
     "topology_used": "n_parallel=3, n_series=12 (Quartz topology \u2014 not default 5\u00d74)",
     "check_1_KCL": {
