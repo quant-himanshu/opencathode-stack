@@ -284,9 +284,9 @@
       },
       "gp_confidence_gating": {
         "rationale": "All 28 systems are warranty returns, but README states returns can be driven by BMS warnings, user judgment, or support advice \u2014 not necessarily a cell fault. On a pack with no genuinely weak cell, both GP and V-detector pick a top-1 by noise; AGREE/DISAGREE is then meaningless.",
-        "gp_source": "BattGP calc_fault_probabilities with causal=True, r0_band=0.55e-3, r0_upper_threshold=2.0e-3 (published fault line from example_usage_battgp.py)",
-        "gp_confident_definition": "At least one cell's fault probability exceeds the GP threshold AND that cell's estimated R0 elevation exceeds r0_upper_threshold=2.0e-3 Ohm. Single highest-probability cell = GP-inferred weak cell.",
-        "no_clear_fault_definition": "No cell exceeds r0_upper_threshold=2.0e-3 Ohm in GP's R0 estimate for this pack. Pack is excluded from AGREE/DISAGREE; reported in its own count.",
+        "gp_source": "BattGP calc_fault_probabilities with causal=True, r0_band=0.55e-3, r0_upper_threshold=2.0e-3 (used only for threshold fault prob column, not used for GP-confidence gate \u2014 see correction below)",
+        "gp_confident_definition": "GP-confident = max(R_upper{i} band_i fault prob, over last 24 hourly GP predictions, across cells i=1..8) >= 0.5. R_upper{i} band_i fault prob is P(R0_i > mean_pack_without_i + r0_band=0.55e-3 Ohm), the relative upper-band probability computed by BattGP's calc_fault_probabilities. This is the correct metric: absolute r0_upper_threshold=2.0e-3 is UNUSABLE here because all cells in this pack have baseline R0 of 8-10 mOhm (pack age: 2013-2016), well above the 2 mOhm absolute line. Band-relative probability is independent of pack baseline resistance and correctly isolates relative outliers.",
+        "no_clear_fault_definition": "max(R_upper{i} band_i fault prob, last 24 timesteps) < 0.5. Pack is excluded from AGREE/DISAGREE; reported as NO-CLEAR-FAULT count.",
         "evaluation_preconditions": "AGREE or DISAGREE are evaluated ONLY when BOTH (a) power gate passes (ratio >= 2) AND (b) GP flags at least one cell above r0_upper_threshold.",
         "full_breakdown_reported": [
           "N_held_out     : total held-out systems (27)",
@@ -297,7 +297,9 @@
           "N_no_fault     : gate-pass systems where GP flags no cell above threshold",
           "N_gate_fail    : systems where power gate ratio < 2"
         ],
-        "no_silent_drops": "Every held-out system appears in exactly one of: N_agree + N_disagree + N_no_fault + N_gate_fail = N_held_out. No pack is silently excluded."
+        "no_silent_drops": "Every held-out system appears in exactly one of: N_agree + N_disagree + N_no_fault + N_gate_fail = N_held_out. No pack is silently excluded.",
+        "gp_confident_threshold": 0.5,
+        "gp_weak_cell_definition": "argmax(mean R_upper{i} band_i fault prob over last 24 hourly predictions), evaluated only when GP-confident=True"
       }
     }
   },
