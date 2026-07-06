@@ -188,7 +188,7 @@
   },
   "battgp_vdetector": {
     "battgp_vdetector_preregistration": {
-      "status": "LOCKED \u2014 pre-registered before any detection code is written",
+      "status": "LOCKED \u2014 GP-confidence gating added; pre-registered before any detection code is written",
       "locked_commit": "pending",
       "dataset": "BattGP Zenodo 13715694 \u2014 28 LFP 8s1p field-return systems",
       "calibration_system": {
@@ -262,23 +262,42 @@
         "gate_fail_is_first_class_result": "gate-fail count (X/27) reported as primary result, not hidden"
       },
       "outcomes_per_held_out_system": {
-        "three_mutually_exclusive": [
-          "AGREE: gate passes AND V-detector top-1 == GP-inferred weak cell",
-          "DISAGREE: gate passes AND V-detector top-1 != GP-inferred weak cell",
-          "GATE-FAIL: ratio < 2"
-        ],
         "baseline_outcomes": [
           "BASELINE-AGREE: gate passes AND trivial top-1 == GP",
           "BASELINE-DISAGREE: gate passes AND trivial top-1 != GP"
         ],
         "gp_source": "BattGP calc_fault_probabilities output \u2014 independent of our pipeline",
-        "framing": "method-agreement study, not validation against independent ground truth"
+        "framing": "method-agreement study, not validation against independent ground truth",
+        "four_mutually_exclusive": [
+          "AGREE: power gate passes AND GP-confident AND V-detector top-1 == GP-inferred weak cell",
+          "DISAGREE: power gate passes AND GP-confident AND V-detector top-1 != GP-inferred weak cell",
+          "GATE-FAIL: power gate ratio < 2 (detection underpowered; no prediction made)",
+          "NO-CLEAR-FAULT: power gate passes AND GP does not flag any cell above r0_upper_threshold=2.0e-3 Ohm (pack may be healthy or fault is below GP detection threshold; AGREE/DISAGREE not evaluated)"
+        ],
+        "baseline_outcomes_note": "Trivial baseline outcomes use the same GP-confidence precondition: BASELINE-AGREE and BASELINE-DISAGREE are evaluated only when gate passes AND GP-confident. Trivial score is computed on all gate-pass systems regardless, but agreement only counted on GP-confident subset."
       },
       "mode_b_attribution": "DEFERRED \u2014 at constant high current the Mode A vs Mode B distinction is near-absent. Deferred until a study with broader current range or synthetic injection.",
       "data_sys_17_snooped_sanity_check": {
         "label": "CALIBRATION SYSTEM \u2014 snooped, excluded from primary results",
         "may_be_shown_as": "secondary/sanity check only",
         "known_answer": "U_Cell_3 degraded (p50=3.218V vs healthy p50=3.285V; min=2.567V vs healthy min=3.116V)"
+      },
+      "gp_confidence_gating": {
+        "rationale": "All 28 systems are warranty returns, but README states returns can be driven by BMS warnings, user judgment, or support advice \u2014 not necessarily a cell fault. On a pack with no genuinely weak cell, both GP and V-detector pick a top-1 by noise; AGREE/DISAGREE is then meaningless.",
+        "gp_source": "BattGP calc_fault_probabilities with causal=True, r0_band=0.55e-3, r0_upper_threshold=2.0e-3 (published fault line from example_usage_battgp.py)",
+        "gp_confident_definition": "At least one cell's fault probability exceeds the GP threshold AND that cell's estimated R0 elevation exceeds r0_upper_threshold=2.0e-3 Ohm. Single highest-probability cell = GP-inferred weak cell.",
+        "no_clear_fault_definition": "No cell exceeds r0_upper_threshold=2.0e-3 Ohm in GP's R0 estimate for this pack. Pack is excluded from AGREE/DISAGREE; reported in its own count.",
+        "evaluation_preconditions": "AGREE or DISAGREE are evaluated ONLY when BOTH (a) power gate passes (ratio >= 2) AND (b) GP flags at least one cell above r0_upper_threshold.",
+        "full_breakdown_reported": [
+          "N_held_out     : total held-out systems (27)",
+          "N_gate_pass    : systems where power gate ratio >= 2",
+          "N_gp_confident : gate-pass systems where GP flags >= 1 cell above threshold",
+          "N_agree        : GP-confident AND V-detector top-1 == GP weak cell",
+          "N_disagree     : GP-confident AND V-detector top-1 != GP weak cell",
+          "N_no_fault     : gate-pass systems where GP flags no cell above threshold",
+          "N_gate_fail    : systems where power gate ratio < 2"
+        ],
+        "no_silent_drops": "Every held-out system appears in exactly one of: N_agree + N_disagree + N_no_fault + N_gate_fail = N_held_out. No pack is silently excluded."
       }
     }
   },
