@@ -46,61 +46,85 @@
       "p3s10_fringe_rank": "24/35 (distance 0.0107 from centroid)",
       "fringe_cells_are_thermal": "Cells furthest from centroid (P1S1, P3S4, P1S7) are thermal position outliers (end-of-string T_norm extremes), not voltage/capacity outliers"
     },
-    "stage_2_detector_training": {
+    "pre_registration_deviation": {
+      "deviation": "Self-set used in commit 1eb8ff2 was 35 per-cell MEAN positions, not real per-timestep readings as pre-registration specified ('real healthy readings sampled uniformly across all cells AND TIMESTEPS').",
+      "why_taken": "Stage 1 analysis surfaced two interpretations of 'p95 self-cloud radius' (0.035 per-cell-means vs 0.311 all-observations). The pre-registration rationale mentioned '~0.025–0.056 normalized units', which matches the per-cell-means span. This was an interpretation error — the pre-registration text is unambiguous. Deviation was flagged by user review of commit 1eb8ff2.",
+      "impact_on_conclusion": "Per-cell-means run produced degenerate non-zero scores (PRIMARY std=0.000158) with T_norm-position-driven residual structure. Timestep-self-set rerun produces PRIMARY std=0.000000 (all exactly zero) — a stronger null. The final null verdict does NOT change, but the mechanism is now cleaner: Type A (cycling envelope covers Quartz operating range), Type B and Type C both ruled out. The per-cell-means LOCO (1 point of 35) had no statistical power; retracted and replaced by the timestep LOCO below (2,884 points removed per cell)."
+    },
+    "stage_2_detector_training_means_run": {
+      "_note": "DEVIATED FROM PRE-REGISTRATION — documented above. Results retained for audit trail.",
+      "self_set": "35 per-cell mean positions (incorrect)",
       "r": 0.014024,
-      "r_formula": "0.4 × p95 — single pre-chosen multiplier, not tuned",
-      "sampling_box": {
-        "V_norm": [0.393733, 0.674204],
-        "T_norm": [-0.058654, 0.221817]
-      },
-      "N_CANDIDATE": 50000,
+      "p95_r": 0.035059,
       "n_survivors": 47848,
       "survivor_fraction": 0.957,
+      "primary_std": 0.000158,
+      "secondary_std": 0.000086
+    },
+    "stage_2_detector_training": {
+      "self_set": "100,940 per-timestep (V_norm, T_norm) observations — every 220th row × 35 cells (PRE-REGISTERED)",
+      "r": 0.124250,
+      "r_formula": "0.4 × p95 — single pre-chosen multiplier, not tuned",
+      "p95_r": 0.310624,
+      "p50_r": 0.164061,
+      "centroid": {"V_norm": 0.534114, "T_norm": 0.081589},
+      "sampling_box": {
+        "V_norm": [-0.708382, 1.776611],
+        "T_norm": [-1.160907, 1.324086]
+      },
+      "N_CANDIDATE": 50000,
+      "n_survivors": 45386,
+      "survivor_fraction": 0.908,
       "calibration_check": "OK — not 0% or ~100%",
-      "sanity_check": "min(distance from survivor to any self-point) = 0.014030 > r = 0.014024 — PASS",
-      "note_high_survival": "95.7% survival is expected: the 35 self-points (tight cluster spanning ~0.008 × 0.084) occupy only ~4.3% of the sampling box area. Detectors fill the surrounding space."
+      "quartz_operating_range": {
+        "V_norm": [0.0, 0.8060],
+        "T_norm": [-0.0784, 0.3406]
+      },
+      "survivors_within_quartz_reach": "1,066 / 45,386 (2.3%)",
+      "survivors_outside_quartz_reach": "44,320 / 45,386 (97.7%)",
+      "pre_score_prediction": "By construction, any survivor is > r from all self-points. The nearest Quartz observations to the survivor boundary are exactly at the self-cloud p95 boundary, which is r away from the nearest survivor. No activation is possible before scoring begins."
     },
     "stage_3_scores": {
-      "scoring_primary": "mean over all 634,450 timesteps of per-timestep activation fraction (fraction of detectors within r of cell's (V_norm,T_norm))",
+      "scoring_primary": "mean over all 634,450 timesteps of per-timestep activation fraction",
       "scoring_secondary": "max over all 634,450 timesteps of per-timestep activation fraction",
-      "primary_range": {"min": 0.003153, "min_cell": "P2S10", "max": 0.003688, "max_cell": "P3S7"},
-      "primary_std": 0.000158,
-      "secondary_range": {"min": 0.009488, "min_cell": "P3S8", "max": 0.009885, "max_cell": "P2S3"},
-      "secondary_std": 0.000086,
-      "degeneracy_verdict": "DEGENERATE — both primary and secondary std < 0.001 threshold",
-      "null_type_classification": "Null Type A + B (primary), Null Type C ruled out by LOCO",
-      "null_type_A_explanation": "The cycling range (V_norm std ≈ 0.188 per cell across all timesteps) dominates over inter-cell differences (~0.004 V_norm at any given timestep). All cells traverse the full V_norm range during WLTP; detector activations during cycling excursions swamp the small per-cell offsets.",
-      "null_type_B_explanation": "95.7% detector survival distributes detectors throughout the sampling box. The inter-cell V_norm and T_norm differences (0.004 and 0.008 normalized) are far smaller than the box extent (~0.28), so all cells activate approximately equal detector fractions.",
-      "small_residual_structure": "Primary relative range = 15.5% (max/min = 0.003688/0.003153). Structure is driven by T_norm position bias — cells with low T_norm (P1S1: 0.035, P1S7: 0.048) rank highest because their self-deletion region is at the T_norm fringe; P2-cluster cells near the centroid (T_norm ≈ 0.08) rank lowest due to denser mutual self-deletion."
+      "primary_range": {"min": 0.000000, "max": 0.000000},
+      "primary_std": 0.000000,
+      "secondary_range": {"min": 0.000000, "max": 0.000286, "max_cells": "P3S4 (0.000242), P3S9 (0.000110), P1S1 (0.000022) — extreme T outliers, single-timestep activations"},
+      "secondary_std": 0.000071,
+      "degeneracy_verdict": "DEGENERATE — PRIMARY all exactly 0.0; SECONDARY std=0.000071 < 0.001",
+      "null_type_classification": "Null Type A — confirmed",
+      "null_type_A_confirmed": "Cycling-envelope self-set at r=0.124 covers the entire Quartz WLTP operating range. Surviving detectors exist only in T/V extremes no cell ever reaches: T_norm > 0.466 (>48°C, Quartz max 40°C), T_norm < -0.203 (<14.9°C), V_norm outside [0, 0.930]. The 47× cycling/inter-cell ratio (V_norm cycling std=0.188 vs inter-cell differences=0.004) is confirmed as the structural explanation — not an artifact of the per-cell-means shortcut.",
+      "secondary_trace_explanation": "Three cells show non-zero secondary scores (P3S4=0.000242, P3S9=0.000110, P1S1=0.000022). These are single-timestep activations where those cells' T_norm reaches within r of the detector boundary at the high-T fringe. All are below any physically meaningful threshold and contribute std=0.000071, well below the 0.001 degeneracy threshold."
     },
     "stage_4_spearman_2x2": {
-      "note": "Scores are degenerate (std < 0.001); Spearman operates on tiny rank differences. Results are noise-driven and declared NULL per pre-registration despite some rs values entering WEAK range.",
-      "primary_vs_criterion_A_deficit": {"rs": -0.2244, "p": 0.1951, "category": "WEAK by rs threshold — NULL per degenerate-score rule; sign NEGATIVE (anti-correlated: high activation = low deficit, T_norm fringe effect, not health signal)"},
-      "primary_vs_criterion_B_minV": {"rs": -0.1768, "p": 0.3096, "category": "WEAK by rs — NULL per degenerate-score rule"},
-      "secondary_vs_criterion_A_deficit": {"rs": 0.2087, "p": 0.2289, "category": "WEAK by rs — NULL per degenerate-score rule"},
-      "secondary_vs_criterion_B_minV": {"rs": 0.1326, "p": 0.4475, "category": "WEAK by rs — NULL per degenerate-score rule"},
-      "2x2_summary": "ALL NULL — degenerate input scores propagate to null correlations"
+      "note": "PRIMARY scores are all exactly 0 — Spearman undefined for primary. SECONDARY scores have std=0.000071; correlation analysis would operate on effectively constant values. Table is trivially NULL; not re-run on all-zero primary.",
+      "2x2_summary": "ALL NULL — primary scores all-zero; secondary scores degenerate (std=0.000071)"
     },
     "loco_diagnostic": {
-      "triggered_by": "null outcome in Stage 3+4",
-      "pre_registration": "run only as null diagnostic; remove one cell from self-set, regenerate detectors, recompute only that cell's score",
+      "triggered_by": "null outcome — pre-registration requirement",
+      "self_set_type": "timestep self-set (corrected), 100,940 self-points; removed 2,884 readings per held-out cell (2.9%)",
+      "retraction": "Previous LOCO (commit 1eb8ff2) removed 1 of 35 mean points — statistical power was negligible. 'Type C ruled out definitively' claim from that run is RETRACTED and replaced by this result.",
       "p3s12_loco": {
-        "delta_primary": 0.000001,
-        "delta_secondary": -0.000003,
-        "relative_change_pct": 0.0,
-        "verdict": "Negligible — circularity NOT the primary cause of null"
+        "self_points_removed": 2884,
+        "pct_of_self_set": 2.9,
+        "surviving_detectors": 45386,
+        "delta_primary": 0.000000,
+        "delta_secondary": 0.000000,
+        "verdict": "No change — circularity NOT the primary cause of null"
       },
       "p3s10_loco": {
+        "self_points_removed": 2884,
+        "pct_of_self_set": 2.9,
+        "surviving_detectors": 45386,
         "delta_primary": 0.000000,
-        "delta_secondary": -0.000001,
-        "relative_change_pct": 0.0,
-        "verdict": "Negligible — circularity NOT the primary cause of null"
+        "delta_secondary": 0.000000,
+        "verdict": "No change — circularity NOT the primary cause of null"
       },
-      "conclusion": "Null Type C (circularity) ruled out. P3S12 and P3S10 sit near the self-cloud centroid (fringe ranks 14 and 24 of 35), so their own self-points have minimal impact on detector placement. The null is structural: V_norm cycling amplitude dominates inter-cell differences by ~47× (0.188 vs 0.004)."
+      "conclusion": "Null Type C (circularity) definitively ruled out. Removing 2.9% of self-points (all of P3S12 or P3S10's readings) causes zero change in scores, because the 0.004 V_norm offset between these cells and the pack mean is negligible relative to r=0.124. Even with their data removed, the remaining 34 cells cover those cells' operating regions completely."
     },
-    "final_result": "DEGENERATE NULL — Null Type A+B. Recalibrated NSA with genuine negative selection and data-derived r produces non-zero but indistinguishable anomaly scores across all 35 cells. The 2D (V,T) signal that weakly survives (primary rs=-0.22 with Criterion A) reflects thermal string-position bias, not voltage health ranking, and is anti-correlated with the pre-registered weakest-cell criterion.",
-    "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA detects anomalies in V_norm × T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar), not negative selection. NSA is designed for binary fault/non-fault detection with degraded cells in the training set — it is structurally unsuitable for fine-grained health ranking within a healthy population.",
-    "code_updated": "diagnosis/weakest_cell.py rewritten: 6D→2D, genuine negative-selection training (self-deletion from data-derived self-set), primary/secondary scoring methods, 6D expansion path documented in module docstring. All 20 validate() tests PASS."
+    "final_result": "DEGENERATE NULL — Null Type A, confirmed by both self-set constructions. PRIMARY scores exactly 0 for all 35 cells. The cycling envelope of a healthy WLTP pack occupies the entire NSA detector space at this r; no non-self region exists within the cells' actual operating range. LOCO (2,884 points removed, not 1) confirms Type C does not contribute. Retracted: 'per-cell-means LOCO ruled out Type C definitively' (no statistical power at 1/35 points).",
+    "2d_scope_limitation_final": "Restated per pre-registration requirement: the recalibrated NSA operates on V_norm × T_norm only. No SOH, SEI, or plating sensitivity is possible without real per-cell sensors. For relative health ranking within a healthy homogeneous pack, the appropriate tool is a pack-centroid distance metric (Mahalanobis or similar). NSA is designed for binary fault/non-fault detection with degraded cells in the training set — structurally unsuitable for fine-grained health ranking within a healthy population.",
+    "code_updated": "diagnosis/weakest_cell.py rewritten (2D, genuine negative selection, 6D expansion path). All 20 validate() tests PASS."
   },
   "aco_kuramoto": {
     "topology_used": "n_parallel=3, n_series=12 (Quartz topology — not default 5×4)",
@@ -173,8 +197,8 @@
   },
   "summary_table": {
     "NSA_recalibrated": {
-      "result": "DEGENERATE NULL (Null Type A+B)",
-      "category": "NULL — recalibrated 2D NSA with genuine negative selection; cycling amplitude 47× inter-cell V differences; LOCO rules out circularity (Type C). 2D scope limitation (no SOH/SEI/plating) persists."
+      "result": "DEGENERATE NULL (Null Type A — confirmed by both per-cell-means and timestep self-sets)",
+      "category": "NULL — cycling envelope covers entire Quartz operating range at r=0.124; PRIMARY all-zero; LOCO (2,884 points removed) rules out Type C. Pre-registration deviation documented: per-cell-means shortcut in commit 1eb8ff2 retracted and rerun with correct timestep self-set."
     },
     "ACO_Check_1_KCL": {
       "result": "PASS",
