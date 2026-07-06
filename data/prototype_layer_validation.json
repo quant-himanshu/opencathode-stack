@@ -123,8 +123,12 @@
     },
     "real_distribution_input_test": {
       "result": "PASS (bounds)",
-      "finding": "std=0.000 across all 20 output nodes for real Quartz inputs — GNN produces identical outputs for all cells when inputs are near-uniform (SOC=0.99 for all, V spread=37mV, T spread=2.8°C). BatchNorm collapses all representations to the same value when node features are near-identical.",
-      "implication": "The GNN has zero per-cell discrimination when inputs are near-uniform. For a healthy pack with small inter-cell differences, the GNN is a constant estimator — not a per-cell estimator. This is expected for an untrained model but is also a concern for the architecture: BatchNorm in the SAGEConv layers normalizes across nodes in the forward pass, which will tend to homogenize outputs when inputs are similar."
+      "finding": "std≈0.000 across all 20 output nodes for real Quartz inputs (mean std=0.000819 vs 0.043327 on random-wide inputs). GNN produces near-identical outputs for all cells when inputs are near-uniform (SOC=0.99 for all, V spread=37mV, T spread=2.8°C).",
+      "root_cause_investigation": {
+        "experiment": "Repeated with BatchNorm replaced by identity (same random-weight seed, same real inputs). Result: std=0.000819 — IDENTICAL to the BatchNorm case. Layer-by-layer probe: BN changes std from 0.003359 to 0.003359 (no change) because in eval mode with default init (running_mean=0, running_var=1), BatchNorm1d acts as identity.",
+        "conclusion": "RANDOM-WEIGHT ARTIFACT, NOT BATCHNORM. Collapse persists when BN is disabled. The collapse arises because random weight matrices W map near-identical input vectors to near-identical output vectors: ||W·(x_i−x_j)|| ≤ ||W||·||x_i−x_j||, and with Quartz's tiny inter-cell spread (0.025 normalized units in V_norm), even typical-scale W produces near-zero inter-node differences. BatchNorm is not a contributing factor."
+      },
+      "implication": "The near-zero std is a random-weight artifact on near-uniform inputs — not an architectural property that would persist after training. Whether trained weights would learn to amplify small inter-cell differences (and achieve per-cell discrimination) cannot be assessed without training data. This is consistent with the broader 'accuracy-untestable' status of the GNN."
     },
     "data_limitation": {
       "n_nodes_mismatch": "GNN hardcoded to N_NODES=20; Quartz has 36 cells. Architecture change required.",
@@ -160,7 +164,7 @@
     },
     "GNN_architecture": {
       "result": "ALL PASS (7/7)",
-      "detail": "accuracy validation not possible; BatchNorm collapse on uniform inputs"
+      "detail": "accuracy validation not possible; near-zero inter-node std on uniform inputs is random-weight artifact (not BatchNorm — confirmed by BN-disabled control, std identical)"
     }
   }
 }
