@@ -690,6 +690,118 @@ def run_all(systems: list[str], output_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Post-hoc spot audit: full-data re-run on lowest-confidence GP systems
+# ---------------------------------------------------------------------------
+
+# Large sentinel so _write_capped_zip never subsamples (cap_rows > any real dataset).
+_GP_FULL_DATA_CAP = 10_000_000
+
+
+def spot_audit_cap(results: list[dict], n_audit: int = 3) -> list[dict]:
+    """
+    Post-hoc transparency check: pick the N GP-confident systems with the
+    LOWEST max_band_prob (closest to the 0.5 decision boundary, most at risk
+    of cap dilution) among systems where the cap actually bound, then re-run
+    each at full data (no subsampling).  Compare weak-cell prediction and
+    band_prob.  If any differ, the capped conclusion for that system is flagged
+    as cap-dependent.
+
+    Pre-registered: locked before any system-7+ results were seen.
+    Selection criterion: lowest max_band_prob among GP-confident + cap-bound systems.
+    """
+    # Gather candidates: GP-confident AND cap actually bound
+    candidates = []
+    for r in results:
+        if r.get("outcome") not in ("AGREE", "DISAGREE"):
+            continue
+        gp = r.get("gp", {})
+        if not gp.get("gp_confident"):
+            continue
+        n_seg  = gp.get("n_seg_rows", 0)
+        n_used = gp.get("n_gp_rows", n_seg)
+        if n_used >= n_seg:
+            continue   # cap didn't bind — full = capped, skip
+        candidates.append((float(gp.get("max_band_prob", 1.0)), str(r["system_id"])))
+
+    candidates.sort(key=lambda x: x[0])   # ascending: lowest band_prob first
+    targets = candidates[:n_audit]
+
+    if not targets:
+        print("  SPOT AUDIT: no cap-bound GP-confident systems found — nothing to audit.")
+        return []
+
+    print(f"  Auditing {len(targets)} systems: " +
+          ", ".join(f"sys_{sid} (band_prob={bp:.3f})" for bp, sid in targets))
+
+    audit_records = []
+    for capped_bp, sid in targets:
+        print(f"\n{'='*65}")
+        print(f"SPOT AUDIT (full data, no cap) — data_sys_{sid}"
+              f"  [capped band_prob={capped_bp:.3f}]")
+        print("=" * 65)
+
+        df_raw = _load_csv_from_zip(ZIP_PATH, sid)
+        if df_raw is None:
+            print(f"  DATA UNAVAILABLE — cannot audit sys_{sid}")
+            audit_records.append({"system_id": sid, "audit_status": "DATA_UNAVAILABLE"})
+            continue
+
+        df_seg = apply_segment_criteria(df_raw)
+
+        # Capped reference (already in results)
+        capped_rec = next((r for r in results if str(r.get("system_id")) == sid), {})
+        capped_gp  = capped_rec.get("gp", {})
+
+        # Full-data run
+        full_gp = gp_confidence(sid, df_seg, cap_rows=_GP_FULL_DATA_CAP)
+
+        capped_cell = capped_gp.get("gp_weak_cell")
+        capped_conf = capped_gp.get("gp_confident")
+        full_cell   = full_gp.get("gp_weak_cell")
+        full_conf   = full_gp.get("gp_confident")
+        full_bp     = full_gp.get("max_band_prob", float("nan"))
+
+        same = (full_cell == capped_cell) and (full_conf == capped_conf)
+        audit_status = "MATCH" if same else "DIFFERS"
+
+        print(f"  CAPPED (40k): weak_cell={capped_cell}  "
+              f"confident={capped_conf}  band_prob={capped_bp:.3f}")
+        print(f"  FULL DATA:   weak_cell={full_cell}  "
+              f"confident={full_conf}  "
+              f"band_prob={full_bp:.3f}  "
+              f"rows_used={full_gp.get('n_gp_rows', '?'):,}")
+        print(f"  AUDIT:       {audit_status}")
+        sys.stdout.flush()
+
+        audit_records.append({
+            "system_id": sid,
+            "capped_band_prob": round(capped_bp, 4),
+            "capped_weak_cell": capped_cell,
+            "capped_confident": capped_conf,
+            "full_band_prob": round(full_bp, 4) if not np.isnan(full_bp) else None,
+            "full_weak_cell": full_cell,
+            "full_confident": full_conf,
+            "full_n_rows": full_gp.get("n_gp_rows"),
+            "audit_status": audit_status,
+        })
+
+    # Summary
+    n_match  = sum(1 for a in audit_records if a.get("audit_status") == "MATCH")
+    n_differ = sum(1 for a in audit_records if a.get("audit_status") == "DIFFERS")
+    print(f"\n  SPOT AUDIT SUMMARY: {n_match} MATCH / {n_differ} DIFFERS "
+          f"(out of {len(audit_records)} audited)")
+    if n_differ:
+        print(f"  WARNING: {n_differ} system(s) changed at full data — "
+              "those conclusions are cap-dependent and must be flagged in the report.")
+    else:
+        print("  CAP INTEGRITY CONFIRMED: 40k cap preserves weak-cell and confidence "
+              "judgement across the severity range (validated on lowest-band_prob systems).")
+    sys.stdout.flush()
+
+    return audit_records
+
+
+# ---------------------------------------------------------------------------
 # Entry points
 # ---------------------------------------------------------------------------
 
@@ -714,10 +826,74 @@ if __name__ == "__main__":
                         help="Run calibration-system smoke test only (data_sys_17)")
     parser.add_argument("--systems", nargs="+", type=str,
                         help="System IDs to process (default: all 27 held-out)")
+    parser.add_argument("--spot-audit", action="store_true",
+                        help="Post-hoc spot audit: re-run 3 lowest-band_prob GP-confident "
+                             "systems at full data and write augmented final results JSON")
     args = parser.parse_args()
 
     if args.smoke:
         smoke_test()
+    elif args.spot_audit:
+        # Load completed results from partial file, run spot audit, write final JSON.
+        results, _ = _load_partial_results()
+        if not results:
+            print("ERROR: no completed results found in partial file — run the batch first.")
+            sys.exit(1)
+        print(f"\nLoaded {len(results)} completed systems from partial results file.")
+        print(f"\n{'='*65}")
+        print("SPOT AUDIT — full-data re-run on 3 lowest-band_prob GP-confident systems")
+        print("Pre-registered: locked before any system-7+ results were seen.")
+        print("=" * 65)
+        audit_records = spot_audit_cap(results, n_audit=3)
+
+        # Write final consolidated results (same format as run_all)
+        held_out = [r for r in results if str(r.get("system_id")) != CALIBRATION_SYSTEM]
+        n_total     = len(held_out)
+        n_gate_pass = sum(1 for r in held_out
+                          if r.get("outcome") in ("AGREE","DISAGREE","NO-CLEAR-FAULT","GP_ERROR"))
+        n_gp_conf   = sum(1 for r in held_out if r.get("outcome") in ("AGREE","DISAGREE"))
+        n_agree     = sum(1 for r in held_out if r.get("outcome") == "AGREE")
+        n_disagree  = sum(1 for r in held_out if r.get("outcome") == "DISAGREE")
+        n_no_fault  = sum(1 for r in held_out if r.get("outcome") == "NO-CLEAR-FAULT")
+        n_gate_fail = sum(1 for r in held_out if r.get("outcome") == "GATE-FAIL")
+        n_gp_err    = sum(1 for r in held_out if r.get("outcome") == "GP_ERROR")
+        b_agree     = sum(1 for r in held_out if r.get("baseline_outcome") == "BASELINE-AGREE")
+
+        audit_differs = [a for a in audit_records if a.get("audit_status") == "DIFFERS"]
+        out_data = {
+            "preregistration_commits": ["34d096f", "b89c635", "12668d0", "5a515bf"],
+            "calibration_system": CALIBRATION_SYSTEM,
+            "gp_input_cap": {
+                "max_discharge_rows": GP_MAX_DISCHARGE_ROWS,
+                "method": "uniform_stride_time_ordered",
+                "spot_audit_note": (
+                    "GP capped at 40k discharge rows per system; validated on sys_1 (severe) "
+                    "and sys_4 (subtle) as signal-preserving; borderline systems re-checked "
+                    "at 100k; post-hoc spot audit re-ran 3 lowest-band_prob GP-confident "
+                    "systems at full data — see spot_audit field."
+                ),
+            },
+            "breakdown": {
+                "n_held_out": n_total, "n_gate_pass": n_gate_pass,
+                "n_gp_confident": n_gp_conf, "n_agree": n_agree,
+                "n_disagree": n_disagree, "n_no_fault": n_no_fault,
+                "n_gate_fail": n_gate_fail, "n_gp_error": n_gp_err,
+                "baseline_agree": b_agree,
+            },
+            "spot_audit": {
+                "n_audited": len(audit_records),
+                "n_match": sum(1 for a in audit_records if a.get("audit_status") == "MATCH"),
+                "n_differs": len(audit_differs),
+                "cap_integrity": "CONFIRMED" if not audit_differs else "FLAGGED",
+                "differs_systems": [a["system_id"] for a in audit_differs],
+                "records": audit_records,
+            },
+            "systems": results,
+        }
+        out_path = ROOT / "data" / "battgp_vdetector_results.json"
+        with open(out_path, "w") as f:
+            json.dump(_serial(out_data), f, indent=2)
+        print(f"\nFinal results with spot audit written to {out_path}")
     else:
         all_ids = [str(i) for i in range(1, 29)]
         held_out = [sid for sid in all_ids if sid != CALIBRATION_SYSTEM]

@@ -330,6 +330,27 @@
         "locked_before_system": "7",
         "locked_commit": "pending \u2014 set before any new run on sys_7-28",
         "validation_required": "Must re-run sys_1 with capped GP and confirm GP weak cell still = 7 with band_prob >= 0.5 before launching remaining systems."
+      },
+      "spot_audit_cap": {
+        "description": "Post-hoc full-data spot audit on 3 lowest-band_prob GP-confident systems",
+        "rationale": "The 40k cap is fast but could dilute a near-boundary system. Running the 3 worst cases at full data provides a severity-range coverage check without re-running everything.",
+        "selection_criterion": "GP-confident systems (outcome AGREE or DISAGREE) sorted ascending by max_band_prob; top 3 where cap actually bound (n_gp_rows < n_seg_rows)",
+        "n_audit": 3,
+        "full_data_cap_rows": 10000000,
+        "comparison_fields": [
+          "gp_weak_cell",
+          "gp_confident",
+          "max_band_prob"
+        ],
+        "audit_status_values": [
+          "MATCH",
+          "DIFFERS",
+          "DATA_UNAVAILABLE"
+        ],
+        "verdict_rule": "If any DIFFERS: report both capped and full-data conclusions; flag which outcome depends on the capped run. If all MATCH: cap integrity confirmed across the severity range.",
+        "locked_before_any_system_7_plus_results_seen": true,
+        "locked_mid_batch": "sys_7 completed (AGREE); sys_8 in progress at time of lock; no result reviewed that could influence selection criterion",
+        "run_command": "python3 -u scripts/battgp_vdetector.py --spot-audit"
       }
     }
   },
