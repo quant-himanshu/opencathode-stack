@@ -322,6 +322,14 @@
           "rationale": "Locked pre-batch to eliminate post-hoc incentive to rationalize V-detector value. If the trivial baseline and V-detector make identical predictions, the sophisticated algorithm is not contributing \u2014 and that is the honest result to report."
         },
         "locked_before_batch_run": true
+      },
+      "gp_input_cap": {
+        "max_discharge_rows_per_system": 40000,
+        "method": "uniform_stride_time_ordered",
+        "rationale": "Original run thrashed on sys_8 (3.6GB) and sys_6 (2.9GB) \u2014 GP inference at full resolution is O(n^2) in timesteps. 40,000 rows (\u22485,000/cell) leaves sys_1-4 unchanged (<35k rows), caps sys_5+ aggressively. Applied identically to ALL systems.",
+        "locked_before_system": "7",
+        "locked_commit": "pending \u2014 set before any new run on sys_7-28",
+        "validation_required": "Must re-run sys_1 with capped GP and confirm GP weak cell still = 7 with band_prob >= 0.5 before launching remaining systems."
       }
     }
   },

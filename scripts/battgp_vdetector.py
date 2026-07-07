@@ -35,7 +35,9 @@ import json
 import os
 import struct
 import sys
+import tempfile
 import time
+import zipfile
 import zlib
 from io import BytesIO
 from pathlib import Path
@@ -82,7 +84,14 @@ CALIBRATION_SYSTEM = "17"     # data_sys_17 — burned, sanity only
 POWER_GATE_SEEDS   = [42, 43, 44, 45]
 POWER_GATE_MIN_RATIO = 2.0
 
+# GP INPUT CAP — pre-registered before any system 7-28 is processed.
+# Discharge-segment rows fed to BattGP capped at this value per system.
+# Uniform stride sampling (time-ordered) preserves temporal coverage.
+# 40,000 rows ≈ 5,000 per cell × 8 cells; leaves systems 1-4 unchanged.
+GP_MAX_DISCHARGE_ROWS = 40_000
+
 ZIP_PATH = ROOT / "data" / "iontech_lfp" / "field_data.zip"
+PARTIAL_RESULTS_PATH = ROOT / "data" / "battgp_results_partial.json"
 
 BATTGP_CONFIG_OVERRIDES = {
     "PATH_FIELDDATA_DATA": str(ZIP_PATH),
@@ -155,6 +164,80 @@ def apply_segment_criteria(df: pd.DataFrame) -> pd.DataFrame:
 
 def apply_high_current(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["I_Battery"].abs() > HIGH_CURRENT_THRESHOLD_A].copy()
+
+# ---------------------------------------------------------------------------
+# GP input cap: write subsampled temp zip for BattGP
+# ---------------------------------------------------------------------------
+
+def _write_capped_zip(df_seg: pd.DataFrame, system_id: str) -> Path:
+    """
+    Write a stride-subsampled (≤ GP_MAX_DISCHARGE_ROWS rows) temp zip for BattGP.
+    Timestamp is set as the index to match the original CSV format BattGP expects.
+    Returns path to the temp zip.
+    """
+    tmp_dir = Path(tempfile.gettempdir()) / "battgp_cap"
+    tmp_dir.mkdir(exist_ok=True)
+    zip_path = tmp_dir / f"sys_{system_id}_cap.zip"
+
+    if len(df_seg) > GP_MAX_DISCHARGE_ROWS:
+        stride = max(1, len(df_seg) // GP_MAX_DISCHARGE_ROWS)
+        df_cap = df_seg.iloc[::stride].copy()
+    else:
+        df_cap = df_seg.copy()
+
+    csv_buf = BytesIO()
+    df_cap.set_index("Timestamp").to_csv(csv_buf, index=True)
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(f"field_data/data_sys_{system_id}.csv", csv_buf.getvalue())
+
+    return zip_path
+
+
+# ---------------------------------------------------------------------------
+# Incremental save / resume helpers
+# ---------------------------------------------------------------------------
+
+def _serial(obj):
+    if isinstance(obj, bool): return bool(obj)
+    if isinstance(obj, (np.integer, int)): return int(obj)
+    if isinstance(obj, (np.floating, float)):
+        return None if np.isnan(obj) else float(obj)
+    if isinstance(obj, np.ndarray): return obj.tolist()
+    if isinstance(obj, dict): return {k: _serial(v) for k, v in obj.items()}
+    if isinstance(obj, list): return [_serial(x) for x in obj]
+    return obj
+
+
+def _load_partial_results() -> tuple[list[dict], set[str]]:
+    """Return (results_list, set_of_completed_system_ids)."""
+    if PARTIAL_RESULTS_PATH.exists():
+        try:
+            with open(PARTIAL_RESULTS_PATH) as f:
+                d = json.load(f)
+            systems = d.get("systems", [])
+            completed = {str(s["system_id"]) for s in systems}
+            return systems, completed
+        except Exception:
+            pass
+    return [], set()
+
+
+def _save_partial_results(results: list[dict]) -> None:
+    """Overwrite partial results file with current list (crash-safe after each system)."""
+    out = {
+        "note": "Incremental crash-safe results. gp_input_cap applied to all systems.",
+        "preregistration_commits": ["34d096f", "b89c635", "12668d0", "5a515bf"],
+        "gp_input_cap": {
+            "max_discharge_rows_per_system": GP_MAX_DISCHARGE_ROWS,
+            "method": "uniform_stride_time_ordered",
+            "locked_before_system": "7",
+        },
+        "systems": results,
+    }
+    with open(PARTIAL_RESULTS_PATH, "w") as f:
+        json.dump(_serial(out), f, indent=2)
+
 
 # ---------------------------------------------------------------------------
 # Feature extraction: (V_norm, T_norm) per cell
@@ -253,17 +336,25 @@ def power_gate(df_hc: pd.DataFrame) -> dict:
 # GP confidence gate
 # ---------------------------------------------------------------------------
 
-def gp_confidence(system_id: str) -> dict:
+def gp_confidence(system_id: str, df_seg: pd.DataFrame) -> dict:
     """
     Run BattGP spatiotemporal GP on this system and check fault confidence.
+    df_seg is the already-filtered discharge-segment DataFrame (from run_system).
+    If len(df_seg) > GP_MAX_DISCHARGE_ROWS, writes a stride-subsampled temp zip
+    so BattGP processes ≤ GP_MAX_DISCHARGE_ROWS rows instead of the full file.
     Returns gp_confident bool, gp_weak_cell (1-indexed or None), and R0 estimates.
-    Uses BattGP's published r0_upper_threshold=2.0e-3 Ohm as fault line.
     """
-    battgp_cfg.PATH_FIELDDATA_DATA = BATTGP_CONFIG_OVERRIDES["PATH_FIELDDATA_DATA"]
     battgp_cfg.PATH_FIELDDATA_CELL_CHARACTERISTIC = (
         BATTGP_CONFIG_OVERRIDES["PATH_FIELDDATA_CELL_CHARACTERISTIC"]
     )
     battgp_cfg.PATH_DATA_CACHE = None
+
+    # Write capped temp zip; BattGP reads from this instead of the full zip.
+    cap_zip = _write_capped_zip(df_seg, system_id)
+    battgp_cfg.PATH_FIELDDATA_DATA = str(cap_zip)
+    n_cap = min(len(df_seg), GP_MAX_DISCHARGE_ROWS)
+    print(f"  GP input: {n_cap:,} discharge rows "
+          f"({'capped from ' + str(len(df_seg)) + ' by stride' if len(df_seg) > GP_MAX_DISCHARGE_ROWS else 'full — under cap'})")
 
     try:
         cell_char = read_cell_characteristics(
@@ -413,7 +504,7 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
 
     # --- GP confidence gate ---
     print(f"\n  GP CONFIDENCE GATE (BattGP spatiotemporal GP):")
-    gp = gp_confidence(system_id)
+    gp = gp_confidence(system_id, df_seg)
     if not gp["fault_probs_computed"]:
         print(f"  GP ERROR: {gp.get('error', 'unknown')}")
         # GP unavailable — report with note but don't change outcome categories
@@ -478,30 +569,30 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
 # ---------------------------------------------------------------------------
 
 def run_all(systems: list[str], output_path: Path) -> None:
-    results = []
-    summary = {"AGREE": 0, "DISAGREE": 0, "NO-CLEAR-FAULT": 0,
-               "GATE-FAIL": 0, "GP_ERROR": 0, "DATA_UNAVAILABLE": 0,
-               "INSUFFICIENT_DATA": 0,
-               "BASELINE-AGREE": 0, "BASELINE-DISAGREE": 0}
+    # --- RESUME: load already-completed systems from partial file ---
+    results, completed_ids = _load_partial_results()
+    skipped = [sid for sid in systems if sid in completed_ids]
+    pending = [sid for sid in systems if sid not in completed_ids]
+    if skipped:
+        print(f"\nRESUME: skipping {len(skipped)} already-completed systems: {skipped}")
+    print(f"Processing {len(pending)} remaining systems.\n")
 
-    for sid in systems:
+    for sid in pending:
         is_cal = (sid == CALIBRATION_SYSTEM)
         result = run_system(sid, is_calibration=is_cal)
         results.append(result)
+        # --- INCREMENTAL SAVE: write after every system ---
+        _save_partial_results(results)
         outcome = result.get("outcome", result.get("status", "UNKNOWN"))
-        if outcome in summary:
-            summary[outcome] += 1
-        b_outcome = result.get("baseline_outcome")
-        if b_outcome in summary:
-            summary[b_outcome] += 1
+        print(f"  → Saved to partial file ({len(results)} systems total so far)")
+        sys.stdout.flush()
 
-    # Held-out only counts (exclude calibration system)
-    held_out = [r for r in results if r.get("system_id") != CALIBRATION_SYSTEM]
+    # --- Final summary (held-out only) ---
+    held_out = [r for r in results if str(r.get("system_id")) != CALIBRATION_SYSTEM]
     print(f"\n{'='*65}")
     print("FULL BREAKDOWN (held-out systems only)")
     print("=" * 65)
     n_total     = len(held_out)
-    n_avail     = sum(1 for r in held_out if r.get("status") in ("OK", "INSUFFICIENT_DATA"))
     n_gate_pass = sum(1 for r in held_out
                       if r.get("outcome") in ("AGREE","DISAGREE","NO-CLEAR-FAULT","GP_ERROR"))
     n_gp_conf   = sum(1 for r in held_out if r.get("outcome") in ("AGREE","DISAGREE"))
@@ -511,10 +602,8 @@ def run_all(systems: list[str], output_path: Path) -> None:
     n_gate_fail = sum(1 for r in held_out if r.get("outcome") == "GATE-FAIL")
     n_gp_err    = sum(1 for r in held_out if r.get("outcome") == "GP_ERROR")
     b_agree     = sum(1 for r in held_out if r.get("baseline_outcome") == "BASELINE-AGREE")
-    b_disagree  = sum(1 for r in held_out if r.get("baseline_outcome") == "BASELINE-DISAGREE")
 
     print(f"  N_held_out       = {n_total}")
-    print(f"  N_data_available = {n_avail}")
     print(f"  N_gate_pass      = {n_gate_pass}")
     print(f"  N_gp_confident   = {n_gp_conf}")
     print(f"  N_agree          = {n_agree}  (V-detector == GP weak cell)")
@@ -523,43 +612,25 @@ def run_all(systems: list[str], output_path: Path) -> None:
     print(f"  N_gate_fail      = {n_gate_fail}  (power gate ratio < 2)")
     print(f"  N_gp_error       = {n_gp_err}  (GP pipeline failed)")
     if n_gp_conf > 0:
-        print(f"\n  V-detector agreement rate (GP-confident packs): "
-              f"{n_agree}/{n_gp_conf} = {n_agree/n_gp_conf:.0%}")
-        print(f"  Trivial baseline agreement rate:                "
-              f"{b_agree}/{n_gp_conf} = {b_agree/n_gp_conf:.0%}")
-        if n_agree >= b_agree:
-            print(f"  → V-detector MATCHES OR BEATS trivial baseline")
-        else:
-            print(f"  → V-detector DOES NOT BEAT trivial baseline (honest result)")
+        print(f"\n  V-detector agreement rate: {n_agree}/{n_gp_conf} = {n_agree/n_gp_conf:.0%}")
+        print(f"  Trivial baseline agreement: {b_agree}/{n_gp_conf} = {b_agree/n_gp_conf:.0%}")
 
+    # Write final results file
     out_data = {
-        "preregistration_commits": ["34d096f", "b89c635"],
+        "preregistration_commits": ["34d096f", "b89c635", "12668d0", "5a515bf"],
         "calibration_system": CALIBRATION_SYSTEM,
-        "v_norm_formula": f"clip((V - {V_NORM_LOW}) / {V_NORM_SPAN}, 0, 1)",
-        "high_current_threshold_A": HIGH_CURRENT_THRESHOLD_A,
-        "power_gate_seeds": POWER_GATE_SEEDS,
-        "r0_upper_threshold_Ohm": R0_UPPER_THRESHOLD,
+        "gp_input_cap": {"max_discharge_rows": GP_MAX_DISCHARGE_ROWS,
+                          "method": "uniform_stride_time_ordered"},
         "breakdown": {
-            "n_held_out": n_total, "n_data_available": n_avail,
-            "n_gate_pass": n_gate_pass, "n_gp_confident": n_gp_conf,
-            "n_agree": n_agree, "n_disagree": n_disagree,
-            "n_no_fault": n_no_fault, "n_gate_fail": n_gate_fail,
-            "n_gp_error": n_gp_err,
-            "baseline_agree": b_agree, "baseline_disagree": b_disagree,
+            "n_held_out": n_total, "n_gate_pass": n_gate_pass,
+            "n_gp_confident": n_gp_conf, "n_agree": n_agree,
+            "n_disagree": n_disagree, "n_no_fault": n_no_fault,
+            "n_gate_fail": n_gate_fail, "n_gp_error": n_gp_err,
+            "baseline_agree": b_agree,
         },
         "systems": results,
     }
-
     with open(output_path, "w") as f:
-        def _serial(obj):
-            if isinstance(obj, bool): return bool(obj)
-            if isinstance(obj, (np.integer, int)): return int(obj)
-            if isinstance(obj, (np.floating, float)):
-                return None if np.isnan(obj) else float(obj)
-            if isinstance(obj, np.ndarray): return obj.tolist()
-            if isinstance(obj, dict): return {k: _serial(v) for k, v in obj.items()}
-            if isinstance(obj, list): return [_serial(x) for x in obj]
-            return obj
         json.dump(_serial(out_data), f, indent=2)
     print(f"\nResults written to {output_path}")
 
@@ -577,15 +648,6 @@ def smoke_test():
     result = run_system(CALIBRATION_SYSTEM, is_calibration=True)
     out_path = ROOT / "data" / "battgp_smoke_test.json"
     with open(out_path, "w") as f:
-        def _serial(obj):
-            if isinstance(obj, bool): return bool(obj)
-            if isinstance(obj, (np.integer, int)): return int(obj)
-            if isinstance(obj, (np.floating, float)):
-                return None if np.isnan(obj) else float(obj)
-            if isinstance(obj, np.ndarray): return obj.tolist()
-            if isinstance(obj, dict): return {k: _serial(v) for k, v in obj.items()}
-            if isinstance(obj, list): return [_serial(x) for x in obj]
-            return obj
         json.dump(_serial(result), f, indent=2)
     print(f"\nSmoke-test result written to data/battgp_smoke_test.json")
     return result
