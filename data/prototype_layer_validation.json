@@ -363,7 +363,28 @@
         ],
         "fallback": "If sys_4 V-detector edge vanishes under 20k cap, raise to 50k and re-validate",
         "locked_before_system": "8-rerun",
-        "locked_before_any_new_result_seen": true
+        "locked_before_any_new_result_seen": true,
+        "validation_result": {
+          "validated_on": "sys_6",
+          "reason": "Only completed system where cap genuinely removed data (170,519 \u2192 21,315 HC rows, stride=8, 87.5% removed)",
+          "uncapped": {
+            "n_hc": 170519,
+            "vdetector_pred": 8,
+            "gp_weak_cell": 8,
+            "outcome": "AGREE",
+            "baseline_weak": 8
+          },
+          "capped_20k": {
+            "n_hc_used": 21315,
+            "vdetector_pred": 8,
+            "gp_weak_cell": 8,
+            "outcome": "AGREE",
+            "baseline_weak": 8
+          },
+          "verdict": "MATCH",
+          "note_on_sys4_sys7": "Both had <20k HC rows (4,645 and 5,719); cap never fired; those runs confirmed no regression on small systems but did not test cap subsampling",
+          "cap_validated": true
+        }
       }
     }
   },
