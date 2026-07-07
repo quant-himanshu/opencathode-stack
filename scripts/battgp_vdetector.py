@@ -97,6 +97,12 @@ GP_RECHECK_ROWS      = 100_000
 GP_BORDERLINE_LOW    = 0.50    # = GP_BAND_PROB_THRESHOLD — the decision boundary
 GP_BORDERLINE_HIGH   = 0.95    # above this: clearly confident, cap dilution irrelevant
 
+# HC-ROW CAP — pre-registered before sys_8 re-run (locked in prototype_layer_validation.json).
+# Stride-subsample df_hc to this many rows before V-detector LOO and trivial baseline.
+# sys_8 had 287k HC rows → uncapped LOO consumed 63+ CPU-min with zero seeds complete.
+# 20k rows ≈ 2,500/cell; distance-based ranker — temporal density adds no signal.
+HC_MAX_ROWS = 20_000
+
 ZIP_PATH = ROOT / "data" / "iontech_lfp" / "field_data.zip"
 PARTIAL_RESULTS_PATH = ROOT / "data" / "battgp_results_partial.json"
 
@@ -171,6 +177,14 @@ def apply_segment_criteria(df: pd.DataFrame) -> pd.DataFrame:
 
 def apply_high_current(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["I_Battery"].abs() > HIGH_CURRENT_THRESHOLD_A].copy()
+
+def _cap_hc(df_hc: pd.DataFrame, cap: int = HC_MAX_ROWS) -> tuple[pd.DataFrame, int]:
+    """Stride-subsample df_hc to ≤ cap rows (time-ordered). Returns (df_capped, n_used)."""
+    if len(df_hc) <= cap:
+        return df_hc, len(df_hc)
+    stride = max(1, len(df_hc) // cap)
+    df_cap = df_hc.iloc[::stride].copy()
+    return df_cap, len(df_cap)
 
 # ---------------------------------------------------------------------------
 # GP input cap: write subsampled temp zip for BattGP
@@ -481,13 +495,21 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
     print(f"  Discharge-segment rows: {len(df_seg):,} ({len(df_seg)/len(df_raw):.1%})")
 
     df_hc = apply_high_current(df_seg)
+    n_hc_raw = len(df_hc)
     print(f"  High-current rows (|I|>{HIGH_CURRENT_THRESHOLD_A}A): "
-          f"{len(df_hc):,} ({len(df_hc)/max(len(df_seg),1):.1%} of discharge-segment)")
+          f"{n_hc_raw:,} ({n_hc_raw/max(len(df_seg),1):.1%} of discharge-segment)")
 
-    if len(df_hc) < 100:
-        print(f"  SKIP: insufficient high-current rows ({len(df_hc)} < 100)")
+    if n_hc_raw < 100:
+        print(f"  SKIP: insufficient high-current rows ({n_hc_raw} < 100)")
         return {"system_id": system_id, "status": "INSUFFICIENT_DATA",
-                "n_seg": len(df_seg), "n_hc": len(df_hc)}
+                "n_seg": len(df_seg), "n_hc": n_hc_raw}
+
+    # HC-row cap: subsample before V-detector LOO and trivial baseline.
+    df_hc, n_hc_used = _cap_hc(df_hc, HC_MAX_ROWS)
+    hc_cap_fraction = n_hc_used / n_hc_raw
+    print(f"  HC-cap: {n_hc_used:,} / {n_hc_raw:,} rows used "
+          f"(hc_cap_fraction={hc_cap_fraction:.3f}"
+          f"{', stride-capped' if n_hc_raw > HC_MAX_ROWS else ', under cap'})")
 
     # --- Trivial baseline (pre-registered comparator) ---
     baseline = trivial_baseline(df_hc)
@@ -509,7 +531,8 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
         outcome = "GATE-FAIL"
         print(f"\n  OUTCOME: {outcome}")
         return {"system_id": system_id, "status": "OK", "outcome": outcome,
-                "n_seg": len(df_seg), "n_hc": len(df_hc),
+                "n_seg": len(df_seg), "n_hc_raw": n_hc_raw, "n_hc_used": n_hc_used,
+                "hc_cap_fraction": round(hc_cap_fraction, 4),
                 "baseline": baseline, "gate": gate,
                 "elapsed_s": time.time() - t0}
 
@@ -605,7 +628,9 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
         "baseline_outcome": baseline_outcome,
         "n_raw": len(df_raw),
         "n_seg": len(df_seg),
-        "n_hc": len(df_hc),
+        "n_hc_raw": n_hc_raw,
+        "n_hc_used": n_hc_used,
+        "hc_cap_fraction": round(hc_cap_fraction, 4),
         "baseline": baseline,
         "gate": {k: (v if not isinstance(v, dict) else
                      {str(kk): float(vv) for kk, vv in v.items()})

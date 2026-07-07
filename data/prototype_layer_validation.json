@@ -351,6 +351,19 @@
         "locked_before_any_system_7_plus_results_seen": true,
         "locked_mid_batch": "sys_7 completed (AGREE); sys_8 in progress at time of lock; no result reviewed that could influence selection criterion",
         "run_command": "python3 -u scripts/battgp_vdetector.py --spot-audit"
+      },
+      "hc_input_cap": {
+        "description": "HC-row cap on V-detector LOO and trivial baseline: stride-subsample df_hc to 20,000 rows per cell before power gate",
+        "max_hc_rows_per_system": 20000,
+        "method": "uniform_stride_time_ordered",
+        "rationale": "sys_8 had 287,734 HC rows; uncapped LOO trains on 2M+ stacked rows per seed-cell iteration, consuming 63+ CPU-minutes with zero seeds complete. Cap applied identically to all systems. V-detector is a distance-based ranker \u2014 temporal density adds no signal beyond shape distribution.",
+        "validation_required_before_batch": [
+          "sys_4: HC-capped V-detector must still pick Cell 1 (subtle case where V-detector beat trivial baseline)",
+          "sys_7: HC-capped V-detector must still agree with GP (AGREE, GP weak cell=5)"
+        ],
+        "fallback": "If sys_4 V-detector edge vanishes under 20k cap, raise to 50k and re-validate",
+        "locked_before_system": "8-rerun",
+        "locked_before_any_new_result_seen": true
       }
     }
   },
