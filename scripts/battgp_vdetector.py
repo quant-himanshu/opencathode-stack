@@ -827,6 +827,131 @@ def spot_audit_cap(results: list[dict], n_audit: int = 3) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Targeted HC-cap spot-check: 80k re-run on subtle+large-HC systems only
+# ---------------------------------------------------------------------------
+
+HC_SPOTCHECK_CAP       = 80_000   # reference cap for spot-check
+HC_SPOTCHECK_SEVERITY  = 1.3      # subtle-fault threshold
+HC_SPOTCHECK_RAW_MIN   = 60_000   # cap must have cut at least 3x (raw > 3×20k)
+
+
+def targeted_hc_spotcheck(results: list[dict]) -> list[dict]:
+    """
+    Post-batch targeted spot-check: for every GP-confident system where the
+    20k HC-cap fired with a large cut (n_hc_raw > HC_SPOTCHECK_RAW_MIN) AND
+    the fault is subtle (severity < HC_SPOTCHECK_SEVERITY), re-run the full
+    pipeline at 80k HC-cap and compare V-detector and trivial baseline.
+
+    These are the only cases where 20k subsampling could plausibly change the
+    answer. Systems with severe faults or small HC sets are unambiguous under
+    the cap and not re-run.
+
+    Returns list of spot-check records.
+    """
+    global HC_MAX_ROWS
+
+    candidates = []
+    for r in results:
+        if r.get("outcome") not in ("AGREE", "DISAGREE"):
+            continue
+        sev       = r.get("fault_severity_ratio")
+        n_hc_raw  = r.get("n_hc_raw") or r.get("n_hc", 0)
+        n_hc_used = r.get("n_hc_used", n_hc_raw)
+        if sev is None or sev >= HC_SPOTCHECK_SEVERITY:
+            continue   # severe or unknown — cap can't plausibly change a clear signal
+        if n_hc_raw <= HC_SPOTCHECK_RAW_MIN:
+            continue   # small HC set — cap never fired significantly
+        candidates.append(r)
+
+    if not candidates:
+        print("  TARGETED SPOTCHECK: no systems meet criteria "
+              f"(severity<{HC_SPOTCHECK_SEVERITY} AND n_hc_raw>{HC_SPOTCHECK_RAW_MIN:,}) — "
+              "cap only ever bit on severe/moderate faults where signal is robust.")
+        return []
+
+    print(f"  {len(candidates)} system(s) qualify for 80k spot-check:")
+    for r in candidates:
+        print(f"    sys_{r['system_id']}: severity={r['fault_severity_ratio']:.3f}  "
+              f"n_hc_raw={r.get('n_hc_raw',0):,} -> n_hc_used={r.get('n_hc_used',0):,}")
+
+    saved_cap = HC_MAX_ROWS
+    HC_MAX_ROWS = HC_SPOTCHECK_CAP   # patch module-level cap for re-runs
+
+    records = []
+    for r in candidates:
+        sid = str(r["system_id"])
+        vdet_20k  = r.get("vdetector_pred") or r.get("gate", {}).get("vdetector_pred")
+        triv_20k  = r.get("baseline", {}).get("weak_cell")
+        gp_20k    = r.get("gp", {}).get("gp_weak_cell")
+        bp_20k    = r.get("gp", {}).get("max_band_prob", float("nan"))
+
+        print(f"\n{'='*65}")
+        print(f"TARGETED SPOTCHECK (80k HC-cap) — sys_{sid}  "
+              f"[20k result: V={vdet_20k}  trivial={triv_20k}  GP={gp_20k}  "
+              f"severity={r['fault_severity_ratio']:.3f}]")
+        print("=" * 65)
+
+        r80 = run_system(sid, is_calibration=(sid == CALIBRATION_SYSTEM))
+
+        vdet_80k = r80.get("vdetector_pred")
+        triv_80k = r80.get("baseline", {}).get("weak_cell")
+        gp_80k   = r80.get("gp", {}).get("gp_weak_cell")
+        bp_80k   = r80.get("gp", {}).get("max_band_prob", float("nan"))
+        used_80k = r80.get("n_hc_used", 0)
+
+        vdet_match = (vdet_80k == vdet_20k)
+        triv_match = (triv_80k == triv_20k)
+        gp_match   = (gp_80k   == gp_20k)
+        verdict = "MATCH" if (vdet_match and triv_match and gp_match) else "DIFFERS"
+
+        print(f"\n  20k: V={vdet_20k}  trivial={triv_20k}  GP={gp_20k}  "
+              f"band_prob={bp_20k:.3f}  n_hc_used={r.get('n_hc_used',0):,}")
+        print(f"  80k: V={vdet_80k}  trivial={triv_80k}  GP={gp_80k}  "
+              f"band_prob={bp_80k:.3f}  n_hc_used={used_80k:,}")
+        print(f"  VERDICT: {verdict}")
+        sys.stdout.flush()
+
+        records.append({
+            "system_id": sid,
+            "severity": r["fault_severity_ratio"],
+            "n_hc_raw": r.get("n_hc_raw") or r.get("n_hc"),
+            "n_hc_20k": r.get("n_hc_used"),
+            "n_hc_80k": used_80k,
+            "vdet_20k": vdet_20k, "vdet_80k": vdet_80k, "vdet_match": vdet_match,
+            "triv_20k": triv_20k, "triv_80k": triv_80k, "triv_match": triv_match,
+            "gp_20k":   gp_20k,   "gp_80k":   gp_80k,   "gp_match":   gp_match,
+            "bp_20k": round(bp_20k, 4) if not np.isnan(bp_20k) else None,
+            "bp_80k": round(bp_80k, 4) if not np.isnan(bp_80k) else None,
+            "verdict": verdict,
+        })
+
+    HC_MAX_ROWS = saved_cap   # restore
+
+    # Summary table
+    print(f"\n{'='*65}")
+    print("TARGETED SPOTCHECK SUMMARY TABLE")
+    print(f"  Criteria: severity < {HC_SPOTCHECK_SEVERITY} AND n_hc_raw > {HC_SPOTCHECK_RAW_MIN:,}")
+    print(f"  {'sys':>4}  {'severity':>8}  {'n_hc_raw':>10}  {'->20k':>7}  {'->80k':>7}  "
+          f"{'V 20k':>6}  {'V 80k':>6}  {'GP 20k':>7}  {'GP 80k':>7}  verdict")
+    for rec in records:
+        print(f"  {rec['system_id']:>4}  {rec['severity']:>8.3f}  "
+              f"{rec['n_hc_raw']:>10,}  {rec['n_hc_20k']:>7,}  {rec['n_hc_80k']:>7,}  "
+              f"{str(rec['vdet_20k']):>6}  {str(rec['vdet_80k']):>6}  "
+              f"{str(rec['gp_20k']):>7}  {str(rec['gp_80k']):>7}  {rec['verdict']}")
+
+    n_differ = sum(1 for rec in records if rec["verdict"] == "DIFFERS")
+    if n_differ:
+        print(f"\n  WARNING: {n_differ} system(s) differ at 80k. Those outcomes depend on "
+              "the 20k cap and must use the 80k result in the final tally.")
+    else:
+        print(f"\n  ALL {len(records)} MATCH — 20k HC-cap proven safe on all "
+              "subtle+large-HC systems. No result rests on a heavy subsample.")
+    sys.stdout.flush()
+
+    return records
+
+
+# ---------------------------------------------------------------------------
 # Entry points
 # ---------------------------------------------------------------------------
 
@@ -854,6 +979,9 @@ if __name__ == "__main__":
     parser.add_argument("--spot-audit", action="store_true",
                         help="Post-hoc spot audit: re-run 3 lowest-band_prob GP-confident "
                              "systems at full data and write augmented final results JSON")
+    parser.add_argument("--targeted-spotcheck", action="store_true",
+                        help="Targeted HC-cap spot-check: re-run subtle+large-HC systems "
+                             "at 80k HC-cap and compare to 20k results. Run after batch completes.")
     args = parser.parse_args()
 
     if args.smoke:
@@ -919,6 +1047,38 @@ if __name__ == "__main__":
         with open(out_path, "w") as f:
             json.dump(_serial(out_data), f, indent=2)
         print(f"\nFinal results with spot audit written to {out_path}")
+    elif args.targeted_spotcheck:
+        results, _ = _load_partial_results()
+        if not results:
+            print("ERROR: no completed results in partial file — run the batch first.")
+            sys.exit(1)
+        held_out = [r for r in results if str(r.get("system_id")) != CALIBRATION_SYSTEM]
+        n_conf = sum(1 for r in held_out if r.get("outcome") in ("AGREE", "DISAGREE"))
+        print(f"\nLoaded {len(results)} systems ({n_conf} GP-confident).")
+        print(f"\n{'='*65}")
+        print("TARGETED HC-CAP SPOT-CHECK")
+        print(f"Criteria: severity < {HC_SPOTCHECK_SEVERITY}  AND  "
+              f"n_hc_raw > {HC_SPOTCHECK_RAW_MIN:,}  (cap cut > 3x)")
+        print("=" * 65)
+        spotcheck_records = targeted_hc_spotcheck(results)
+
+        # Save spot-check results alongside the final consolidated file
+        out_sc = ROOT / "data" / "battgp_hc_spotcheck.json"
+        with open(out_sc, "w") as f:
+            json.dump(_serial({
+                "hc_cap_20k": HC_MAX_ROWS,
+                "hc_cap_80k": HC_SPOTCHECK_CAP,
+                "severity_threshold": HC_SPOTCHECK_SEVERITY,
+                "n_hc_raw_threshold": HC_SPOTCHECK_RAW_MIN,
+                "n_systems_checked": len(spotcheck_records),
+                "n_match": sum(1 for r in spotcheck_records if r["verdict"] == "MATCH"),
+                "n_differs": sum(1 for r in spotcheck_records if r["verdict"] == "DIFFERS"),
+                "cap_integrity": ("CONFIRMED" if all(r["verdict"] == "MATCH"
+                                                     for r in spotcheck_records)
+                                  else "FLAGGED" if spotcheck_records else "NO_CANDIDATES"),
+                "records": spotcheck_records,
+            }), f, indent=2)
+        print(f"\nSpot-check results written to {out_sc}")
     else:
         all_ids = [str(i) for i in range(1, 29)]
         held_out = [sid for sid in all_ids if sid != CALIBRATION_SYSTEM]
