@@ -90,6 +90,13 @@ POWER_GATE_MIN_RATIO = 2.0
 # 40,000 rows ≈ 5,000 per cell × 8 cells; leaves systems 1-4 unchanged.
 GP_MAX_DISCHARGE_ROWS = 40_000
 
+# Borderline self-check: if capped GP yields max_band_prob in [LOW, HIGH],
+# re-run at GP_RECHECK_ROWS. If result changes, both are recorded and flagged.
+# Clearly-confident (>HIGH) and clear-no-fault (<LOW) skip the recheck.
+GP_RECHECK_ROWS      = 100_000
+GP_BORDERLINE_LOW    = 0.50    # = GP_BAND_PROB_THRESHOLD — the decision boundary
+GP_BORDERLINE_HIGH   = 0.95    # above this: clearly confident, cap dilution irrelevant
+
 ZIP_PATH = ROOT / "data" / "iontech_lfp" / "field_data.zip"
 PARTIAL_RESULTS_PATH = ROOT / "data" / "battgp_results_partial.json"
 
@@ -169,18 +176,19 @@ def apply_high_current(df: pd.DataFrame) -> pd.DataFrame:
 # GP input cap: write subsampled temp zip for BattGP
 # ---------------------------------------------------------------------------
 
-def _write_capped_zip(df_seg: pd.DataFrame, system_id: str) -> Path:
+def _write_capped_zip(df_seg: pd.DataFrame, system_id: str,
+                      cap_rows: int = GP_MAX_DISCHARGE_ROWS) -> tuple[Path, int]:
     """
-    Write a stride-subsampled (≤ GP_MAX_DISCHARGE_ROWS rows) temp zip for BattGP.
+    Write a stride-subsampled (≤ cap_rows rows) temp zip for BattGP.
     Timestamp is set as the index to match the original CSV format BattGP expects.
-    Returns path to the temp zip.
+    Returns (path_to_temp_zip, actual_rows_used).
     """
     tmp_dir = Path(tempfile.gettempdir()) / "battgp_cap"
     tmp_dir.mkdir(exist_ok=True)
-    zip_path = tmp_dir / f"sys_{system_id}_cap.zip"
+    zip_path = tmp_dir / f"sys_{system_id}_cap{cap_rows}.zip"
 
-    if len(df_seg) > GP_MAX_DISCHARGE_ROWS:
-        stride = max(1, len(df_seg) // GP_MAX_DISCHARGE_ROWS)
+    if len(df_seg) > cap_rows:
+        stride = max(1, len(df_seg) // cap_rows)
         df_cap = df_seg.iloc[::stride].copy()
     else:
         df_cap = df_seg.copy()
@@ -191,7 +199,7 @@ def _write_capped_zip(df_seg: pd.DataFrame, system_id: str) -> Path:
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"field_data/data_sys_{system_id}.csv", csv_buf.getvalue())
 
-    return zip_path
+    return zip_path, len(df_cap)
 
 
 # ---------------------------------------------------------------------------
@@ -336,13 +344,15 @@ def power_gate(df_hc: pd.DataFrame) -> dict:
 # GP confidence gate
 # ---------------------------------------------------------------------------
 
-def gp_confidence(system_id: str, df_seg: pd.DataFrame) -> dict:
+def gp_confidence(system_id: str, df_seg: pd.DataFrame,
+                  cap_rows: int = GP_MAX_DISCHARGE_ROWS) -> dict:
     """
     Run BattGP spatiotemporal GP on this system and check fault confidence.
     df_seg is the already-filtered discharge-segment DataFrame (from run_system).
-    If len(df_seg) > GP_MAX_DISCHARGE_ROWS, writes a stride-subsampled temp zip
-    so BattGP processes ≤ GP_MAX_DISCHARGE_ROWS rows instead of the full file.
-    Returns gp_confident bool, gp_weak_cell (1-indexed or None), and R0 estimates.
+    If len(df_seg) > cap_rows, writes a stride-subsampled temp zip so BattGP
+    processes ≤ cap_rows rows instead of the full file.
+    Returns gp_confident bool, gp_weak_cell (1-indexed or None), R0 estimates,
+    and cap metadata.
     """
     battgp_cfg.PATH_FIELDDATA_CELL_CHARACTERISTIC = (
         BATTGP_CONFIG_OVERRIDES["PATH_FIELDDATA_CELL_CHARACTERISTIC"]
@@ -350,11 +360,12 @@ def gp_confidence(system_id: str, df_seg: pd.DataFrame) -> dict:
     battgp_cfg.PATH_DATA_CACHE = None
 
     # Write capped temp zip; BattGP reads from this instead of the full zip.
-    cap_zip = _write_capped_zip(df_seg, system_id)
+    cap_zip, n_used = _write_capped_zip(df_seg, system_id, cap_rows)
     battgp_cfg.PATH_FIELDDATA_DATA = str(cap_zip)
-    n_cap = min(len(df_seg), GP_MAX_DISCHARGE_ROWS)
-    print(f"  GP input: {n_cap:,} discharge rows "
-          f"({'capped from ' + str(len(df_seg)) + ' by stride' if len(df_seg) > GP_MAX_DISCHARGE_ROWS else 'full — under cap'})")
+    cap_fraction = n_used / max(len(df_seg), 1)
+    print(f"  GP input: {n_used:,} / {len(df_seg):,} discharge rows "
+          f"(cap_fraction={cap_fraction:.3f}"
+          f"{', stride-capped' if len(df_seg) > cap_rows else ', under cap'})")
 
     try:
         cell_char = read_cell_characteristics(
@@ -423,6 +434,10 @@ def gp_confidence(system_id: str, df_seg: pd.DataFrame) -> dict:
             "max_band_prob": max_prob,
             "gp_band_prob_threshold": GP_BAND_PROB_THRESHOLD,
             "fault_probs_computed": True,
+            "cap_rows_used": cap_rows,
+            "n_seg_rows": len(df_seg),
+            "n_gp_rows": n_used,
+            "cap_fraction": round(cap_fraction, 4),
         }
 
     except Exception as e:
@@ -432,6 +447,10 @@ def gp_confidence(system_id: str, df_seg: pd.DataFrame) -> dict:
             "r0_final": {},
             "error": str(e),
             "fault_probs_computed": False,
+            "cap_rows_used": cap_rows,
+            "n_seg_rows": len(df_seg),
+            "n_gp_rows": n_used,
+            "cap_fraction": round(cap_fraction, 4),
         }
 
 # ---------------------------------------------------------------------------
@@ -502,12 +521,14 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
         marker = " ← PREDICTED WEAK" if i == vdet_pred else ""
         print(f"    Cell {i}: PRIMARY={primary_scores[i]:.4e}{marker}")
 
-    # --- GP confidence gate ---
+    # --- GP confidence gate (standard cap) ---
     print(f"\n  GP CONFIDENCE GATE (BattGP spatiotemporal GP):")
     gp = gp_confidence(system_id, df_seg)
+    gp_recheck = None
+    cap_flag = "ok"
+
     if not gp["fault_probs_computed"]:
         print(f"  GP ERROR: {gp.get('error', 'unknown')}")
-        # GP unavailable — report with note but don't change outcome categories
         gp_status = "GP_ERROR"
     else:
         print(f"  R0 final per cell (mOhm): " +
@@ -516,13 +537,29 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
         print(f"  Band P(above) per cell: " +
               "  ".join(f"Cell{k}={v:.3f}" if not np.isnan(v) else f"Cell{k}=NaN"
                         for k, v in sorted(gp.get("band_prob_final", {}).items())))
-        print(f"  Max band prob: {gp.get('max_band_prob', '?'):.3f}  "
-              f"threshold: {gp.get('gp_band_prob_threshold', 0.5):.1f}")
-        print(f"  GP-confident: {gp['gp_confident']}  "
-              f"GP weak cell: {gp['gp_weak_cell']}")
+        mp = gp.get("max_band_prob", 0.0)
+        print(f"  Max band prob: {mp:.3f}  threshold: 0.5  "
+              f"cap_fraction: {gp.get('cap_fraction', 1.0):.3f}")
+        print(f"  GP-confident: {gp['gp_confident']}  GP weak cell: {gp['gp_weak_cell']}")
         gp_status = "OK"
 
-    # --- Outcome ---
+        # --- Borderline self-check: re-run at 100k if band_prob in [0.5, 0.95] ---
+        if GP_BORDERLINE_LOW <= mp <= GP_BORDERLINE_HIGH and len(df_seg) > GP_MAX_DISCHARGE_ROWS:
+            print(f"\n  BORDERLINE band_prob ({mp:.3f} in [{GP_BORDERLINE_LOW},{GP_BORDERLINE_HIGH}]) "
+                  f"AND cap bound — re-running GP at {GP_RECHECK_ROWS:,} rows to check stability...")
+            gp_recheck = gp_confidence(system_id, df_seg, cap_rows=GP_RECHECK_ROWS)
+            if gp_recheck["fault_probs_computed"]:
+                same_cell = gp_recheck["gp_weak_cell"] == gp["gp_weak_cell"]
+                same_conf = gp_recheck["gp_confident"] == gp["gp_confident"]
+                cap_flag = "recheck_same" if (same_cell and same_conf) else "recheck_differs"
+                print(f"  RECHECK (100k): GP weak cell={gp_recheck['gp_weak_cell']}  "
+                      f"confident={gp_recheck['gp_confident']}  "
+                      f"max_prob={gp_recheck['max_band_prob']:.3f}  → {cap_flag.upper()}")
+            else:
+                cap_flag = "recheck_gp_error"
+                print(f"  RECHECK failed: {gp_recheck.get('error', 'unknown')}")
+
+    # --- Outcome (from standard-cap GP) ---
     if gp_status == "GP_ERROR" or gp["gp_confident"] is None:
         outcome = "GP_ERROR"
     elif not gp["gp_confident"]:
@@ -542,9 +579,23 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
     else:
         baseline_outcome = "BASELINE-DISAGREE"
 
+    # --- Fault severity: GP weak cell R0 vs pack-mean R0 ---
+    severity_ratio = None
+    if gp_status == "OK" and gp["gp_confident"] and gp["gp_weak_cell"] is not None:
+        r0 = gp["r0_final"]
+        weak = gp["gp_weak_cell"]
+        pack_vals = [v for k, v in r0.items() if k != weak and not np.isnan(v)]
+        if pack_vals and not np.isnan(r0.get(weak, float("nan"))):
+            severity_ratio = round(r0[weak] / np.mean(pack_vals), 3)
+
     print(f"\n  V-DETECTOR OUTCOME:  {outcome}")
     print(f"  BASELINE OUTCOME:    {baseline_outcome}")
+    if severity_ratio is not None:
+        print(f"  FAULT SEVERITY:      R0_weak/R0_pack_mean = {severity_ratio:.3f}")
+    if cap_flag != "ok":
+        print(f"  CAP FLAG:            {cap_flag.upper()}")
     print(f"  Elapsed: {time.time()-t0:.0f}s")
+    sys.stdout.flush()
 
     return {
         "system_id": system_id,
@@ -560,7 +611,10 @@ def run_system(system_id: str, is_calibration: bool = False) -> dict:
                      {str(kk): float(vv) for kk, vv in v.items()})
                  for k, v in gate.items()},
         "gp": gp,
+        "gp_recheck": gp_recheck,
+        "cap_flag": cap_flag,
         "vdetector_pred": vdet_pred,
+        "fault_severity_ratio": severity_ratio,
         "elapsed_s": round(time.time() - t0, 1),
     }
 
