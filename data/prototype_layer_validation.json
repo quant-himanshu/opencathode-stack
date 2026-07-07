@@ -384,6 +384,11 @@
           "verdict": "MATCH",
           "note_on_sys4_sys7": "Both had <20k HC rows (4,645 and 5,719); cap never fired; those runs confirmed no regression on small systems but did not test cap subsampling",
           "cap_validated": true
+        },
+        "residual_validation_gap": {
+          "description": "HC-cap validated on sys_6 (moderate/severe fault, 170k HC rows). NOT validated on a system that is BOTH subtle-fault (severity_ratio < 1.3) AND large-HC (>20k HC rows pre-cap). No such system exists among sys_1-7 \u2014 the subtle cases (sys_4: severity=1.152, sys_7: severity=1.163) had only 4,645 and 5,719 HC rows respectively.",
+          "spot_check_rule": "If any remaining system (sys_8-28) has severity_ratio < 1.3 AND n_hc_raw > 20000, re-run that system at 80k HC cap vs 20k HC cap and compare before trusting its outcome.",
+          "logged_before_batch_launch": true
         }
       }
     }
