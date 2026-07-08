@@ -1,0 +1,83 @@
+{
+  "title": "FOBSS V-detector Second-Dataset Validation \u2014 Pre-Registration",
+  "registered_at_commit": "ce4418f0bc4f9ba084bd0b7dd9eec427fed862c3",
+  "registration_date": "2026-07-08",
+  "dataset": {
+    "name": "FOBSS (Frequent Observations from a Battery System with Subunits)",
+    "doi": "10.35097/1174",
+    "repository": "RADAR4KIT (Karlsruhe Institute of Technology)",
+    "url": "https://radar.kit.edu/radar/en/dataset/uabgQSNJZVAhKHgS",
+    "license": "CC BY 4.0",
+    "reference": "Steinbuss et al. (2019), e-Energy ACM conference",
+    "description": "Monitoring data from a stationary modular battery test bench. 44 cells total in 4 series-connected slave boards of 11 cells each. Multiple experiment protocols (jump profiles, constant-current profiles, internal resistance measurements). Real test-bench data, NOT field EV data.",
+    "n_cells_per_slave": 11,
+    "n_slaves": 4,
+    "n_cells_total": 44,
+    "connection": "series",
+    "known_faults": null,
+    "chemistry": "unknown (likely NMC, nominal ~3.7V per cell)"
+  },
+  "context_vs_battgp": {
+    "battgp": "Field EV warranty-return data, 27 systems, 8 cells/system, GP-inferred degradation reference",
+    "fobss": "Lab test-bench, 1 physical pack / 53 experiment runs, 44 cells, NO known faults or degradation labels",
+    "scientific_purpose": "Test whether V-detector agrees with trivial baseline on a HEALTHY series pack \u2014 different chemistry, different application, no confounding from mixed degradation states",
+    "limitation_acknowledged": "Cannot assess fault detection accuracy (no ground-truth fault labels). Tests false-positive rate and cross-experiment consistency only."
+  },
+  "experiment_inclusion_criteria": {
+    "rule": "Include experiment directories where |I_mean_on_discharge_segment| >= 5.0 A AND n_high_current_rows >= 200",
+    "i_threshold_A": 5.0,
+    "min_hc_rows": 200,
+    "excluded_types": [
+      "Ri Jumps (internal resistance only)",
+      "osc (oscillation tests)",
+      "osc_small",
+      "voc_soc (OCV mapping)",
+      "current_ramp"
+    ],
+    "note": "5A threshold captures both 10A and 25A discharge protocols while excluding rest/low-current segments"
+  },
+  "vdetector_protocol": {
+    "algorithm": "NSA variable-radius LOO (same as BattGP experiment)",
+    "n_cells": 44,
+    "hc_threshold_A": 5.0,
+    "hc_cap": 20000,
+    "v_normalization": "min-max per experiment per cell (same as BattGP)",
+    "seeds": [
+      42,
+      43,
+      44,
+      45
+    ],
+    "power_gate": {
+      "description": "Median LOO gap / p95 pairwise delta-gap >= 2.0 to confirm a detectable weak cell",
+      "threshold": 2.0,
+      "note": "Threshold lowered from BattGP 10x to 2x because healthy packs have smaller natural imbalance signals"
+    },
+    "trivial_baseline": "argmin(mean V_norm per cell over high-current rows)"
+  },
+  "primary_metric": "Fraction of passing experiments where V-detector and trivial baseline identify the SAME weakest cell",
+  "pre_registered_hypotheses": {
+    "H1_agreement": {
+      "description": "V-detector agrees with trivial baseline on weakest cell identification",
+      "expected": ">= 85% of power-gate-passing experiments",
+      "rationale": "Healthy pack with no degradation heterogeneity -> trivial baseline and V-detector both capture same natural imbalance signal"
+    },
+    "H2_consistency": {
+      "description": "V-detector identifies the SAME cell as weakest across >= 80% of passing experiments",
+      "expected": ">= 80%",
+      "rationale": "One physical pack -> one physically weakest cell from manufacturing variation"
+    },
+    "H3_power_gate_pass": {
+      "description": "Power gate (gap ratio >= 2.0) passes in at least 40% of experiments",
+      "expected": ">= 40%",
+      "rationale": "Natural cell imbalance in a healthy pack may be too small for gap ratio >= 10x (BattGP threshold) but should exceed 2x in most discharge experiments"
+    }
+  },
+  "interpretation_rules": {
+    "if_H1_passes": "High agreement on healthy data confirms V-detector tracks same signal as trivial baseline when no degradation confounds exist. The BattGP 75% agreement (below this) is then interpretable as degradation-driven divergence, not algorithm noise.",
+    "if_H1_fails": "V-detector produces spurious weak-cell identifications even on healthy data. This would undermine the BattGP results by suggesting algorithm instability is a confounder.",
+    "if_H2_passes": "Consistent cell ID across experiments confirms the detection is reproducible, not run-dependent randomness.",
+    "note": "This experiment cannot validate fault DETECTION capability. It validates consistency and false-alarm rate on known-healthy data."
+  },
+  "results": null
+}
