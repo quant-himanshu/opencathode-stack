@@ -462,33 +462,72 @@
           "interpretation": "HC-cap subsampling did not affect V-detector outcome on the subtle+large-HC system"
         },
         "gp_cap_spot_audit": {
-          "n_audited": 1,
-          "n_match": 0,
-          "n_differs": 1,
-          "cap_integrity": "FLAGGED",
-          "details": {
+          "scope": "all 12 GP-confident systems",
+          "method": "stride = max(1, n_seg // 40000); cap cuts data only when stride > 1 (n_seg >= 80k)",
+          "systems_where_cap_cut_data": {
+            "sys_6": {
+              "n_seg": 175595,
+              "stride": 4,
+              "gp_at_40k": 8,
+              "gp_at_full": 8,
+              "audit": "MATCH",
+              "outcome_change": null
+            },
             "sys_8": {
-              "capped_40k": {
-                "gp_weak_cell": 6,
-                "band_prob": 0.999,
-                "n_seg": 40000
-              },
-              "full_data": {
-                "gp_weak_cell": 3,
-                "band_prob": 1.0,
-                "n_seg": 319286
-              },
-              "audit_status": "DIFFERS",
-              "interpretation": "GP-cap caused GP to identify Cell 6; at full discharge history, GP identifies Cell 3. V-detector and trivial baseline independently identified Cell 6 regardless of HC-cap (MATCH at 80k). The GP result at 40k was an artifact; under full data, sys_8 becomes DISAGREE(V=trivial=6, GP=3)."
+              "n_seg": 319286,
+              "stride": 7,
+              "gp_at_40k": 6,
+              "gp_at_full": 3,
+              "audit": "DIFFERS",
+              "outcome_change": "AGREE -> DISAGREE (V=trivial=6, GP_full=3)"
             }
           },
-          "note_only_1_audited": "Spot-audit criterion requires cap to have bound (n_seg > 40k) among the lowest-bp GP-confident systems. Only sys_8 qualified (n_seg=319k); sys_27 (n_seg=1836) and sys_2 (n_seg unknown, small) did not have cap bound."
+          "systems_cap_not_bound": {
+            "stride_1_but_no_data_cut": [
+              "sys_7 (76k)",
+              "sys_9 (45k)",
+              "sys_20 (41k, recheck confirmed)"
+            ],
+            "under_cap_no_fire": [
+              "sys_1 (36k)",
+              "sys_2 (19k)",
+              "sys_4 (30k)",
+              "sys_10 (14k)",
+              "sys_12 (14k)",
+              "sys_15 (30k)",
+              "sys_27 (2k)"
+            ]
+          },
+          "n_cap_cut": 2,
+          "n_match": 1,
+          "n_differs": 1,
+          "cap_integrity": "FLAGGED (1 of 2 cap-cut systems differs)",
+          "corrected_breakdown_under_full_gp": {
+            "n_agree": 8,
+            "n_disagree": 4,
+            "N_same_v_vs_trivial": 9,
+            "pct_same": 0.75,
+            "trigger_fired": false,
+            "value_test_unchanged": true,
+            "note": "sys_8 changes AGREE->DISAGREE(V=trivial=6, GP=3). N_same/N_different unchanged since sys_8 has V=trivial throughout."
+          }
         },
         "revised_outcome_under_full_data_gp": {
           "sys_8_revised": "DISAGREE (V=trivial=6, GP=3 at full data)",
           "impact_on_N_different": "No change \u2014 sys_8 remains V=trivial, so N_different stays 3",
           "impact_on_N_agree": "Drops from 9 to 8; N_disagree rises from 3 to 4",
           "note": "Official registered-protocol outcome is AGREE (40k cap used uniformly). Spot-audit revised outcome is provided for transparency only."
+        },
+        "authoritative_final_counts": {
+          "basis": "full-data GP for all systems (sys_8 corrected)",
+          "n_gp_confident": 12,
+          "n_agree": 8,
+          "n_disagree": 4,
+          "N_same": 9,
+          "N_different": 3,
+          "pct_same": 0.75,
+          "trigger_fired": false,
+          "value_test": "V wins: sys_4 (Cell1 vs trivial=8), sys_9 (Cell2 vs trivial=8). Trivial wins: sys_20 (trivial=8=GP, V=2)."
         }
       }
     }

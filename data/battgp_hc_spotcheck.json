@@ -1,0 +1,31 @@
+{
+  "hc_cap_20k": 20000,
+  "hc_cap_80k": 80000,
+  "severity_threshold": 1.3,
+  "n_hc_raw_threshold": 60000,
+  "n_systems_checked": 1,
+  "n_match": 1,
+  "n_differs": 0,
+  "cap_integrity": "CONFIRMED",
+  "records": [
+    {
+      "system_id": "8",
+      "severity": 1.072,
+      "n_hc_raw": 287734,
+      "n_hc_20k": 20553,
+      "n_hc_80k": 95912,
+      "vdet_20k": 6,
+      "vdet_80k": 6,
+      "vdet_match": true,
+      "triv_20k": 6,
+      "triv_80k": 6,
+      "triv_match": true,
+      "gp_20k": 6,
+      "gp_80k": 6,
+      "gp_match": true,
+      "bp_20k": 0.9988,
+      "bp_80k": 0.9988,
+      "verdict": "MATCH"
+    }
+  ]
+}
