@@ -79,5 +79,13 @@
     "if_H2_passes": "Consistent cell ID across experiments confirms the detection is reproducible, not run-dependent randomness.",
     "note": "This experiment cannot validate fault DETECTION capability. It validates consistency and false-alarm rate on known-healthy data."
   },
-  "results": null
+  "results": null,
+  "structural_amendment": {
+    "amendment_type": "data-informed structural correction",
+    "discovery": "Preliminary data inspection revealed FOBSS is a multi-MODULE stationary battery: 4 slave boards (each 11 cells) operate as semi-independent modules. Inter-module voltage deviation (~70 mV, e.g. Slave-0 mean = -47 mV vs Slave-1 mean = +26 mV relative to pack mean) vastly exceeds intra-module cell variation (~10-20 mV). Pack-mean centering across all 44 cells produces meaningless V-detector features.",
+    "anomaly_found_in_inspection": "cell_17 (Slave 1, local index 6) has mean deviation ~-47 mV when other Slave-1 cells cluster at +25 to +32 mV (within-slave deviation ~73 mV). This appears to be a genuine weak-cell anomaly within Slave 1.",
+    "revised_analysis_unit": "Each SLAVE (11 cells) is treated as one independent series pack. Row-centering is performed WITHIN each slave. V-detector and trivial baseline run within each 11-cell slave per experiment. This gives up to 4 slaves \u00d7 N_experiments sub-analyses.",
+    "implication_for_H1_H2": "H1 (agree >= 85%) and H2 (consistency >= 80%) are re-evaluated per-slave. Slave 1 contains a visually obvious anomaly (cell_17); if V-detector and trivial baseline both identify it consistently, that would be the strongest positive result. Slaves without such an anomaly will test the false-positive rate on healthy sub-packs.",
+    "note": "Pre-registration amended BEFORE running within-slave analysis. Cell_17 anomaly seen in data inspection is known to the analyst \u2014 not fully blind."
+  }
 }
