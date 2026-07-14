@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "script": "degradation/hierarchical_beta_cross_chemistry.py",
+    "model": "3-level hierarchy: chemistry -> cell/vehicle, meta-analytic measurement-error normal-normal",
+    "gamma_fixed": 0.5,
+    "chemistries": {
+      "LCO": {
+        "dataset": "NASA PCoE B0005/6/7/18",
+        "n_cells": 4,
+        "D_scale": "D_k=k unit-cycle"
+      },
+      "LFP": {
+        "dataset": "Severson et al. 2019, n=124",
+        "n_cells": 124,
+        "D_scale": "D_k=k unit-cycle"
+      },
+      "NCM": {
+        "dataset": "Deng et al. 2023, BAIC EU500 fleet",
+        "n_cells": 20,
+        "D_scale": "D_cumul (rainflow-Miner), cycling residual after subtracting frozen SEI calendar term lambda_sei*sqrt(t)"
+      }
+    },
+    "empirical_population_means": {
+      "LCO": 0.02154318922193371,
+      "LFP": 0.002541095953843681,
+      "NCM": 0.2608182303301465
+    },
+    "reference_literature_review": "docs/problem2_literature_review.md",
+    "prior_project_anecdote": "hierarchical_beta.py docstring: 200-300x error transferring an LCO-derived beta to NCM (Deng) naively, split 262x D-scale mismatch + genuine chemistry fatigue-resistance difference."
+  },
+  "ncm_identifiability_check": {
+    "n_vehicles": 20,
+    "beta_hat_mean": 0.2608182303301465,
+    "beta_hat_sd": 0.4043997367111651,
+    "beta_hat_cv": 1.5505041047081758,
+    "n_beta_hat_zero_or_near_zero": 11,
+    "mean_se": 0.02020277349987933,
+    "degenerate": true,
+    "interpretation": "CV > 1.0: per-vehicle beta_v estimates are dominated by noise, not signal. This is the expected consequence of D_cumul~0.002 on the Deng fleet (x=D^0.5~0.045) vs D_k~100-300 on NASA cells (x~10-17) -- the cycling damage signal available to identify beta_v is 2-3 orders of magnitude too small. Consistent with cell_to_field_bridge.py's own 'stress_frac=0% for all Deng vehicles' finding. The NCM leg of the leave-one-chemistry-out test below should be read as a test of what happens when a chemistry contributes an UNIDENTIFIABLE population estimate to the hierarchy, not a clean 3rd chemistry data point."
+  },
+  "full_fit_reference_posterior": {
+    "mu_glob": {
+      "mean": 0.026920344379761582,
+      "sd": 0.016748828943005372,
+      "hdi94": [
+        -0.003794577115418031,
+        0.058547549836419764
+      ]
+    },
+    "sigma_chem": {
+      "mean": 0.049674335981901435,
+      "sd": 0.012763486556497634,
+      "hdi94": [
+        0.025578524442130962,
+        0.07376872125299734
+      ]
+    }
+  },
+  "leave_one_chemistry_out": {
+    "LCO": {
+      "n_divergences": 1,
+      "train_chems": [
+        "LFP",
+        "NCM"
+      ],
+      "hierarchical_predictive_mean": 0.026934383631238283,
+      "hierarchical_predictive_hdi94": [
+        -0.08360445210432087,
+        0.13656130007005998
+      ],
+      "actual_population_mean": 0.02154318922193371,
+      "point_error_pct": 25.025052481855393,
+      "covered_by_hdi94": true,
+      "naive_pool_prediction": 0.038412920172774624,
+      "naive_pool_error_pct": 78.3065625811907,
+      "n_leaves_held_out_chem": 4
+    },
+    "LFP": {
+      "n_divergences": 7,
+      "train_chems": [
+        "LCO",
+        "NCM"
+      ],
+      "hierarchical_predictive_mean": 0.03009181405943771,
+      "hierarchical_predictive_hdi94": [
+        -0.0766994681391022,
+        0.13403007908627684
+      ],
+      "actual_population_mean": 0.002541095953843681,
+      "point_error_pct": 1084.2061297637558,
+      "covered_by_hdi94": true,
+      "naive_pool_prediction": 0.220939056812111,
+      "naive_pool_error_pct": 8594.636516656152,
+      "n_leaves_held_out_chem": 124
+    },
+    "NCM": {
+      "n_divergences": 58,
+      "train_chems": [
+        "LCO",
+        "LFP"
+      ],
+      "hierarchical_predictive_mean": 0.010677781426751387,
+      "hierarchical_predictive_hdi94": [
+        -0.029762294865527686,
+        0.052609523447994036
+      ],
+      "actual_population_mean": 0.2608182303301465,
+      "point_error_pct": -95.90604482892381,
+      "covered_by_hdi94": false,
+      "naive_pool_prediction": 0.003134911368471494,
+      "naive_pool_error_pct": -98.7980474503292,
+      "n_leaves_held_out_chem": 20
+    }
+  },
+  "n_covered_of_3": 2,
+  "honest_verdict": "2/3 held-out chemistries' true population beta fell within the leave-one-chemistry-out posterior predictive 94% HDI. With n_chemistry=3, sigma_chem is only weakly identified (2 groups inform it per fold); this test quantifies -- for the first time in this project's own record and, per the accompanying literature review, in the published literature -- the real uncertainty of extrapolating a fatigue-damage coefficient to an unseen chemistry, rather than relying on a single naive point-estimate transfer."
+}

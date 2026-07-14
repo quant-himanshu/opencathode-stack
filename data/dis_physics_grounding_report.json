@@ -1,0 +1,78 @@
+{
+  "materials": {
+    "LCO": {
+      "constants": {
+        "E_Y_single_crystal_GPa": 190.0,
+        "E_Y_effective_porous_GPa": 45.0,
+        "nu": 0.3,
+        "omega_m3_per_mol": 3.497e-06,
+        "c_max_mol_per_m3": 51410.0
+      },
+      "omega_source_note": "Christensen & Newman 2006, fit for LiMn2O4; used as best available layered/spinel-oxide proxy, NOT LCO-specific -- approximation, flagged.",
+      "stress_by_E_kind": {
+        "single_crystal": {
+          "NASA_lab_1C_full_DoD": {
+            "dod_frac": 1.0,
+            "sigma_max_MPa": 16265.879190476193
+          },
+          "Deng_field_typical": {
+            "dod_frac": 0.57,
+            "sigma_max_MPa": 9271.551138571429
+          }
+        },
+        "effective_porous": {
+          "NASA_lab_1C_full_DoD": {
+            "dod_frac": 1.0,
+            "sigma_max_MPa": 3852.445071428572
+          },
+          "Deng_field_typical": {
+            "dod_frac": 0.57,
+            "sigma_max_MPa": 2195.8936907142856
+          }
+        }
+      }
+    },
+    "NMC": {
+      "constants": {
+        "E_Y_single_crystal_GPa": 165.0,
+        "E_Y_effective_porous_GPa": 22.0,
+        "nu": 0.3,
+        "omega_m3_per_mol": 4.5e-06,
+        "c_max_mol_per_m3": 49000.0
+      },
+      "omega_source_note": "Representative layered-oxide value; not independently verified per-stoichiometry -- approximation, flagged.",
+      "stress_by_E_kind": {
+        "single_crystal": {
+          "NASA_lab_1C_full_DoD": {
+            "dod_frac": 1.0,
+            "sigma_max_MPa": 17325.000000000004
+          },
+          "Deng_field_typical": {
+            "dod_frac": 0.57,
+            "sigma_max_MPa": 9875.25
+          }
+        },
+        "effective_porous": {
+          "NASA_lab_1C_full_DoD": {
+            "dod_frac": 1.0,
+            "sigma_max_MPa": 2310.0000000000005
+          },
+          "Deng_field_typical": {
+            "dod_frac": 0.57,
+            "sigma_max_MPa": 1316.7
+          }
+        }
+      }
+    }
+  },
+  "cross_chemistry_ratio_check": {
+    "sigma_max_ratio_NMC_over_LCO_effective_porous_E": 0.5996191917522659,
+    "sigma_max_ratio_NMC_over_LCO_single_crystal_E": 1.0651130379809985,
+    "fitted_beta_ratio_NCM_over_LCO": 12.10676040781373,
+    "beta_ratio_note": "Uses this project's own empirically-fitted beta_LCO and beta_NCM population means. NOTE: the NCM beta in that report was flagged 'degenerate' (CV=1.55, noise-dominated per-vehicle fits) -- this ratio comparison inherits that caveat and should be read as suggestive, not a clean validation.",
+    "interpretation": "Real DIS physics predicts NMC/LCO peak-stress ratio of 0.60x (effective porous E) to 1.07x (single-crystal E) at matched DoD=100%, driven mainly by NMC's higher c_max and E_Y. This project's own fitted beta_NCM/beta_LCO ratio is 12.11x -- a very different order of magnitude than the physics-only prediction. Given the NCM beta is independently flagged degenerate (see note above), this is weak, not strong, corroborating evidence -- but it is at least directionally consistent with 'different chemistries genuinely have different mechanical stress response,' not just measurement noise."
+  },
+  "magnitude_sanity_check": "The sigma_max values computed above are in the GPa range (thousands of MPa). Commonly reported FRACTURE strengths for polycrystalline oxide cathode secondary particles are on the order of 100s of MPa, not GPa (mechanical-properties literature, e.g. ScienceDirect S2542435122001398) -- so these numbers overshoot realistic fracture stress by roughly 1-2 orders of magnitude. Root cause: the instantiation here uses dC = c_max * DoD (the FULL equilibrium concentration swing) as the driving gradient, which corresponds to the diffusion-limited / long-relaxation worst case in Christensen & Newman's original time-dependent solution. Their full formula includes a Fourier-number-dependent prefactor (<1 for realistic C-rates that are not deeply diffusion-limited) that this module does not implement -- doing so requires the particle diffusion coefficient D_s and particle radius, which are not reliably available for the Deng fleet cells (same data gap stress_model.py's own docstring names) and would be a further, separate modelling step. READ THE SIGMA_MAX NUMBERS ABOVE AS AN UPPER-BOUND / WORST-CASE PROXY, NOT A LITERAL OPERATING STRESS. The cross-chemistry RATIO comparison above is more robust than the absolute magnitudes, since the missing Fourier-number prefactor is expected to be of similar order across chemistries at matched C-rate and partially cancels in the ratio -- though it does not cancel exactly, since diffusivity D_s is itself chemistry-dependent.",
+  "lfp_note": "LFP is not modelled by this formula. Two-phase (LiFePO4<->FePO4) lithiation (Malik, Zhou & Ceder 2011, Nature Materials 10:587) violates the single-phase solid-solution assumption the Christensen & Newman DIS formula requires. Consistent with severson_gp_predictor.py's independent finding that a beta*sqrt(k) (concave, single-phase-consistent) physics mean function underperforms a zero-mean GP baseline on the Severson LFP dataset at every N tested -- two separate analyses in this project now agree LFP needs a structurally different model, not just different constants in the same one.",
+  "production_pipeline_note": "This module does NOT modify stress_model.py or fatigue.py. All calibrated results in this project (beta_NASA=0.021545 and everything downstream of it) remain fit against the existing dimensionless proxy. Swapping in real-unit stress would require re-fitting Basquin (A, m) from scratch against the new scale -- out of scope here."
+}

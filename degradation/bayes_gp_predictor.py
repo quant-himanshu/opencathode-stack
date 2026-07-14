@@ -165,6 +165,134 @@ COVERAGE_NOMINAL = 0.90  # 90% credible interval
 B0006_SIGMA_DISTANCE = 3.22   # documented here for report
 
 
+# ═════════════════════════════════════════════════════════════════════════════
+# Small-N uncertainty calibration (Thread 2, docs/problem1_eol_and_calibration_
+# literature_review.md) -- jackknife+ prediction interval
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# PROBLEM: the GP posterior's 90% nominal credible interval achieves only
+# 73.9% empirical coverage on NASA LCO (n=4) -- see
+# data/problem1_360_validation_report.json. Overconfident.
+#
+# DECISION: jackknife+ (Barber, Candes, Ramdas & Tibshirani 2021, Annals of
+# Statistics 49(1):486-507) chosen over Sanchez-Dominguez et al. (2025,
+# arXiv:2512.04566) small-n-reliable split conformal. Reasoning, with the
+# actual formulas checked numerically before writing any code:
+#
+# 1. Sanchez-Dominguez requires a SEPARATE calibration set distinct from
+#    training. At n=4 total cells there is no cell to spare for a dedicated
+#    calibration split without shrinking the already-tiny training set
+#    further. jackknife+ needs no separate split -- it reuses each point via
+#    leave-one-out, which maps directly onto this project's existing 4-cell
+#    LOO-CV design.
+#
+# 2. More decisively: Sanchez-Dominguez's own target -- Pr(coverage >= C_min)
+#    >= 1-alpha, via F_C(c;m) = I_c(m, n_cal+1-m) (regularized incomplete
+#    Beta) -- was checked numerically at n_cal=3 and n_cal=4 (the calibration
+#    pool sizes available in this project's LOO structure) for C_min=0.9,
+#    alpha=0.1. Result: NO value of m in [1, n_cal] satisfies it. Even the
+#    most conservative choice, m=n_cal (the widest interval the data can
+#    produce), gives Pr(coverage>=0.9) = 0.27 (n_cal=3) or 0.34 (n_cal=4) --
+#    nowhere near the 0.9 confidence required. This method is NOT
+#    implementable at this sample size at ANY finite width, not even
+#    approximately.
+#
+#    jackknife+'s guarantee Pr(Y in interval) >= 1-2*alpha (Theorem 1),
+#    valid with prob >= 1-1/(n+1), uses order-statistic index
+#    k = ceil((1-alpha)*(n+1)); the interval is finite only if k <= n.
+#    At n=3 (this project's LOO-ensemble size, holding one of 4 cells out
+#    for prediction and jackknifing over the other 3): the target alpha=0.05
+#    (for a 1-2*alpha=0.90 guarantee) needs k=4 > n=3 -- ALSO not achievable
+#    with a finite interval. But UNLIKE Sanchez-Dominguez, jackknife+ DOES
+#    have an achievable finite-width regime here: alpha=0.25 gives k=3=n,
+#    achievable, with a formally guaranteed coverage of 1-2*0.25 = 0.50.
+#    This is a real, if modest, guarantee -- Sanchez-Dominguez has no
+#    achievable regime at all at this n.
+#
+# HONEST HEADLINE FINDING (stated before any empirical run): at n=4 NASA
+# cells, NO published distribution-free method can deliver a finite-width,
+# formally guaranteed 90% interval. The best jackknife+ can formally
+# guarantee with finite width at this sample size is 50% coverage. Any
+# interval reported below at a nominal 90% target is either (a) the
+# guaranteed-50% jackknife+ interval (finite, honest, but not 90%), or (b) a
+# PRACTICAL, UN-GUARANTEED relaxation (index clipped to n) evaluated only by
+# its empirical LOO-CV coverage on this project's own 4 cells -- both are
+# reported, neither is hidden.
+
+def jackknife_plus_interval(mu_loo: np.ndarray, resid_loo: np.ndarray,
+                             alpha: float) -> dict:
+    """
+    Barber, Candes, Ramdas & Tibshirani (2021) jackknife+ interval.
+
+    mu_loo   : shape (n,) -- leave-one-out point predictions mu_{-i}(x_new)
+               for the NEW point, one per excluded ensemble member i=1..n.
+    resid_loo: shape (n,) -- leave-one-out nonconformity residuals R_i
+               (computed on the EXCLUDED member's own held-out data, same
+               units as mu_loo), one per i.
+    alpha    : miscoverage level. Formal guarantee: Pr(Y in interval) >=
+               1 - 2*alpha, itself valid with probability >= 1 - 1/(n+1)
+               over the randomness of the calibration draw (Theorem 1).
+
+    k = ceil((1-alpha)*(n+1)).  If k > n: the formal guarantee is NOT
+    achievable with a finite interval at this (n, alpha) -- returns
+    lo=-inf, hi=+inf, guarantee_achievable=False. Caller may choose to
+    additionally compute a practical (un-guaranteed) clipped-index variant.
+    """
+    n = len(mu_loo)
+    lower_vals = mu_loo - resid_loo
+    upper_vals = mu_loo + resid_loo
+    k = int(np.ceil((1.0 - alpha) * (n + 1)))
+    guarantee_achievable = bool(k <= n)
+
+    def _kth_smallest(vals, kk):
+        if kk < 1: return -np.inf
+        if kk > len(vals): return np.inf
+        return float(np.sort(vals)[kk - 1])
+
+    def _kth_largest(vals, kk):
+        if kk < 1: return np.inf
+        if kk > len(vals): return -np.inf
+        return float(np.sort(vals)[len(vals) - kk])
+
+    hi = _kth_smallest(upper_vals, k)
+    lo = _kth_largest(lower_vals, k)
+
+    return {
+        "lo": lo, "hi": hi, "k": k, "n": n, "alpha": alpha,
+        "guaranteed_coverage": 1.0 - 2.0 * alpha,
+        "guarantee_achievable": guarantee_achievable,
+    }
+
+
+def jackknife_plus_interval_practical(mu_loo: np.ndarray, resid_loo: np.ndarray,
+                                       alpha: float) -> dict:
+    """
+    Practical relaxation: same as jackknife_plus_interval but clips k to n
+    when the formal index would exceed n, so a FINITE interval is always
+    returned. This is NOT covered by Theorem 1's guarantee when clipping
+    occurs -- it is evaluated purely empirically (LOO-CV coverage on this
+    project's own data), and that distinction is reported explicitly by
+    the caller, never blurred into a claimed formal guarantee.
+    """
+    n = len(mu_loo)
+    lower_vals = mu_loo - resid_loo
+    upper_vals = mu_loo + resid_loo
+    k_raw = int(np.ceil((1.0 - alpha) * (n + 1)))
+    k = int(np.clip(k_raw, 1, n))
+    hi = float(np.sort(upper_vals)[k - 1])
+    lo = float(np.sort(lower_vals)[n - k])
+    return {
+        "lo": lo, "hi": hi, "k_used": k, "k_formal": k_raw, "n": n, "alpha": alpha,
+        "clipped": bool(k_raw > n),
+        "formal_guarantee_note": (
+            "Index clipped from formal k -- this interval has NO proven "
+            "coverage guarantee; only empirical coverage (measured "
+            "separately via LOO-CV) applies." if k_raw > n else
+            "No clipping needed; formal 1-2*alpha guarantee applies."
+        ),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Data loading
 # ─────────────────────────────────────────────────────────────────────────────
@@ -224,6 +352,84 @@ class _PhysicsMeanFn(pm.gp.mean.Mean):
 
     def __call__(self, X):
         return self.beta * pt.sqrt(X[:, 0])
+
+
+# ── Knee-aware Bacon-Watts mean function (standalone, not yet wired into the ──
+# ── PyMC marginal_likelihood pipeline above -- see problem1_360_validation.py ──
+# ── for the applied fit/predict/evaluate loop that actually uses this)      ──
+#
+# Source: Fermin-Cueto et al. (2020) Energy and AI 1:100006 (Bacon-Watts
+# change-point form); Attia et al. (2022) J. Electrochem. Soc. 169:060517
+# (LCO knees are threshold/electrolyte-depletion driven, gentler than LFP's --
+# motivates the wider LCO w prior below); Greenbank & Howey (2022) Mech. Syst.
+# Signal Process. 184:109612. Added per
+# docs/problem1_eol_and_calibration_literature_review.md Section 1.3 and 3.3.
+# That document's own before/after numbers were computed on SYNTHETIC data in
+# a separate sandbox -- they are NOT validated results for this project. See
+# data/problem1_360_validation_report_bacon_watts.json for the real
+# measurement on this project's own NASA data.
+
+CHEM_W_PRIOR = {"LFP": 0.03, "LCO": 0.08}   # LogNormal mean, sigma=0.5 in log space
+BW_PRIOR_SIGMA_LOG = 0.5
+BW_BOUNDS_LO = np.array([-2.0, -0.5, 0.0, 0.4, 0.005])
+BW_BOUNDS_HI = np.array([5.0, 0.5, 3.0, 0.95, 0.5])
+
+
+def bacon_watts_mean(D: np.ndarray, a: float, b: float, c: float,
+                      tau: float, w: float) -> np.ndarray:
+    """fade(D) = a*D + b + c*(D-tau)*tanh((D-tau)/w), D = cycle/total_life in [0,1].
+    c >= 0 (curve can only accelerate, not decelerate, past the knee)."""
+    D = np.asarray(D, dtype=float)
+    return a * D + b + c * (D - tau) * np.tanh((D - tau) / w)
+
+
+def density_weights(D: np.ndarray, h: float = 0.1) -> np.ndarray:
+    """Inverse local-density weight in cycle-life-fraction space, bandwidth h."""
+    D = np.asarray(D, dtype=float)
+    counts = np.array([max(1, int(np.sum(np.abs(D - d) < h))) for d in D])
+    return 1.0 / counts
+
+
+def fit_bacon_watts(D_obs: np.ndarray, y_obs: np.ndarray, chemistry: str):
+    """
+    Density-weighted, chemistry-prior-regularized NLS fit of the Bacon-Watts
+    mean function. Returns (params, pcov, success). See
+    severson_gp_predictor.py's identical function for the full docstring on
+    the identifiability caveat (tau/c weakly identified at small observed
+    fractions) -- duplicated here, not imported, to keep this module
+    self-contained per this project's existing convention.
+    """
+    from scipy.optimize import least_squares
+
+    w_prior_mean = CHEM_W_PRIOR.get(chemistry, 0.05)
+    dens_w = density_weights(D_obs, h=0.1)
+
+    A = np.vstack([D_obs, np.ones_like(D_obs)]).T
+    a0, b0 = np.linalg.lstsq(A, y_obs, rcond=None)[0]
+    tau0 = float(np.clip(0.7, 0.4, 0.95))
+    x0 = np.array([a0, b0, 0.05, tau0, w_prior_mean])
+    x0 = np.clip(x0, BW_BOUNDS_LO, BW_BOUNDS_HI)
+
+    def _resid(params):
+        a, b, c, tau, w = params
+        pred = bacon_watts_mean(D_obs, a, b, c, tau, w)
+        data_resid = np.sqrt(dens_w) * (pred - y_obs)
+        prior_resid = np.array([
+            (np.log(max(w, 1e-6)) - np.log(w_prior_mean)) / BW_PRIOR_SIGMA_LOG
+        ])
+        return np.concatenate([data_resid, prior_resid])
+
+    try:
+        res = least_squares(_resid, x0, bounds=(BW_BOUNDS_LO, BW_BOUNDS_HI))
+        J = res.jac
+        resid_var = float(np.sum(res.fun ** 2)) / max(1, len(res.fun) - len(x0))
+        try:
+            pcov = np.linalg.inv(J.T @ J) * resid_var
+        except np.linalg.LinAlgError:
+            pcov = np.eye(len(x0)) * resid_var
+        return res.x, pcov, bool(res.success)
+    except Exception:
+        return x0, np.eye(len(x0)) * 0.01, False
 
 
 def _sample_kernel_posterior(

@@ -28,6 +28,12 @@ data/severson/
 # Embedded git repo
 data/iontech/
 
+# Session-downloaded raw data for SOC baseline benchmarks — code/reports are
+# committed, raw CSVs/xlsx are not (same convention as the other real-fleet
+# datasets above)
+data/calce/
+data/parallel_module_dataset/
+
 # IDE / OS
 .DS_Store
 .idea/

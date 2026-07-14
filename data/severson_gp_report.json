@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "module": "severson_gp_predictor.py",
+    "dataset": "Severson et al. (2019) Nature Energy 4:383-391 \u2014 LFP/graphite, A123 APR18650M1A",
+    "n_cells_total": 124,
+    "n_calib_cells": 12,
+    "n_loo_cells": 112,
+    "calib_cell_ids": [
+      "b1c21",
+      "b1c3",
+      "b1c31",
+      "b1c35",
+      "b2c11",
+      "b2c27",
+      "b2c3",
+      "b2c32",
+      "b3c21",
+      "b3c28",
+      "b3c31",
+      "b3c6"
+    ],
+    "calib_subsample_k": 4,
+    "n_values": [
+      36,
+      110,
+      220
+    ],
+    "n_fracs": [
+      0.05,
+      0.15,
+      0.3
+    ],
+    "median_cycle_life": 736,
+    "coverage_nominal": 0.9,
+    "nuts_ok": false,
+    "ls_scale_from_data": 97.5,
+    "protocol_heterogeneity_r2_numeric": 0.452,
+    "protocol_heterogeneity_r2_upper_bound": 0.984,
+    "scope": "Demonstrates physics-informed GP methodology at n=124 (adequate statistical power). Separate from NASA LCO analysis \u2014 different chemistry, V-grid, scale, facility. NOT a cross-chemistry result.",
+    "named_limitation": "Kernel amplitude/ls/sigma_obs estimated from calibration-cell within-cell structure only; cannot capture between-cell systematic deviation. Coverage degrades at higher N. Convergence of the kernel posterior != correctness of the uncertainty model.",
+    "separate_from_nasa": true
+  },
+  "calibration_kernel": {
+    "used_full_nuts": false,
+    "max_rhat": 1.01,
+    "min_ess": 773.0,
+    "divergences": 0,
+    "elapsed_s": 1627.3627898693085,
+    "amplitude_mean": 0.19920924564622142,
+    "ls_mean": 401.80182259220595,
+    "sigma_obs_mean": 2.3331482326577882e-05
+  },
+  "hierarchical_beta": {
+    "mu_beta": 0.0025194229510749873,
+    "mu_beta_sd": 0.00011685224542281191,
+    "mu_beta_hdi94": [
+      0.002278634302919648,
+      0.0027097718544531377
+    ],
+    "sigma_beta": 0.0012851489565269647,
+    "sigma_beta_sd": 8.74309109370851e-05,
+    "sigma_beta_hdi94": [
+      0.001123187070569162,
+      0.0014485305361244454
+    ],
+    "sigma_obs_h": 0.03662604276216675,
+    "sigma_obs_h_hdi94": [
+      0.036476074378208545,
+      0.036782753187688436
+    ],
+    "max_rhat": 1.25,
+    "min_ess": 14.0,
+    "divergences": 0,
+    "protocol_note": "sigma_beta conflates within-protocol cell variance with between-protocol design variance (Step 0: protocol explains R\u00b2=0.452 of OLS beta variance, upper bound R\u00b2=0.984)."
+  },
+  "loo_results": {
+    "aggregate_by_N": {
+      "36": {
+        "n_cells": 112,
+        "physics_coverage": 0.7881551399603673,
+        "physics_rmse_mean": 0.19342267720974998,
+        "zero_mean_coverage": 0.9778167629726536,
+        "zero_mean_rmse_mean": 0.08744673286043236,
+        "rmse_ratio_physics_over_zero": 2.2118914095791142
+      },
+      "110": {
+        "n_cells": 112,
+        "physics_coverage": 0.7513408993059975,
+        "physics_rmse_mean": 0.19937292588982536,
+        "zero_mean_coverage": 0.8850512899996535,
+        "zero_mean_rmse_mean": 0.12425636656735509,
+        "rmse_ratio_physics_over_zero": 1.6045288575354582
+      },
+      "220": {
+        "n_cells": 111,
+        "physics_coverage": 0.7983346707051585,
+        "physics_rmse_mean": 0.16784320475245976,
+        "zero_mean_coverage": 0.8889710803095482,
+        "zero_mean_rmse_mean": 0.11260468450711518,
+        "rmse_ratio_physics_over_zero": 1.4905525954548917
+      }
+    },
+    "aggregate_by_N_by_batch": {
+      "36": {
+        "1": {
+          "n_cells": 37,
+          "coverage": 0.9723436653616683,
+          "rmse_mean": 0.21823727237355217
+        },
+        "2": {
+          "n_cells": 39,
+          "coverage": 0.4233684463836136,
+          "rmse_mean": 0.24670022178596385
+        },
+        "3": {
+          "n_cells": 36,
+          "coverage": 0.9940358513394023,
+          "rmse_mean": 0.11020144777827719
+        }
+      },
+      "110": {
+        "1": {
+          "n_cells": 37,
+          "coverage": 0.9876199664476525,
+          "rmse_mean": 0.17738894817957657
+        },
+        "2": {
+          "n_cells": 39,
+          "coverage": 0.3062108138105493,
+          "rmse_mean": 0.27856986084574326
+        },
+        "3": {
+          "n_cells": 36,
+          "coverage": 0.990722784030476,
+          "rmse_mean": 0.13617089011200345
+        }
+      },
+      "220": {
+        "1": {
+          "n_cells": 37,
+          "coverage": 0.6950598828590369,
+          "rmse_mean": 0.23000396784774482
+        },
+        "2": {
+          "n_cells": 38,
+          "coverage": 0.7120169718898698,
+          "rmse_mean": 0.16678423777249213
+        },
+        "3": {
+          "n_cells": 36,
+          "coverage": 0.9955913291853654,
+          "rmse_mean": 0.10507355227227154
+        }
+      }
+    }
+  }
+}

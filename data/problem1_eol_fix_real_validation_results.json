@@ -1,0 +1,104 @@
+{
+  "LFP": {
+    "n_cells": 124,
+    "baseline_eol_bias": -0.04283335531025987,
+    "baseline_eol_bias_std": 0.049016436996504695,
+    "fix_eol_bias": -0.0852441035435121,
+    "fix_eol_bias_std": 0.055085961543221804,
+    "delta": 0.04241074823325223,
+    "abs_bias_reduction": -0.04241074823325223,
+    "pct_abs_bias_reduction": -99.01336919571989,
+    "baseline_bins": {
+      "early_0_20": [
+        0.02925992130413862,
+        0.005947921698012839,
+        24000
+      ],
+      "mid_40_60": [
+        0.03310265169252725,
+        0.014673185748873682,
+        87317
+      ],
+      "eol_80_100": [
+        -0.04283335531025987,
+        0.049016436996504695,
+        97460
+      ]
+    },
+    "fix_bins": {
+      "early_0_20": [
+        -0.004599245873782581,
+        0.0038030252361832433,
+        24000
+      ],
+      "mid_40_60": [
+        -0.01876628851153563,
+        0.0175032296961546,
+        87317
+      ],
+      "eol_80_100": [
+        -0.0852441035435121,
+        0.055085961543221804,
+        97460
+      ]
+    },
+    "tau_identifiability": {
+      "n_fits_total": 620,
+      "n_fits_tau_unobserved": 620,
+      "pct_tau_unobserved": 100.0,
+      "note": "In this fraction of LOO-CV fits, the observed training window never reached the knee region (tau - 3w) -- tau/c were fit almost entirely from the chemistry-specific prior/bounds, not from data. High values here mean the EOL-bias result is substantially prior-driven, not data-driven."
+    },
+    "real_vs_literature_review_synthetic": "This is a REAL measurement on this project's own data. The literature review document's Section 4 numbers (94.5% LCO / 75.3% LFP reduction) were computed on SYNTHETIC data in a separate sandbox and are not reused or assumed here."
+  },
+  "LCO": {
+    "n_cells": 4,
+    "baseline_eol_bias": -0.03803707827240371,
+    "baseline_eol_bias_std": 0.07400361112067592,
+    "fix_eol_bias": 0.2508915102399762,
+    "fix_eol_bias_std": 0.5063606005026327,
+    "delta": -0.2889285885123799,
+    "abs_bias_reduction": -0.21285443196757248,
+    "pct_abs_bias_reduction": -559.5972183710139,
+    "baseline_bins": {
+      "early_0_20": [
+        0.06125858469888583,
+        0.034563062636042544,
+        151
+      ],
+      "mid_40_60": [
+        0.004173541667721784,
+        0.06269598019960866,
+        565
+      ],
+      "eol_80_100": [
+        -0.03803707827240371,
+        0.07400361112067592,
+        645
+      ]
+    },
+    "fix_bins": {
+      "early_0_20": [
+        0.015452515597953917,
+        0.020854617311837638,
+        151
+      ],
+      "mid_40_60": [
+        0.027665957312559,
+        0.12769176186564715,
+        565
+      ],
+      "eol_80_100": [
+        0.2508915102399762,
+        0.5063606005026327,
+        645
+      ]
+    },
+    "tau_identifiability": {
+      "n_fits_total": 20,
+      "n_fits_tau_unobserved": 16,
+      "pct_tau_unobserved": 80.0,
+      "note": "In this fraction of LOO-CV fits, the observed training window never reached the knee region (tau - 3w) -- tau/c were fit almost entirely from the chemistry-specific prior/bounds, not from data. High values here mean the EOL-bias result is substantially prior-driven, not data-driven."
+    },
+    "real_vs_literature_review_synthetic": "This is a REAL measurement on this project's own data. The literature review document's Section 4 numbers (94.5% LCO / 75.3% LFP reduction) were computed on SYNTHETIC data in a separate sandbox and are not reused or assumed here."
+  }
+}
