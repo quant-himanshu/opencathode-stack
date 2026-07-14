@@ -4,6 +4,6 @@ Compares this project's Dual EKF against two generic, unnamed baselines (pure co
 
 | Fleet | n segments | EKF SOC RMSE | Coulomb-only | OCV-lookup-only | EKF beats both? |
 |---|---|---|---|---|---|
-| BMW_i3 | 63 | 18.28% | 29.42% | 37.75% | Yes |
-| Deng_BAIC_EU500 | 2000 | 10.98% | 40.12% | 6.05% | No |
-| VED | 408 | 21.75% | 16.05% | 14.83% | No |
+| BMW_i3 | 63 | 17.69% | 29.42% | 37.75% | Yes |
+| Deng_BAIC_EU500 | 2000 | 9.69% | 40.12% | 6.05% | No |
+| VED | 408 | 25.71% | 16.05% | 14.83% | No |

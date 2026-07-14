@@ -10,7 +10,7 @@
   },
   "aggregate": {
     "n_segments": 26,
-    "ekf_soc_rmse_pct_mean": 35.142052287511504,
+    "ekf_soc_rmse_pct_mean": 35.18069845485191,
     "ekf_n_valid": 26,
     "coulomb_only_soc_rmse_pct_mean": 15.663319726305382,
     "coulomb_only_n_valid": 26,
@@ -31,42 +31,42 @@
       "n_rows": 1792,
       "soc_rmse_coulomb_pct": 20.022055154300833,
       "soc_rmse_ocv_lookup_pct": 37.11235420810991,
-      "soc_rmse_ekf_pct": 47.12461072185452,
+      "soc_rmse_ekf_pct": 46.936148224393236,
       "vehicle_id": "A1_seg_0002_win004"
     },
     {
       "n_rows": 1794,
       "soc_rmse_coulomb_pct": 19.998754565863475,
       "soc_rmse_ocv_lookup_pct": 24.588870550684643,
-      "soc_rmse_ekf_pct": 57.00465595104644,
+      "soc_rmse_ekf_pct": 72.5704785062201,
       "vehicle_id": "A1_seg_0002_win005"
     },
     {
       "n_rows": 948,
       "soc_rmse_coulomb_pct": 20.048124712495607,
       "soc_rmse_ocv_lookup_pct": 14.203701261653586,
-      "soc_rmse_ekf_pct": 14.642843118225187,
+      "soc_rmse_ekf_pct": 15.778485704834125,
       "vehicle_id": "A1_seg_0002_win006"
     },
     {
       "n_rows": 361,
       "soc_rmse_coulomb_pct": 20.127678951770335,
       "soc_rmse_ocv_lookup_pct": 65.87077747030617,
-      "soc_rmse_ekf_pct": 14.576967914298471,
+      "soc_rmse_ekf_pct": 17.242295403950855,
       "vehicle_id": "A1_seg_0000_win000"
     },
     {
       "n_rows": 360,
       "soc_rmse_coulomb_pct": 17.77597225829731,
       "soc_rmse_ocv_lookup_pct": 28.93820428353986,
-      "soc_rmse_ekf_pct": 27.18507886929024,
+      "soc_rmse_ekf_pct": 27.06654840444297,
       "vehicle_id": "A1_seg_0000_win001"
     },
     {
       "n_rows": 500,
       "soc_rmse_coulomb_pct": 1.8935236528054493,
       "soc_rmse_ocv_lookup_pct": 25.524993771792914,
-      "soc_rmse_ekf_pct": 98.20309598293473,
+      "soc_rmse_ekf_pct": 98.046638749067,
       "vehicle_id": "A1_seg_0000_win002"
     },
     {
@@ -80,21 +80,21 @@
       "n_rows": 1800,
       "soc_rmse_coulomb_pct": 19.89809753430361,
       "soc_rmse_ocv_lookup_pct": 47.503742574570836,
-      "soc_rmse_ekf_pct": 33.21259976373992,
+      "soc_rmse_ekf_pct": 40.12796081002867,
       "vehicle_id": "A1_seg_0000_win004"
     },
     {
       "n_rows": 1800,
       "soc_rmse_coulomb_pct": 19.894386161275964,
       "soc_rmse_ocv_lookup_pct": 32.24652231449841,
-      "soc_rmse_ekf_pct": 28.821008700338304,
+      "soc_rmse_ekf_pct": 25.465954720939184,
       "vehicle_id": "A1_seg_0000_win005"
     },
     {
       "n_rows": 1800,
       "soc_rmse_coulomb_pct": 19.881362009909033,
       "soc_rmse_ocv_lookup_pct": 19.255586790481523,
-      "soc_rmse_ekf_pct": 68.64953689323835,
+      "soc_rmse_ekf_pct": 16.90207399318871,
       "vehicle_id": "A1_seg_0000_win006"
     },
     {
@@ -108,7 +108,7 @@
       "n_rows": 360,
       "soc_rmse_coulomb_pct": 20.157402388697022,
       "soc_rmse_ocv_lookup_pct": 66.8635725520266,
-      "soc_rmse_ekf_pct": 12.678394472552432,
+      "soc_rmse_ekf_pct": 12.969686364481728,
       "vehicle_id": "A1_seg_0001_win000"
     },
     {
@@ -122,7 +122,7 @@
       "n_rows": 1009,
       "soc_rmse_coulomb_pct": 0.4925498588567874,
       "soc_rmse_ocv_lookup_pct": 56.3689058130499,
-      "soc_rmse_ekf_pct": 73.65464177209527,
+      "soc_rmse_ekf_pct": 66.88242140932881,
       "vehicle_id": "A1_seg_0001_win002"
     },
     {
@@ -136,42 +136,42 @@
       "n_rows": 1797,
       "soc_rmse_coulomb_pct": 19.933331998328526,
       "soc_rmse_ocv_lookup_pct": 38.46661441244986,
-      "soc_rmse_ekf_pct": 46.554830719529754,
+      "soc_rmse_ekf_pct": 43.52136038471517,
       "vehicle_id": "A1_seg_0001_win004"
     },
     {
       "n_rows": 1797,
       "soc_rmse_coulomb_pct": 19.885056438434642,
       "soc_rmse_ocv_lookup_pct": 21.94280706047865,
-      "soc_rmse_ekf_pct": 40.41146707557935,
+      "soc_rmse_ekf_pct": 69.5546654770226,
       "vehicle_id": "A1_seg_0001_win005"
     },
     {
       "n_rows": 972,
       "soc_rmse_coulomb_pct": 19.95173178107229,
       "soc_rmse_ocv_lookup_pct": 6.483135238601721,
-      "soc_rmse_ekf_pct": 7.0815863263050725,
+      "soc_rmse_ekf_pct": 13.509917168378854,
       "vehicle_id": "A1_seg_0001_win006"
     },
     {
       "n_rows": 360,
       "soc_rmse_coulomb_pct": 20.157210778055145,
       "soc_rmse_ocv_lookup_pct": 67.01737041576872,
-      "soc_rmse_ekf_pct": 18.504464245235773,
+      "soc_rmse_ekf_pct": 8.026841468290073,
       "vehicle_id": "A1_seg_0002_win000"
     },
     {
       "n_rows": 361,
       "soc_rmse_coulomb_pct": 16.528386623554958,
       "soc_rmse_ocv_lookup_pct": 24.747234892043657,
-      "soc_rmse_ekf_pct": 23.826492850014883,
+      "soc_rmse_ekf_pct": 23.551950926347416,
       "vehicle_id": "A1_seg_0002_win001"
     },
     {
       "n_rows": 1020,
       "soc_rmse_coulomb_pct": 0.8798915208695669,
       "soc_rmse_ocv_lookup_pct": 54.63935906179268,
-      "soc_rmse_ekf_pct": 50.9921616940118,
+      "soc_rmse_ekf_pct": 43.19223176047088,
       "vehicle_id": "A1_seg_0002_win002"
     },
     {
@@ -185,21 +185,21 @@
       "n_rows": 1795,
       "soc_rmse_coulomb_pct": 19.880754038577084,
       "soc_rmse_ocv_lookup_pct": 39.3293752981903,
-      "soc_rmse_ekf_pct": 45.66397444680003,
+      "soc_rmse_ekf_pct": 45.65419161294663,
       "vehicle_id": "A1_seg_0002_win004"
     },
     {
       "n_rows": 1794,
       "soc_rmse_coulomb_pct": 19.922191493466805,
       "soc_rmse_ocv_lookup_pct": 28.3030810069235,
-      "soc_rmse_ekf_pct": 62.075523572106775,
+      "soc_rmse_ekf_pct": 15.612549520835001,
       "vehicle_id": "A1_seg_0002_win005"
     },
     {
       "n_rows": 1377,
       "soc_rmse_coulomb_pct": 19.965868146038787,
       "soc_rmse_ocv_lookup_pct": 17.824223027070246,
-      "soc_rmse_ekf_pct": 14.373898528086293,
+      "soc_rmse_ekf_pct": 83.63023335825204,
       "vehicle_id": "A1_seg_0002_win006"
     }
   ]
