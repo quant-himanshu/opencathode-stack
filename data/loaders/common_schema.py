@@ -196,14 +196,65 @@ def resample_to_uniform_dt(
     return pd.DataFrame(out)
 
 
+def assert_discharge_negative_consistency(
+    t_s: np.ndarray,
+    I_A: np.ndarray,
+    SOC_bms: np.ndarray,
+    source: str = "",
+    min_dsoc: float = 0.05,
+    min_ah: float = 0.1,
+) -> None:
+    """
+    Permanent sign-convention assertion (2026-07-20 sign-bug postmortem —
+    see docs/SIGN_BUG_POSTMORTEM.md).
+
+    The OpenCATHODE schema is DISCHARGE-NEGATIVE (I_A < 0 while the battery
+    discharges). Under that convention the net integral of current must
+    OPPOSE the net SOC drop: SOC falls ⇒ ∫I dt < 0, SOC rises ⇒ ∫I dt > 0.
+    A segment with a material net SOC change (≥ min_dsoc) and material net
+    charge throughput (≥ min_ah Ah) where sign(∫I dt) EQUALS
+    sign(SOC_start − SOC_end) is discharge-positive data — the exact defect
+    that silently inverted the CALCE/UMich benchmark loaders. Fail loudly.
+
+    Thresholds are deliberately conservative so measurement noise, regen
+    braking, and BMS quantization can never trip a correctly-signed loader:
+    a ≥5 pp net SOC drop with ≥0.1 Ah net throughput cannot have the wrong
+    integral sign unless the current sign itself is wrong.
+    """
+    t = np.asarray(t_s, dtype=np.float64)
+    I = np.asarray(I_A, dtype=np.float64)
+    soc = np.asarray(SOC_bms, dtype=np.float64)
+    if len(t) < 2:
+        return
+    dt = np.diff(t, prepend=t[0])
+    dt[0] = 0.0
+    ah = float(np.sum(I * dt)) / 3600.0
+    dsoc = float(soc[0] - soc[-1])   # > 0 means net discharge
+    if abs(dsoc) >= min_dsoc and abs(ah) >= min_ah \
+            and np.sign(ah) == np.sign(dsoc):
+        raise ValueError(
+            f"SIGN-CONVENTION VIOLATION ({source or 'unknown source'}): "
+            f"net ΔSOC drop {dsoc*100:+.1f} pp with ∫I dt = {ah:+.2f} Ah — "
+            f"sign(∫I dt) must OPPOSE sign(ΔSOC drop) in the "
+            f"discharge-negative schema. This loader is emitting "
+            f"discharge-positive current; flip it with "
+            f"enforce_discharge_negative(). See docs/SIGN_BUG_POSTMORTEM.md."
+        )
+
+
 def make_schema_df(
     t_s: np.ndarray,
     I_A: np.ndarray,
     V_V: np.ndarray,
     T_degC: Optional[np.ndarray],
     SOC_bms: np.ndarray,
+    source: str = "",
 ) -> pd.DataFrame:
-    """Construct a schema-compliant DataFrame from arrays."""
+    """Construct a schema-compliant DataFrame from arrays.
+
+    Runs the permanent discharge-negative sign assertion on the arrays —
+    every dataset load in this project passes through here."""
+    assert_discharge_negative_consistency(t_s, I_A, SOC_bms, source=source)
     n = len(t_s)
     df = pd.DataFrame({
         "t_s":     t_s.astype(np.float64),

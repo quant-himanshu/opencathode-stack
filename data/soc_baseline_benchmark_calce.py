@@ -45,12 +45,17 @@ below has some natural home-field advantage since ground truth is built the
 same way. This is disclosed plainly, not hidden, exactly as it would need
 to be for the NASA/Severson datasets if used this way.
 
-CURRENT SIGN -- VERIFIED, NOT ASSUMED
-----------------------------------------
-Checked empirically: Current(A) is NEGATIVE during discharge (confirmed via
-correlation with which capacity column is increasing), POSITIVE during
-charge -- again the OPPOSITE of this project's established vehicle-fleet
-convention. Flipped on load (I_A = -Current(A)).
+CURRENT SIGN -- FIXED 2026-07-20 (see docs/SIGN_BUG_POSTMORTEM.md)
+--------------------------------------------------------------------
+Checked empirically: Current(A) is NEGATIVE during discharge, POSITIVE
+during charge -- which IS this project's schema convention
+(discharge-negative, common_schema.enforce_discharge_negative). The
+original version of this loader flipped the sign (I_A = -Current(A)) in
+the belief that the project convention was discharge-positive; that
+inverted the EKF's process model and the Mode-A calibration on this
+dataset (delta_R0 = -260 mOhm, the value that motivated the EKF's
+calibration sanity gate). Raw sign is now kept, and
+make_schema_df's permanent sign assertion guards the convention.
 
 CARTRIDGE
 ---------
@@ -112,7 +117,7 @@ def load_calce_file(xlsx_path: Path, cell_id: str,
     df = pd.read_excel(xl, sheet_name=channel_sheet)
 
     t_s = df["Test_Time(s)"].values.astype(np.float64)
-    I_A = -df["Current(A)"].values.astype(np.float64)   # sign-flipped, see module docstring
+    I_A = df["Current(A)"].values.astype(np.float64)   # raw sign kept: already discharge-negative (see module docstring, sign fix 2026-07-20)
     V_V = df["Voltage(V)"].values.astype(np.float64)
     T_degC = df["Temperature (C)_1"].values.astype(np.float64)
 

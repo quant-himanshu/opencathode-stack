@@ -1,0 +1,668 @@
+{
+  "meta": {
+    "stamp": "20260719T182755Z",
+    "n_valid_segments": 453
+  },
+  "H_TOPO": {
+    "VehId_0010": {
+      "vehicle_name_static": "EV_Car",
+      "cartridge_used_by_benchmark": "Generic EV Pack (fallback)",
+      "n_series": 96,
+      "n_parallel": 2,
+      "chemistry_assumed": "NMC",
+      "Q_cell_Ah": 40.0,
+      "topology_uncertain_flag": true,
+      "loader_inference_note": "n_series_inference: n_series=96 inferred from voltage envelope: V_pack=[370.0,385.5]V \u2192 V_cell=[3.854,4.016]V; valid range=[91..111]; n=96 selected (most common EV architecture in Ann Arbor fleet era)",
+      "pack_window_V": {
+        "V_pack_min": 322.0,
+        "V_pack_max": 395.5,
+        "V_pack_p1": 359.5,
+        "V_pack_p99": 394.5
+      },
+      "per_cell_window_V": {
+        "V_pack_min": 3.3541666666666665,
+        "V_pack_max": 4.119791666666667,
+        "V_pack_p1": 3.7447916666666665,
+        "V_pack_p99": 4.109375
+      },
+      "window_consistent_with": {
+        "NMC/NCA": true,
+        "LFP": false
+      },
+      "n_trips": 183,
+      "coulomb_vs_bms_drift_end_pp_median": 5.553537156844457,
+      "coulomb_vs_bms_drift_pp_per_hour_median": 43.15243800922556
+    },
+    "VehId_0455": {
+      "vehicle_name_static": "EV_Car",
+      "cartridge_used_by_benchmark": "Generic EV Pack (fallback)",
+      "n_series": 96,
+      "n_parallel": 2,
+      "chemistry_assumed": "NMC",
+      "Q_cell_Ah": 40.0,
+      "topology_uncertain_flag": true,
+      "loader_inference_note": "n_series_inference: n_series=96 inferred from voltage envelope: V_pack=[371.5,390.0]V \u2192 V_cell=[3.870,4.062]V; valid range=[92..111]; n=96 selected (most common EV architecture in Ann Arbor fleet era)",
+      "pack_window_V": {
+        "V_pack_min": 346.5,
+        "V_pack_max": 395.5,
+        "V_pack_p1": 357.0,
+        "V_pack_p99": 394.0
+      },
+      "per_cell_window_V": {
+        "V_pack_min": 3.609375,
+        "V_pack_max": 4.119791666666667,
+        "V_pack_p1": 3.71875,
+        "V_pack_p99": 4.104166666666667
+      },
+      "window_consistent_with": {
+        "NMC/NCA": true,
+        "LFP": false
+      },
+      "n_trips": 262,
+      "coulomb_vs_bms_drift_end_pp_median": 6.2495990328888755,
+      "coulomb_vs_bms_drift_pp_per_hour_median": 40.03103172877525
+    },
+    "VehId_0541": {
+      "vehicle_name_static": "EV_Car",
+      "cartridge_used_by_benchmark": "Generic EV Pack (fallback)",
+      "n_series": 96,
+      "n_parallel": 2,
+      "chemistry_assumed": "NMC",
+      "Q_cell_Ah": 40.0,
+      "topology_uncertain_flag": true,
+      "loader_inference_note": "n_series_inference: n_series=96 inferred from voltage envelope: V_pack=[357.5,375.0]V \u2192 V_cell=[3.724,3.906]V; valid range=[89..111]; n=96 selected (most common EV architecture in Ann Arbor fleet era)",
+      "pack_window_V": {
+        "V_pack_min": 357.5,
+        "V_pack_max": 387.5,
+        "V_pack_p1": 359.0,
+        "V_pack_p99": 386.0
+      },
+      "per_cell_window_V": {
+        "V_pack_min": 3.7239583333333335,
+        "V_pack_max": 4.036458333333333,
+        "V_pack_p1": 3.7395833333333335,
+        "V_pack_p99": 4.020833333333333
+      },
+      "window_consistent_with": {
+        "NMC/NCA": true,
+        "LFP": false
+      },
+      "n_trips": 8,
+      "coulomb_vs_bms_drift_end_pp_median": 5.412640084122225,
+      "coulomb_vs_bms_drift_pp_per_hour_median": 53.399558361898265
+    }
+  },
+  "H_OCV": {
+    "VehId_0010": {
+      "n_rest_samples": 26754,
+      "tables": {
+        "generic_NMC": {
+          "bias_mV_mean": -28.86751567423841,
+          "bias_mV_median": -51.04166666666732,
+          "structured_rms_mV": 61.441910760786264,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 80.57965786396082
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 101.49390407975112
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 103.87979641391132
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 100.32255527068901
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 70.34561653661342
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 15.206724344966949
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -76.7644268593064
+            }
+          ]
+        },
+        "generic_LMO-NMC": {
+          "bias_mV_mean": 7.869642426464237,
+          "bias_mV_median": -11.041666666667282,
+          "structured_rms_mV": 57.693405991110474,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 109.024112630133
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 130.49390407975102
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 132.87979641391124
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 130.06491186520043
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 103.63149433077767
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 50.848294128590155
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -37.08333333333336
+            }
+          ]
+        },
+        "LFP_Prada2012": {
+          "bias_mV_mean": 488.70666658027994,
+          "bias_mV_median": 460.4085786949332,
+          "structured_rms_mV": 61.49646561600923,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 512.9219675020888
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 553.2316887749222
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 574.0072968885556
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 619.4836489190219
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 617.964467366433
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 566.8283626981112
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": 428.1250000000001
+            }
+          ]
+        },
+        "NMC811_DFN_rest": {
+          "bias_mV_mean": -62.405016708403394,
+          "bias_mV_median": -88.18457506113918,
+          "structured_rms_mV": 124.08324613554485,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 217.00694159784106
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 216.03677259236554
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 176.70885543251867
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 82.3617212862826
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 20.7256648498384
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": -63.957166092701634
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -112.30903186625163
+            }
+          ]
+        },
+        "fleet_fitted_empirical": {
+          "bias_mV_mean": -5.535724161321725,
+          "bias_mV_median": 0.0,
+          "structured_rms_mV": 6.339760102684445,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 5.523956075698333
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 4.808396251259506
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": -13.788463398267004
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 0.0
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 5.208333333333481
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 1.5608028055520418
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -2.8391301191552643
+            }
+          ]
+        }
+      },
+      "best_table_by_structured_rms": "fleet_fitted_empirical"
+    },
+    "VehId_0455": {
+      "n_rest_samples": 45631,
+      "tables": {
+        "generic_NMC": {
+          "bias_mV_mean": 20.551246439259742,
+          "bias_mV_median": 36.30697348344869,
+          "structured_rms_mV": 52.155095265369106,
+          "shape_binned": [
+            {
+              "soc_bin": 0.15000000000000002,
+              "median_resid_mV": 57.27283869406663
+            },
+            {
+              "soc_bin": 0.25,
+              "median_resid_mV": 68.84702042987544
+            },
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 71.35996575573111
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 92.40521533215951
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 99.22017883320011
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 96.28014506030658
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 73.94325218394427
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 4.971699910853333
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -71.87500000000036
+            }
+          ]
+        },
+        "generic_LMO-NMC": {
+          "bias_mV_mean": 54.157958013189884,
+          "bias_mV_median": 68.88631897008013,
+          "structured_rms_mV": 48.72466786125113,
+          "shape_binned": [
+            {
+              "soc_bin": 0.15000000000000002,
+              "median_resid_mV": 86.1006401822999
+            },
+            {
+              "soc_bin": 0.25,
+              "median_resid_mV": 97.48581933255096
+            },
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 99.73339914264878
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 121.40521533215987
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 128.22017883320004
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 126.5973446316111
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 106.20321228049967
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 40.619134063449856
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -31.87500000000032
+            }
+          ]
+        },
+        "LFP_Prada2012": {
+          "bias_mV_mean": 532.7110018797358,
+          "bias_mV_median": 554.9676364136001,
+          "structured_rms_mV": 55.788837733569665,
+          "shape_binned": [
+            {
+              "soc_bin": 0.15000000000000002,
+              "median_resid_mV": 501.8620595293333
+            },
+            {
+              "soc_bin": 0.25,
+              "median_resid_mV": 494.9391566468004
+            },
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 503.9194508530447
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 543.4315950690776
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 576.721116095678
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 607.9680443250757
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 615.4566951495335
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": 555.8583582556669
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": 433.33333333333314
+            }
+          ]
+        },
+        "NMC811_DFN_rest": {
+          "bias_mV_mean": 6.516618308346941,
+          "bias_mV_median": -5.124547481609287,
+          "structured_rms_mV": 123.48428965442551,
+          "shape_binned": [
+            {
+              "soc_bin": 0.15000000000000002,
+              "median_resid_mV": 237.28515190273237
+            },
+            {
+              "soc_bin": 0.25,
+              "median_resid_mV": 236.81396124850673
+            },
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 208.46436366990795
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": 193.27547638403564
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": 138.62104763038818
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 89.4966668618129
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 31.282136055490017
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": -71.81832044699665
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -109.01790839447312
+            }
+          ]
+        },
+        "fleet_fitted_empirical": {
+          "bias_mV_mean": -14.889622157787528,
+          "bias_mV_median": -7.695051150121035,
+          "structured_rms_mV": 26.53327825552,
+          "shape_binned": [
+            {
+              "soc_bin": 0.15000000000000002,
+              "median_resid_mV": -88.54166666666652
+            },
+            {
+              "soc_bin": 0.25,
+              "median_resid_mV": -36.45833333333304
+            },
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": -1.910480814909965
+            },
+            {
+              "soc_bin": 0.45,
+              "median_resid_mV": -16.679471852311334
+            },
+            {
+              "soc_bin": 0.55,
+              "median_resid_mV": -15.34577740619314
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": -7.384598228289185
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 0.33447810669118283
+            },
+            {
+              "soc_bin": 0.8500000000000001,
+              "median_resid_mV": -3.194784000096984
+            },
+            {
+              "soc_bin": 0.95,
+              "median_resid_mV": -7.611820432638972
+            }
+          ]
+        }
+      },
+      "best_table_by_structured_rms": "fleet_fitted_empirical"
+    },
+    "VehId_0541": {
+      "n_rest_samples": 550,
+      "tables": {
+        "generic_NMC": {
+          "bias_mV_mean": 78.0973824406507,
+          "bias_mV_median": 82.52850274680013,
+          "structured_rms_mV": 21.176143688751964,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 76.39490131299765
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 103.7226621770575
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 51.877295505128764
+            }
+          ]
+        },
+        "generic_LMO-NMC": {
+          "bias_mV_mean": 109.00412624994433,
+          "bias_mV_median": 114.48968922953328,
+          "structured_rms_mV": 20.558664257564537,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 105.08490711811547
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 134.1003161958887
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 83.94792664947559
+            }
+          ]
+        },
+        "LFP_Prada2012": {
+          "bias_mV_mean": 593.6032938917963,
+          "bias_mV_median": 610.0233271280666,
+          "structured_rms_mV": 48.88507853492071,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 511.2249419488224
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 625.5013425021887
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 599.3398636880664
+            }
+          ]
+        },
+        "NMC811_DFN_rest": {
+          "bias_mV_mean": 72.96509487756566,
+          "bias_mV_median": 65.36058793916766,
+          "structured_rms_mV": 78.44438114474826,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": 209.14070101257275
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 81.58782945344889
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": 20.91129051128049
+            }
+          ]
+        },
+        "fleet_fitted_empirical": {
+          "bias_mV_mean": -9.901521153011682,
+          "bias_mV_median": -1.9883349510325665,
+          "structured_rms_mV": 7.250692846231685,
+          "shape_binned": [
+            {
+              "soc_bin": 0.35000000000000003,
+              "median_resid_mV": -0.5001138212770151
+            },
+            {
+              "soc_bin": 0.6500000000000001,
+              "median_resid_mV": 0.0
+            },
+            {
+              "soc_bin": 0.75,
+              "median_resid_mV": -15.625
+            }
+          ]
+        }
+      },
+      "best_table_by_structured_rms": "fleet_fitted_empirical"
+    }
+  },
+  "H_CAL": {
+    "VehId_0010": {
+      "n_cal_segments": 18,
+      "delta_R0_mOhm": 2.117795714177931,
+      "delta_R0_physical": true,
+      "delta_V_OLS_mV": -0.9673347544373886,
+      "gamma": 0.5,
+      "ocv_source": "empirical PCHIP: 9 SOC bins (275 near-rest points, |I_cell|<2A) from VED. Source: fleet data per sur",
+      "fleet_level": {
+        "n": 165,
+        "converged": 38,
+        "rediverging": 58,
+        "never_approach": 69,
+        "median_rmse_pp": 19.785958577215226
+      },
+      "per_vehicle_cal": {
+        "n": 165,
+        "converged": 69,
+        "rediverging": 21,
+        "never_approach": 75,
+        "median_rmse_pp": 7.728145783311846
+      }
+    },
+    "VehId_0455": {
+      "n_cal_segments": 26,
+      "delta_R0_mOhm": 1.1841742182121224,
+      "delta_R0_physical": true,
+      "delta_V_OLS_mV": 80.62317986576436,
+      "gamma": 1.0,
+      "ocv_source": "empirical PCHIP: 13 SOC bins (474 near-rest points, |I_cell|<2A) from VED. Source: fleet data per su",
+      "fleet_level": {
+        "n": 236,
+        "converged": 27,
+        "rediverging": 72,
+        "never_approach": 137,
+        "median_rmse_pp": 26.111407376180495
+      },
+      "per_vehicle_cal": {
+        "n": 236,
+        "converged": 21,
+        "rediverging": 86,
+        "never_approach": 129,
+        "median_rmse_pp": 25.851050243226354
+      }
+    },
+    "VehId_0541": {
+      "n_cal_segments": 1,
+      "delta_R0_mOhm": 0.5921207143126037,
+      "delta_R0_physical": true,
+      "delta_V_OLS_mV": 57.432839264635106,
+      "gamma": 0.5,
+      "ocv_source": "generic NMC OCV table (only 0 SOC bins from VED, need \u22654). Fallback per survey \u00a71.5.",
+      "fleet_level": {
+        "n": 7,
+        "converged": 1,
+        "rediverging": 3,
+        "never_approach": 3,
+        "median_rmse_pp": 23.91396388440127
+      },
+      "per_vehicle_cal": {
+        "n": 7,
+        "converged": 0,
+        "rediverging": 1,
+        "never_approach": 6,
+        "median_rmse_pp": 24.015057759867766
+      }
+    }
+  }
+}

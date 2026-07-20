@@ -1,0 +1,78 @@
+{
+  "script": "data/run_offset_sweep.py",
+  "utc": "20260719T174532Z",
+  "git_commit": "9b749c0",
+  "python": "3.14.2",
+  "n_workers": 8,
+  "offsets": [
+    -0.3,
+    -0.2,
+    -0.1,
+    -0.05,
+    0.0,
+    0.05,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "P0_floor": 0.0004,
+  "seeds": {
+    "deng_eval_sample": 42
+  },
+  "theta_tuning": {
+    "BMW_i3": {
+      "fleet": "BMW_i3",
+      "chosen_Q_theta_V2_per_s": 1e-10,
+      "chosen_R_theta_V2": 0.0001,
+      "chosen_mean_cal_rmse_pct": 16.34893426060225,
+      "n_cal_segments_used": 7,
+      "offset_used": 0.2
+    },
+    "Deng_BAIC_EU500": {
+      "fleet": "Deng_BAIC_EU500",
+      "chosen_Q_theta_V2_per_s": 1e-06,
+      "chosen_R_theta_V2": 1e-06,
+      "chosen_mean_cal_rmse_pct": 14.16238129485375,
+      "n_cal_segments_used": 20,
+      "offset_used": 0.2
+    },
+    "VED": {
+      "fleet": "VED",
+      "chosen_Q_theta_V2_per_s": 1e-06,
+      "chosen_R_theta_V2": 0.0001,
+      "chosen_mean_cal_rmse_pct": 16.243673880630997,
+      "n_cal_segments_used": 20,
+      "offset_used": 0.2
+    },
+    "CALCE_A123": {
+      "fleet": "CALCE_A123",
+      "chosen_Q_theta_V2_per_s": 1e-06,
+      "chosen_R_theta_V2": 0.0001,
+      "chosen_mean_cal_rmse_pct": 20.716408085630878,
+      "n_cal_segments_used": 17,
+      "offset_used": 0.2
+    },
+    "Parallel_Module": {
+      "fleet": "Parallel_Module",
+      "chosen_Q_theta_V2_per_s": 1e-06,
+      "chosen_R_theta_V2": 1e-06,
+      "chosen_mean_cal_rmse_pct": 14.149781236775018,
+      "n_cal_segments_used": 20,
+      "offset_used": 0.2
+    }
+  },
+  "cross_check_max_diff_pct": {
+    "BMW_i3": 0.0,
+    "Deng_BAIC_EU500": 0.0,
+    "VED": 0.0,
+    "CALCE_A123": 0.0,
+    "Parallel_Module": 0.0
+  },
+  "censor_t_s": {
+    "BMW_i3": 903.1,
+    "Deng_BAIC_EU500": 2642.0,
+    "VED": 138.7,
+    "CALCE_A123": 1470.9067311801687,
+    "Parallel_Module": 25.0
+  }
+}

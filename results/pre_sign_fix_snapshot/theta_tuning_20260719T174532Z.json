@@ -1,0 +1,412 @@
+{
+  "BMW_i3": {
+    "fleet": "BMW_i3",
+    "chosen_Q_theta_V2_per_s": 1e-10,
+    "chosen_R_theta_V2": 0.0001,
+    "chosen_mean_cal_rmse_pct": 16.34893426060225,
+    "n_cal_segments_used": 7,
+    "offset_used": 0.2,
+    "grid": [
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.351281873804695,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 16.349524402634728,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 16.34893426060225,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.373896349348648,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 16.356760532120358,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 16.351173113469592,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.426022780816673,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 16.37388604658978,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 16.356661813127555,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.57429746307421,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 16.426012331912546,
+        "n_segs": 7
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 16.373786747437485,
+        "n_segs": 7
+      }
+    ]
+  },
+  "Deng_BAIC_EU500": {
+    "fleet": "Deng_BAIC_EU500",
+    "chosen_Q_theta_V2_per_s": 1e-06,
+    "chosen_R_theta_V2": 1e-06,
+    "chosen_mean_cal_rmse_pct": 14.16238129485375,
+    "n_cal_segments_used": 20,
+    "offset_used": 0.2,
+    "grid": [
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.013931641642806,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 15.968747815340643,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 15.65782155569211,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 15.564867699299384,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 15.946073738937809,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 15.69523670199876,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.567061553592541,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 15.582868756107572,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 15.589348337789446,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.16238129485375,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 14.605741321484981,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 15.110790625080352,
+        "n_segs": 20
+      }
+    ]
+  },
+  "VED": {
+    "fleet": "VED",
+    "chosen_Q_theta_V2_per_s": 1e-06,
+    "chosen_R_theta_V2": 0.0001,
+    "chosen_mean_cal_rmse_pct": 16.243673880630997,
+    "n_cal_segments_used": 20,
+    "offset_used": 0.2,
+    "grid": [
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 16.664598335214656,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 18.004715449765378,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 18.204544449769227,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 17.687672318605966,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 16.552025176024124,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 18.22743543573482,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 17.11715671304818,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 19.647248029939824,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 18.922695660654767,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 17.93897047076792,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 19.07222716303658,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 16.243673880630997,
+        "n_segs": 20
+      }
+    ]
+  },
+  "CALCE_A123": {
+    "fleet": "CALCE_A123",
+    "chosen_Q_theta_V2_per_s": 1e-06,
+    "chosen_R_theta_V2": 0.0001,
+    "chosen_mean_cal_rmse_pct": 20.716408085630878,
+    "n_cal_segments_used": 17,
+    "offset_used": 0.2,
+    "grid": [
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 27.548556263175527,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 26.756975333006846,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 26.427722941873604,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 22.065901170841304,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 20.97707618771088,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 21.83497637309934,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 23.217772984094612,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 21.191066435774857,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 24.288242906521717,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 20.92956655310592,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 25.17486726623667,
+        "n_segs": 17
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 20.716408085630878,
+        "n_segs": 17
+      }
+    ]
+  },
+  "Parallel_Module": {
+    "fleet": "Parallel_Module",
+    "chosen_Q_theta_V2_per_s": 1e-06,
+    "chosen_R_theta_V2": 1e-06,
+    "chosen_mean_cal_rmse_pct": 14.149781236775018,
+    "n_cal_segments_used": 20,
+    "offset_used": 0.2,
+    "grid": [
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.285289739203582,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 14.416210244407065,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-10,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 14.333526792499427,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.218896702739983,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 14.41633017317292,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-08,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 14.33510497995355,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.493707020895878,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 14.19895000834081,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-07,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 14.30487301271209,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-06,
+        "mean_cal_rmse_pct": 14.149781236775018,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 1e-05,
+        "mean_cal_rmse_pct": 14.386614969579364,
+        "n_segs": 20
+      },
+      {
+        "Q_theta_V2_per_s": 1e-06,
+        "R_theta_V2": 0.0001,
+        "mean_cal_rmse_pct": 14.627344276841862,
+        "n_segs": 20
+      }
+    ]
+  }
+}

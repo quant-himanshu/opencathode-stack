@@ -42,11 +42,14 @@ SOC derivation: same disclosed method as the CALCE benchmark --
 Q_eff measured from the file's own net-capacity range (~8.3 Ah for a
 3-parallel NCA-class module, consistent with ~2.5-3 Ah per cell x 3).
 
-CURRENT SIGN -- VERIFIED, NOT ASSUMED
-----------------------------------------
-Current_A < 0 during discharge, > 0 during charge (checked via correlation
-with which capacity column increases) -- flipped on load (I_A = -Current_A),
-same as every other non-vehicle dataset checked this session.
+CURRENT SIGN -- FIXED 2026-07-20 (see docs/SIGN_BUG_POSTMORTEM.md)
+--------------------------------------------------------------------
+Current_A < 0 during discharge, > 0 during charge -- which IS the project
+schema convention (discharge-negative). The original version flipped the
+sign here (same wrong-direction flip as the CALCE loader), inverting the
+EKF process model and the Mode-A calibration on this dataset
+(delta_R0 = -233 mOhm). Raw sign is now kept; make_schema_df's permanent
+sign assertion guards the convention.
 
 CARTRIDGE
 ---------
@@ -98,7 +101,7 @@ def load_module_folder(folder_prefix: str, window_s: float = 900.0) -> List[Tupl
     df = pd.read_csv(path)
 
     t_s = df["Time_s"].values.astype(np.float64)
-    I_A = -df["Current_A"].values.astype(np.float64)   # sign-flipped, see module docstring
+    I_A = df["Current_A"].values.astype(np.float64)   # raw sign kept: already discharge-negative (see module docstring, sign fix 2026-07-20)
     V_V = df["Voltage_V"].values.astype(np.float64)
 
     net_discharged_ah = (df["Discharged_Capacity_Ah"] - df["Charged_Capacity_Ah"]).values

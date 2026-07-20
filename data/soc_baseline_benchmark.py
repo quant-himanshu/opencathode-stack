@@ -71,9 +71,17 @@ def coulomb_counting_soc(seg_df: pd.DataFrame, cfg: ValidationConfig) -> np.ndar
     face the identical starting uncertainty for the comparison to mean
     anything. From this shared starting point: pure current integration,
     zero voltage-based correction ever.
-    Sign convention matches run_mode_a_forced/run_mode_b_ekf in
-    validate_generic.py: I_cell > 0 = discharge (matches this project's own
-    documented Deng convention, SOURCES.md).
+
+    SIGN FIX 2026-07-20 (docs/SIGN_BUG_POSTMORTEM.md): the schema is
+    DISCHARGE-NEGATIVE (common_schema.enforce_discharge_negative; verified
+    empirically per segment on every dataset), so SOC evolves as
+    soc0 + ∫I dt / (3600·Q): I < 0 while discharging lowers SOC. The
+    original version used soc0 − ∫I dt (a discharge-positive formula,
+    matching a wrong claim in this docstring), which INVERTED the coulomb
+    baseline on every schema-conforming dataset (BMW/Deng/VED) while being
+    accidentally correct on the two datasets whose loaders carried the
+    opposite sign defect (CALCE/UMich). Both defects are now fixed and the
+    convention is asserted at every load in make_schema_df.
     """
     t_s = seg_df["t_s"].values.astype(np.float64)
     I_cell = seg_df["I_A"].values.astype(np.float64) / cfg.n_parallel
@@ -82,7 +90,7 @@ def coulomb_counting_soc(seg_df: pd.DataFrame, cfg: ValidationConfig) -> np.ndar
     dt = np.diff(t_s, prepend=t_s[0])
     dt[0] = 0.0
     charge_ah = np.cumsum(I_cell * dt) / 3600.0
-    soc = soc0 - charge_ah / cfg.q_cell_ah
+    soc = soc0 + charge_ah / cfg.q_cell_ah   # discharge-negative schema
     return np.clip(soc, 0.0, 1.0)
 
 
